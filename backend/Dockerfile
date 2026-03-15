@@ -10,4 +10,6 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["npm", "start"]
+ENV NODE_ENV=production
+
+CMD ["node", "server.js"]
