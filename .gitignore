@@ -1,6 +1,6 @@
 # Dependencies
 node_modules/
-/.pnp
+.pnp
 .pnp.js
 
 # Testing
@@ -22,6 +22,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.docker
 
 # IDE
 .idea/
@@ -36,6 +37,7 @@ backend/.env
 # Frontend  
 frontend/node_modules/
 frontend/.env
+frontend/.env.production
 
 # Logs
 logs
@@ -43,3 +45,6 @@ logs
 
 # Uploads
 uploads/
+
+# Docker
+docker-compose.override.yml
