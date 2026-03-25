@@ -38,6 +38,16 @@ const seedData = {
     phone: '+1234567890'
   },
 
+  receptionist: {
+    username: 'staff',
+    email: 'staff@medbookpro.com',
+    password: 'staff123',
+    firstName: 'Mary',
+    lastName: 'Johnson',
+    role: 'receptionist',
+    phone: '+1234567899'
+  },
+
   // Sample doctors with varied specialties (15 doctors)
   doctors: [
     {
@@ -794,29 +804,35 @@ async function seedPatients() {
 }
 
 /**
- * Creates sample appointments.
+ * Creates sample receptionist staff.
  */
-async function seedAppointments(doctors, services, patients) {
-  if (doctors.length < 2 || services.length < 2 || patients.length < 2) {
-    console.log('[Seed] Skipping appointments - not enough data');
-    return;
-  }
+async function seedReceptionist() {
+  const receptionist = await User.create(seedData.receptionist);
+  console.log(`[Seed] Receptionist created: ${receptionist.firstName} ${receptionist.lastName}`);
+  return receptionist;
+}
 
-  for (const aptData of seedData.appointments) {
-    const appointmentDate = new Date();
-    appointmentDate.setDate(appointmentDate.getDate() + aptData.daysFromNow);
-    appointmentDate.setHours(9, 0, 0, 0);
+// ==========================================
+// MAIN SEED FUNCTION
+// ==========================================
 
-    // Parse start time
-    const [startHour, startMin] = aptData.startTime.split(':').map(Number);
-    appointmentDate.setHours(startHour, startMin);
+async function seed() {
+  try {
+    console.log('===========================================');
+    console.log('Clinic System - Database Seed');
+    console.log('===========================================');
+    console.log(`[Seed] Connecting to: ${MONGODB_URI}`);
 
-    // Calculate end time
-    const [endHour, endMin] = aptData.endTime.split(':').map(Number);
-    const endDate = new Date(appointmentDate);
-    endDate.setHours(endHour, endMin);
+    await mongoose.connect(MONGODB_URI);
+    console.log('[Seed] Connected to MongoDB');
 
-    const appointment = await Appointment.create({
+    await clearDatabase();
+    await seedAdmin();
+    await seedReceptionist();
+    const doctors = await seedDoctors();
+    const services = await seedServices();
+    const patients = await seedPatients();
+    await seedAppointments(doctors, services, patients);
       patient: patients[aptData.patientIndex]._id,
       doctor: doctors[aptData.doctorIndex].doctor._id,
       service: services[aptData.serviceIndex]._id,

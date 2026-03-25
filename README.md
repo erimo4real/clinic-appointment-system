@@ -204,15 +204,56 @@ setup-docker.bat seed
 | API Health | http://localhost:5000/api/health |
 | MongoDB | mongodb://localhost:27017 |
 
-### Test Credentials
+### Test Credentials (Seeded from Database)
 
-After seeding the database:
+The database is automatically seeded with sample data when you first run Docker. Here are the login credentials:
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@medbookpro.com | admin123 |
-| Doctor | dr.smith@medbookpro.com | doctor123 |
-| Patient | patient1@example.com | patient123 |
+#### Admin Account
+| Field | Value |
+|-------|-------|
+| Email | admin@medbookpro.com |
+| Password | admin123 |
+| Role | admin |
+
+#### Doctor Accounts
+| Name | Specialty | Email | Password |
+|------|-----------|-------|----------|
+| Dr. John Smith | Cardiology | dr.smith@medbookpro.com | doctor123 |
+| Dr. Sarah Jones | General Medicine | dr.jones@medbookpro.com | doctor123 |
+| Dr. David Lee | Pediatrics | dr.lee@medbookpro.com | doctor123 |
+| Dr. Emily Brown | Dermatology | dr.brown@medbookpro.com | doctor123 |
+| Dr. Michael Chen | Orthopedics | dr.chen@medbookpro.com | doctor123 |
+| Dr. Lisa Wilson | Neurology | dr.wilson@medbookpro.com | doctor123 |
+| Dr. James Taylor | Psychiatry | dr.taylor@medbookpro.com | doctor123 |
+| Dr. Jennifer Martinez | Gynecology | dr.martinez@medbookpro.com | doctor123 |
+| Dr. Robert Anderson | Ophthalmology | dr.anderson@medbookpro.com | doctor123 |
+| Dr. Amanda White | ENT | dr.white@medbookpro.com | doctor123 |
+
+#### Staff/Patient Accounts
+| Name | Role | Email | Password |
+|------|------|-------|----------|
+| System Administrator | admin | admin@medbookpro.com | admin123 |
+| Reception Staff | receptionist | staff@medbookpro.com | staff123 |
+| Patient One | patient | patient1@example.com | patient123 |
+| Patient Two | patient | patient2@example.com | patient123 |
+| Patient Three | patient | patient3@example.com | patient123 |
+
+#### Sample Services (Seeded)
+- General Consultation (₦5,000)
+- Cardiology Consultation (₦15,000)
+- Pediatrics (₦8,000)
+- Dermatology (₦10,000)
+- Orthopedics (₦12,000)
+- Neurology (₦15,000)
+- Psychiatry (₦10,000)
+- Gynecology (₦10,000)
+- Ophthalmology (₦12,000)
+- ENT (₦8,000)
+- Laboratory Tests (₦3,000 - ₦25,000)
+- X-Ray & Imaging (₦5,000 - ₦20,000)
+- Vaccination (₦2,000 - ₦15,000)
+- Health Checkup (₦20,000)
+- Emergency Services (₦50,000)
 
 ### Environment Variables
 
