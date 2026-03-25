@@ -30,9 +30,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../../shared/services/api';
 
-// API Base URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
 /**
  * =====================================================
  * ASYNC THUNKS - API CALLS
@@ -54,7 +51,7 @@ export const fetchDoctors = createAsyncThunk('doctors/fetchAll', async (specialt
     console.log('[Doctor Slice] Fetching doctors, specialty:', specialty);
     
     const params = specialty ? `?specialty=${specialty}` : '';
-    const response = await api.get(`${API_URL}/doctors${params}`);
+    const response = await api.get(`/doctors${params}`);
     
     console.log('[Doctor Slice] Doctors fetched:', response.data.length);
     return response.data;
@@ -79,7 +76,7 @@ export const fetchDoctorById = createAsyncThunk('doctors/fetchById', async (id, 
   try {
     console.log('[Doctor Slice] Fetching doctor:', id);
     
-    const response = await api.get(`${API_URL}/doctors/${id}`);
+    const response = await api.get(`/doctors/${id}`);
     
     console.log('[Doctor Slice] Doctor fetched:', response.data);
     return response.data;
@@ -103,7 +100,7 @@ export const fetchServices = createAsyncThunk('doctors/fetchServices', async (_,
   try {
     console.log('[Doctor Slice] Fetching services');
     
-    const response = await api.get(`${API_URL}/services`);
+    const response = await api.get(`/services`);
     
     console.log('[Doctor Slice] Services fetched:', response.data.length);
     return response.data;
@@ -128,7 +125,7 @@ export const fetchDoctorSchedule = createAsyncThunk('doctors/fetchSchedule', asy
   try {
     console.log('[Doctor Slice] Fetching schedule for doctor:', id);
     
-    const response = await api.get(`${API_URL}/doctors/${id}/schedule`);
+    const response = await api.get(`/doctors/${id}/schedule`);
     
     console.log('[Doctor Slice] Schedule fetched:', response.data);
     return response.data;
@@ -153,7 +150,7 @@ export const fetchAvailableSlots = createAsyncThunk('doctors/fetchSlots', async 
   try {
     console.log('[Doctor Slice] Fetching slots for doctor:', doctorId, 'date:', date);
     
-    const response = await api.get(`${API_URL}/doctors/${doctorId}/available-slots?date=${date}`);
+    const response = await api.get(`/doctors/${doctorId}/available-slots?date=${date}`);
     
     console.log('[Doctor Slice] Slots fetched:', response.data.length);
     return response.data;

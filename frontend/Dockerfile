@@ -1,5 +1,5 @@
-# Build stage
-FROM node:18-alpine as build
+# Stage 1: Build React app
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
@@ -9,16 +9,15 @@ RUN npm install
 
 COPY . .
 
-REACT_APP_API_URL=/api
+ENV REACT_APP_API_URL=/api
 
 RUN npm run build
 
-# Production stage
+# Stage 2: Production stage
 FROM nginx:alpine
 
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy nginx config
 RUN rm /etc/nginx/conf.d/default.conf
 
 COPY nginx.conf /etc/nginx/conf.d/

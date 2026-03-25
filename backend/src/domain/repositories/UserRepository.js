@@ -7,7 +7,6 @@
  * Handles all database operations for users.
  * 
  * @layer Infrastructure/Repositories
- * @implements IUserRepository
  * =====================================================
  */
 
@@ -15,8 +14,7 @@ const User = require('../entities/User');
 
 class UserRepository {
   /**
-   * Create a new user
-   * @param {Object} userData - User data
+   * Creates a new user.
    */
   async create(userData) {
     const user = new User(userData);
@@ -24,33 +22,28 @@ class UserRepository {
   }
 
   /**
-   * Find user by ID
-   * @param {string} id - User ID
+   * Finds a user by ID.
    */
   async findById(id) {
     return await User.findById(id);
   }
 
   /**
-   * Find user by email
-   * @param {string} email - User email
+   * Finds a user by email.
    */
   async findByEmail(email) {
     return await User.findOne({ email: email.toLowerCase() });
   }
 
   /**
-   * Find user by username
-   * @param {string} username - Username
+   * Finds a user by username.
    */
   async findByUsername(username) {
     return await User.findOne({ username });
   }
 
   /**
-   * Find user by email or username
-   * @param {string} email - Email
-   * @param {string} username - Username
+   * Finds a user by email or username.
    */
   async findByEmailOrUsername(email, username) {
     return await User.findOne({ 
@@ -59,49 +52,42 @@ class UserRepository {
   }
 
   /**
-   * Find user by ID with password (for auth)
-   * @param {string} id - User ID
+   * Finds a user by ID with password (for authentication).
    */
   async findByIdWithPassword(id) {
     return await User.findById(id).select('+password');
   }
 
   /**
-   * Find user by email with password (for auth)
-   * @param {string} email - User email
+   * Finds a user by email with password (for authentication).
    */
   async findByEmailWithPassword(email) {
     return await User.findOne({ email: email.toLowerCase() }).select('+password');
   }
 
   /**
-   * Find all users by role
-   * @param {string} role - User role
+   * Finds all users with a specific role.
    */
   async findByRole(role) {
     return await User.find({ role });
   }
 
   /**
-   * Update user
-   * @param {string} id - User ID
-   * @param {Object} userData - Updated data
+   * Updates a user by ID.
    */
   async update(id, userData) {
     return await User.findByIdAndUpdate(id, userData, { new: true });
   }
 
   /**
-   * Delete user
-   * @param {string} id - User ID
+   * Deletes a user by ID.
    */
   async delete(id) {
     return await User.findByIdAndDelete(id);
   }
 
   /**
-   * Find user by reset token
-   * @param {string} token - Reset token (hashed)
+   * Finds a user by password reset token.
    */
   async findByResetToken(token) {
     return await User.findOne({

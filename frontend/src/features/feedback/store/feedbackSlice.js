@@ -1,12 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../../shared/services/api';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
 // Submit feedback for a doctor
 export const submitFeedback = createAsyncThunk('feedback/submit', async (feedbackData, { rejectWithValue }) => {
   try {
-    const response = await api.post(`${API_URL}/feedback`, feedbackData);
+    const response = await api.post('/feedback', feedbackData);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { message: 'Failed to submit feedback' });
@@ -16,7 +14,7 @@ export const submitFeedback = createAsyncThunk('feedback/submit', async (feedbac
 // Get patient's feedback history
 export const fetchPatientFeedback = createAsyncThunk('feedback/patient', async (_, { rejectWithValue }) => {
   try {
-    const response = await api.get(`${API_URL}/feedback/patient`);
+    const response = await api.get('/feedback/patient');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { message: 'Failed to fetch feedback' });
@@ -26,7 +24,7 @@ export const fetchPatientFeedback = createAsyncThunk('feedback/patient', async (
 // Get feedback for a doctor
 export const fetchDoctorFeedback = createAsyncThunk('feedback/doctor', async (doctorId, { rejectWithValue }) => {
   try {
-    const response = await api.get(`${API_URL}/feedback/doctor/${doctorId}`);
+    const response = await api.get(`/feedback/doctor/${doctorId}`);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { message: 'Failed to fetch feedback' });
@@ -36,7 +34,7 @@ export const fetchDoctorFeedback = createAsyncThunk('feedback/doctor', async (do
 // Doctor responds to feedback
 export const respondToFeedback = createAsyncThunk('feedback/respond', async ({ feedbackId, response }, { rejectWithValue }) => {
   try {
-    const res = await api.put(`${API_URL}/feedback/${feedbackId}/respond`, { response });
+    const res = await api.put(`/feedback/${feedbackId}/respond`, { response });
     return res.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { message: 'Failed to respond' });
@@ -46,7 +44,7 @@ export const respondToFeedback = createAsyncThunk('feedback/respond', async ({ f
 // Admin: Get all feedback
 export const fetchAllFeedback = createAsyncThunk('feedback/adminAll', async (_, { rejectWithValue }) => {
   try {
-    const response = await api.get(`${API_URL}/feedback/admin/all`);
+    const response = await api.get('/feedback/admin/all');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { message: 'Failed to fetch feedback' });
@@ -56,7 +54,7 @@ export const fetchAllFeedback = createAsyncThunk('feedback/adminAll', async (_, 
 // Admin: Update feedback status
 export const updateFeedbackStatus = createAsyncThunk('feedback/adminUpdate', async ({ feedbackId, status, adminNotes }, { rejectWithValue }) => {
   try {
-    const response = await api.put(`${API_URL}/feedback/admin/${feedbackId}`, { status, adminNotes });
+    const response = await api.put(`/feedback/admin/${feedbackId}`, { status, adminNotes });
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { message: 'Failed to update feedback' });

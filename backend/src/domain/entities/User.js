@@ -1,13 +1,13 @@
 /**
  * =====================================================
- * USER ENTITY (Domain Layer)
+ * USER MODEL
  * =====================================================
  * 
- * Domain entity representing a User.
- * Contains data structure and business methods.
+ * Mongoose schema for User collection.
+ * Represents all users in the system including patients,
+ * doctors, admins, and receptionists.
  * 
- * @domain User
- * @layer Domain/Entities
+ * @schema userSchema
  * =====================================================
  */
 
@@ -17,48 +17,48 @@ const bcrypt = require('bcryptjs');
 /**
  * User Schema Definition
  * 
- * @schema userSchema
+ * Defines the structure for user documents in MongoDB.
  */
 const userSchema = new mongoose.Schema({
   // ==========================================
   // REQUIRED FIELDS
   // ==========================================
   
-  /** 
+  /**
    * Unique username for login
-   * Required, must be unique in database
+   * Must be unique in the database
    */
   username: { 
     type: String, 
-    required: [true, 'Username is required'], // Custom error message for debugging
-    unique: true, // Enforce uniqueness
-    trim: true, // Remove whitespace
+    required: [true, 'Username is required'],
+    unique: true,
+    trim: true,
     minlength: [3, 'Username must be at least 3 characters'],
     maxlength: [30, 'Username cannot exceed 30 characters']
   },
   
   /**
    * User's email address
-   * Required, used for login and password reset
+   * Used for login and password reset
    */
   email: { 
     type: String, 
     required: [true, 'Email is required'],
     unique: true,
-    lowercase: true, // Store in lowercase for consistency
+    lowercase: true,  // Store in lowercase for consistency
     trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'] // Email validation regex
+    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
   
   /**
    * User's password (hashed)
-   * Will be hashed using bcrypt before saving
+   * Hashed using bcrypt before saving
    */
   password: { 
     type: String, 
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters'],
-    select: false // Don't include in queries by default (security)
+    select: false  // Don't include in queries by default
   },
   
   // ==========================================
@@ -66,8 +66,11 @@ const userSchema = new mongoose.Schema({
   // ==========================================
   
   /**
-   * User role determines permissions
-   * Default: 'patient'
+   * User role determines system permissions
+   * - admin: Full system access
+   * - doctor: Doctor-specific features
+   * - receptionist: Appointment management
+   * - patient: Booking and feedback
    */
   role: { 
     type: String, 
@@ -109,14 +112,12 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
   
-  /** Date of birth - important for medical records */
+  /** Date of birth */
   dateOfBirth: { 
     type: Date
   },
 
-  /**
-   * Whether user account is active
-   */
+  /** Whether user account is active */
   isActive: {
     type: Boolean,
     default: true
@@ -152,8 +153,7 @@ const userSchema = new mongoose.Schema({
     type: Date 
   }
 }, {
-  // Mongoose options
-  timestamps: false, // We manually manage createdAt/updatedAt
+  timestamps: false,  // We manually manage timestamps
   toJSON: { 
     // Remove sensitive fields from JSON output
     transform: function(doc, ret) {
@@ -164,17 +164,9 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// ============================================
-// MIDDLEWARE: Pre-save Hook
-// ============================================
-
 /**
- * Password Hashing Middleware
- * 
- * Automatically hashes password before saving to database
- * Only hashes if password is modified
- * 
- * @pre save middleware
+ * Pre-save middleware to hash password.
+ * Only hashes if password has been modified.
  */
 userSchema.pre('save', async function(next) {
   // Skip if password not modified
@@ -182,63 +174,37 @@ userSchema.pre('save', async function(next) {
     return next();
   }
   
-  // Debug log (remove in production)
-  console.log('[User Model] Hashing password for user:', this.email);
-  
   try {
-    // Hash password with bcrypt (12 rounds = good security)
+    // Hash password with bcrypt (12 rounds for security)
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
-    console.log('[User Model] Password hashed successfully');
     next();
   } catch (error) {
-    console.error('[User Model] Error hashing password:', error.message);
     next(error);
   }
 });
 
-// ============================================
-// MIDDLEWARE: Update Hook
-// ============================================
-
 /**
- * Update timestamp on save
+ * Pre-save middleware to update timestamp.
  */
 userSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// ============================================
-// INSTANCE METHODS
-// ============================================
-
 /**
- * Compare password method
- * 
- * Compares candidate password with stored hashed password
+ * Instance method to compare password.
  * 
  * @method comparePassword
  * @param {string} candidatePassword - Plain text password to compare
  * @returns {Promise<boolean>} - True if passwords match
- * 
- * @example
- * const user = await User.findOne({ email: 'test@example.com' });
- * const isMatch = await user.comparePassword('password123');
  */
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    const isMatch = await bcrypt.compare(candidatePassword, this.password);
-    console.log('[User Model] Password comparison result:', isMatch);
-    return isMatch;
-  } catch (error) {
-    console.error('[User Model] Error comparing password:', error.message);
-    throw error;
-  }
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 /**
- * Get full name
+ * Instance method to get full name.
  * 
  * @method getFullName
  * @returns {string} - First and last name combined
@@ -248,7 +214,7 @@ userSchema.methods.getFullName = function() {
 };
 
 /**
- * Check if user is admin
+ * Instance method to check if user is admin.
  * 
  * @method isAdmin
  * @returns {boolean}
@@ -258,7 +224,7 @@ userSchema.methods.isAdmin = function() {
 };
 
 /**
- * Check if user is doctor
+ * Instance method to check if user is doctor.
  * 
  * @method isDoctor
  * @returns {boolean}
@@ -267,15 +233,14 @@ userSchema.methods.isDoctor = function() {
   return this.role === 'doctor';
 };
 
-// ============================================
+// ==========================================
 // STATIC METHODS
-// ============================================
+// ==========================================
 
 /**
- * Find user by email (case-insensitive)
+ * Find user by email (case-insensitive).
  * 
  * @static
- * @method findByEmail
  * @param {string} email - Email to search for
  * @returns {Promise<User|null>}
  */
@@ -284,10 +249,9 @@ userSchema.statics.findByEmail = function(email) {
 };
 
 /**
- * Find users by role
+ * Find users by role.
  * 
  * @static
- * @method findByRole
  * @param {string} role - Role to filter by
  * @returns {Promise<User[]>}
  */
@@ -295,36 +259,19 @@ userSchema.statics.findByRole = function(role) {
   return this.find({ role });
 };
 
-// ============================================
-// INDEXES (FOR PERFORMANCE)
-// ============================================
+// ==========================================
+// INDEXES
+// ==========================================
 
-// Index on email for faster login lookups
-userSchema.index({ email: 1 });
+userSchema.index({ email: 1 });          // Faster login lookups
+userSchema.index({ username: 1 });       // Faster lookups
+userSchema.index({ role: 1 });          // Faster role filtering
+userSchema.index({ email: 1, role: 1 }); // Common query pattern
 
-// Index on username for faster lookups
-userSchema.index({ username: 1 });
-
-// Index on role for filtering
-userSchema.index({ role: 1 });
-
-// Compound index for common query pattern
-userSchema.index({ email: 1, role: 1 });
-
-// ============================================
+// ==========================================
 // MODEL EXPORT
-// ============================================
+// ==========================================
 
-/**
- * User Model
- * 
- * @typedef {Model<UserDocument>} User
- */
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
-
-// ============================================
-// DEBUG: Log schema creation
-// ============================================
-console.log('[User Model] Schema created successfully');

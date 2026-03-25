@@ -3,10 +3,9 @@
  * CLOUDINARY CONFIGURATION
  * =====================================================
  * 
- * Cloudinary storage configuration for file uploads.
- * Handles image and file uploads for profiles, documents, etc.
- * 
- * @infrastructure Cloudinary
+ * Cloudinary integration for file uploads.
+ * Handles profile images, documents, and medical files
+ * with automatic optimization and storage.
  * 
  * =====================================================
  * ENVIRONMENT VARIABLES REQUIRED:
@@ -20,20 +19,21 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-// Configure Cloudinary
+// Configure Cloudinary with environment variables
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/**
- * =====================================================
- * STORAGE CONFIGURATIONS
- * =====================================================
- */
+// ==========================================
+// STORAGE CONFIGURATIONS
+// ==========================================
 
-// Profile images storage
+/**
+ * Storage for profile images
+ * Automatically resizes and crops to 500x500
+ */
 const profileImageStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -44,7 +44,10 @@ const profileImageStorage = new CloudinaryStorage({
   },
 });
 
-// Doctor documents storage
+/**
+ * Storage for general documents
+ * Supports multiple file formats
+ */
 const documentStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -55,7 +58,10 @@ const documentStorage = new CloudinaryStorage({
   },
 });
 
-// Medical files storage
+/**
+ * Storage for medical files
+ * Supports medical document formats
+ */
 const medicalFileStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -66,16 +72,18 @@ const medicalFileStorage = new CloudinaryStorage({
   },
 });
 
-/**
- * =====================================================
- * MULTER UPLOAD INSTANCES
- * =====================================================
- */
+// ==========================================
+// MULTER UPLOAD INSTANCES
+// ==========================================
 
-// Upload middleware for profile images
+/**
+ * Multer middleware for profile image uploads
+ * Max file size: 5MB
+ * Allowed types: Images only
+ */
 const uploadProfileImage = multer({
   storage: profileImageStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
@@ -85,70 +93,57 @@ const uploadProfileImage = multer({
   },
 });
 
-// Upload middleware for documents
+/**
+ * Multer middleware for document uploads
+ * Max file size: 10MB
+ */
 const uploadDocument = multer({
   storage: documentStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-// Upload middleware for medical files
+/**
+ * Multer middleware for medical file uploads
+ * Max file size: 10MB
+ */
 const uploadMedicalFile = multer({
   storage: medicalFileStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-/**
- * =====================================================
- * HELPER FUNCTIONS
- * =====================================================
- */
+// ==========================================
+// HELPER FUNCTIONS
+// ==========================================
 
 /**
- * Upload image from base64 string
+ * Uploads an image from a base64 string.
  * 
- * @async
- * @function uploadBase64Image
  * @param {string} base64String - Base64 encoded image
- * @param {Object} options - Upload options (folder, transformation)
+ * @param {Object} options - Upload options
  * @returns {Promise<Object>} Upload result
  */
 const uploadBase64Image = async (base64String, options = {}) => {
-  try {
-    const result = await cloudinary.uploader.upload(base64String, {
-      folder: options.folder || 'clinic-appointment/misc',
-      transformation: options.transformation || [],
-    });
-    return result;
-  } catch (error) {
-    console.error('[Cloudinary] Base64 upload error:', error.message);
-    throw error;
-  }
+  return await cloudinary.uploader.upload(base64String, {
+    folder: options.folder || 'clinic-appointment/misc',
+    transformation: options.transformation || [],
+  });
 };
 
 /**
- * Delete file from Cloudinary
+ * Deletes a file from Cloudinary.
  * 
- * @async
- * @function deleteFile
  * @param {string} publicId - File's public ID
  * @returns {Promise<Object>} Deletion result
  */
 const deleteFile = async (publicId) => {
-  try {
-    const result = await cloudinary.uploader.destroy(publicId);
-    return result;
-  } catch (error) {
-    console.error('[Cloudinary] Delete error:', error.message);
-    throw error;
-  }
+  return await cloudinary.uploader.destroy(publicId);
 };
 
 /**
- * Get file URL
+ * Gets a file URL with optional transformations.
  * 
- * @function getFileUrl
  * @param {string} publicId - File's public ID
- * @param {Object} options - URL options (transformation)
+ * @param {Object} options - URL transformation options
  * @returns {string} File URL
  */
 const getFileUrl = (publicId, options = {}) => {
@@ -158,11 +153,9 @@ const getFileUrl = (publicId, options = {}) => {
   });
 };
 
-/**
- * =====================================================
- * EXPORTS
- * =====================================================
- */
+// ==========================================
+// EXPORTS
+// ==========================================
 
 module.exports = {
   cloudinary,
@@ -173,9 +166,3 @@ module.exports = {
   deleteFile,
   getFileUrl,
 };
-
-// =====================================================
-// DEBUG: Log configuration
-// =====================================================
-console.log('[Cloudinary] Configuration loaded');
-console.log('[Cloudinary] Cloud name:', process.env.CLOUDINARY_CLOUD_NAME || 'Not configured');

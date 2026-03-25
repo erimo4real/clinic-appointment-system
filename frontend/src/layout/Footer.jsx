@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../shared/services/api';
 
 const HeartIcon = () => (
   <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
@@ -8,6 +9,44 @@ const HeartIcon = () => (
 );
 
 const Footer = () => {
+  const [services, setServices] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [stats, setStats] = useState({ doctorCount: 0, serviceCount: 0 });
+
+  useEffect(() => {
+    const fetchFooterData = async () => {
+      try {
+        const [doctorsRes, servicesRes] = await Promise.all([
+          api.get('/doctors'),
+          api.get('/services')
+        ]);
+
+        const doctorsData = doctorsRes.data || [];
+        const servicesData = servicesRes.data || [];
+
+        setDoctors(doctorsData);
+        setServices(servicesData.slice(0, 4)); // Show only first 4 services
+        setStats({
+          doctorCount: doctorsData.length,
+          serviceCount: servicesData.length
+        });
+      } catch (err) {
+        console.error('Error fetching footer data:', err);
+      }
+    };
+
+    fetchFooterData();
+  }, []);
+
+  const getDoctorName = (doctor) => {
+    if (doctor.user) {
+      const firstName = doctor.user.firstName || '';
+      const lastName = doctor.user.lastName || '';
+      return `Dr. ${firstName} ${lastName}`.trim();
+    }
+    return doctor.fullName || doctor.name || 'Doctor';
+  };
+
   return (
     <footer className="bg-gray-900 text-gray-400 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,9 +57,19 @@ const Footer = () => {
               <span className="text-xl font-bold text-white">MedBook Pro</span>
             </Link>
             <p className="text-sm text-gray-400">
-              Your trusted partner in modern healthcare management. Book appointments with ease.
+              Your trusted partner in modern healthcare management. 
+              {stats.doctorCount > 0 && ` Book appointments with ${stats.doctorCount}+ expert doctors.`}
             </p>
+            
+            {stats.doctorCount > 0 && (
+              <div className="mt-4 text-sm">
+                <span className="text-blue-400 font-semibold">{stats.doctorCount}+</span> Expert Doctors
+                <br />
+                <span className="text-blue-400 font-semibold">{stats.serviceCount}+</span> Medical Services
+              </div>
+            )}
           </div>
+          
           <div>
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-3 text-sm">
@@ -28,35 +77,52 @@ const Footer = () => {
               <li><Link to="/services" className="hover:text-blue-400 transition-colors">Services</Link></li>
               <li><Link to="/doctors" className="hover:text-blue-400 transition-colors">Doctors</Link></li>
               <li><Link to="/about" className="hover:text-blue-400 transition-colors">About</Link></li>
+              <li><Link to="/booking" className="hover:text-blue-400 transition-colors">Book Appointment</Link></li>
             </ul>
           </div>
+          
           <div>
-            <h4 className="text-white font-semibold mb-4">Services</h4>
+            <h4 className="text-white font-semibold mb-4">
+              {services.length > 0 ? 'Our Services' : 'Services'}
+            </h4>
             <ul className="space-y-3 text-sm">
-              <li className="text-gray-400">General Medicine</li>
-              <li className="text-gray-400">Cardiology</li>
-              <li className="text-gray-400">Pediatrics</li>
-              <li className="text-gray-400">Orthopedics</li>
+              {services.length > 0 ? (
+                services.map((service, index) => (
+                  <li key={service._id || service.id || index}>
+                    <Link to="/services" className="hover:text-blue-400 transition-colors">
+                      {service.name}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <>
+                  <li className="text-gray-400">General Medicine</li>
+                  <li className="text-gray-400">Cardiology</li>
+                  <li className="text-gray-400">Pediatrics</li>
+                  <li className="text-gray-400">Orthopedics</li>
+                </>
+              )}
             </ul>
           </div>
+          
           <div>
             <h4 className="text-white font-semibold mb-4">Contact</h4>
             <ul className="space-y-3 text-sm">
               <li className="text-gray-400 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 123 Medical Center Dr
               </li>
               <li className="text-gray-400 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
                 (555) 123-4567
               </li>
               <li className="text-gray-400 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 contact@medbookpro.com
@@ -64,9 +130,10 @@ const Footer = () => {
             </ul>
           </div>
         </div>
+        
         <div className="border-t border-gray-800 mt-10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-400">&copy; 2024 MedBook Pro. All rights reserved.</p>
+            <p className="text-sm text-gray-400">&copy; {new Date().getFullYear()} MedBook Pro. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <Link to="#" className="text-gray-400 hover:text-blue-400 transition-colors">
                 <span className="sr-only">Facebook</span>

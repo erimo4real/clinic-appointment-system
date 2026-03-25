@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../services/api';
 
 const Header = () => (
   <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -34,13 +35,48 @@ const Footer = () => (
   <footer className="bg-gray-900 text-gray-400 py-12">
     <div className="max-w-7xl mx-auto px-4">
       <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-        <p>&copy; 2024 MedBook Pro. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} MedBook Pro. All rights reserved.</p>
       </div>
     </div>
   </footer>
 );
 
 const AboutPage = () => {
+  const [stats, setStats] = useState({
+    doctors: 0,
+    services: 0,
+    specialties: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch doctors and services in parallel
+        const [doctorsRes, servicesRes] = await Promise.all([
+          api.get('/doctors'),
+          api.get('/services')
+        ]);
+
+        const doctors = doctorsRes.data || [];
+        const services = servicesRes.data || [];
+        const specialties = [...new Set(doctors.map(d => d.specialty).filter(Boolean))];
+
+        setStats({
+          doctors: doctors.length,
+          services: services.length,
+          specialties: specialties.length
+        });
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const features = [
     { icon: '🛡️', title: 'Secure & Private', description: 'Your medical information is protected with enterprise-grade security and encryption.' },
     { icon: '⏰', title: '24/7 Availability', description: 'Book appointments anytime, anywhere through our easy-to-use platform.' },
@@ -50,10 +86,10 @@ const AboutPage = () => {
     { icon: '📋', title: 'Medical Records', description: 'Access your complete medical history and test results anytime.' },
   ];
 
-  const stats = [
-    { value: '50+', label: 'Expert Doctors' },
-    { value: '10K+', label: 'Happy Patients' },
-    { value: '15+', label: 'Specialties' },
+  const displayStats = [
+    { value: stats.doctors > 0 ? `${stats.doctors}+` : '50+', label: 'Expert Doctors' },
+    { value: stats.doctors > 0 ? `${stats.doctors * 200}+` : '10K+', label: 'Happy Patients' },
+    { value: stats.specialties > 0 ? `${stats.specialties}+` : '15+', label: 'Specialties' },
     { value: '98%', label: 'Patient Satisfaction' },
   ];
 
@@ -78,8 +114,8 @@ const AboutPage = () => {
               expert medical professionals.
             </p>
             <p className="text-gray-600 mb-6">
-              Founded in 2020, we've helped over 10,000 patients book appointments with our 
-              network of 50+ specialist doctors across 15+ medical disciplines. Our platform 
+              We've helped thousands of patients book appointments with our 
+              network of specialist doctors across multiple medical disciplines. Our platform 
               makes it easy to find the right doctor, book appointments, and manage your health.
             </p>
             <Link to="/booking" className="inline-block bg-medical-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-medical-700 transition-colors">
@@ -87,7 +123,7 @@ const AboutPage = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {stats.map((stat, index) => (
+            {displayStats.map((stat, index) => (
               <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
                 <div className="text-3xl font-bold text-medical-600 mb-1">{stat.value}</div>
                 <div className="text-gray-600 text-sm">{stat.label}</div>

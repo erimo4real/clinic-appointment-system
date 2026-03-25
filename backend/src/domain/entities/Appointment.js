@@ -21,15 +21,13 @@ const mongoose = require('mongoose');
 
 /**
  * Appointment Schema Definition
- * 
- * @schema appointmentSchema
  */
 const appointmentSchema = new mongoose.Schema({
   // ==========================================
   // REQUIRED FIELDS
   // ==========================================
   
-  /** 
+  /**
    * Patient who booked the appointment
    * Reference to User collection
    */
@@ -67,7 +65,7 @@ const appointmentSchema = new mongoose.Schema({
     required: [true, 'Date is required'],
     validate: {
       validator: function(value) {
-        // Appointment must be booked at least 1 hour in advance
+        // Appointment must be at least 1 hour in advance
         const now = new Date();
         const appointmentTime = new Date(value);
         const hoursDiff = (appointmentTime - now) / (1000 * 60 * 60);
@@ -84,17 +82,16 @@ const appointmentSchema = new mongoose.Schema({
   startTime: { 
     type: String, 
     required: [true, 'Start time is required'],
-    match: [/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format. Use HH:MM (24-hour format)']
+    match: [/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format. Use HH:MM']
   },
   
   /**
    * Appointment end time (24-hour format)
-   * Examples: "09:30", "15:00", "18:15"
    */
   endTime: { 
     type: String, 
     required: [true, 'End time is required'],
-    match: [/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format. Use HH:MM (24-hour format)']
+    match: [/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format. Use HH:MM']
   },
   
   // ==========================================
@@ -103,7 +100,6 @@ const appointmentSchema = new mongoose.Schema({
   
   /**
    * Current appointment status
-   * Default: 'pending'
    */
   status: { 
     type: String, 
@@ -147,7 +143,6 @@ const appointmentSchema = new mongoose.Schema({
     default: Date.now 
   }
 }, {
-  // Mongoose options
   timestamps: false,
   toJSON: { 
     virtuals: true,
@@ -160,73 +155,47 @@ const appointmentSchema = new mongoose.Schema({
   }
 });
 
-// ============================================
-// MIDDLEWARE: Pre-save Hook
-// ============================================
-
 /**
- * Update timestamp on save
+ * Pre-save middleware to update timestamp.
  */
 appointmentSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// ============================================
-// INDEXES (FOR PERFORMANCE)
-// ============================================
+// ==========================================
+// INDEXES
+// ==========================================
 
-/**
- * Compound index for conflict detection
- * 
- * IMPORTANT: This index is crucial for preventing
- * double-booking. Queries use this to check for
- * overlapping appointments.
- * 
- * Index on: doctor + date + startTime
- */
+// Compound index for conflict detection (prevents double-booking)
 appointmentSchema.index({ doctor: 1, date: 1, startTime: 1 });
+appointmentSchema.index({ patient: 1, createdAt: -1 });  // Patient history
+appointmentSchema.index({ doctor: 1, status: 1 });
+appointmentSchema.index({ date: 1 });
+appointmentSchema.index({ status: 1 });
+appointmentSchema.index({ createdAt: -1 });
 
-// Additional indexes for common queries
-appointmentSchema.index({ patient: 1, createdAt: -1 }); // Patient's appointment history
-appointmentSchema.index({ doctor: 1, status: 1 }); // Doctor's appointments by status
-appointmentSchema.index({ date: 1 }); // Appointments by date
-appointmentSchema.index({ status: 1 }); // Appointments by status
-appointmentSchema.index({ createdAt: -1 }); // Recent appointments
-
-// ============================================
+// ==========================================
 // INSTANCE METHODS
-// ============================================
+// ==========================================
 
 /**
- * Check if appointment can be cancelled
- * 
- * @method canCancel
- * @returns {boolean}
+ * Checks if appointment can be cancelled.
  */
 appointmentSchema.methods.canCancel = function() {
-  // Cannot cancel if already completed or cancelled
   const nonCancellableStatuses = ['completed', 'cancelled', 'no_show'];
   return !nonCancellableStatuses.includes(this.status);
 };
 
 /**
- * Check if appointment can be modified
- * 
- * @method canModify
- * @returns {boolean}
+ * Checks if appointment can be modified.
  */
 appointmentSchema.methods.canModify = function() {
-  // Can only modify pending or confirmed appointments
   return ['pending', 'confirmed'].includes(this.status);
 };
 
 /**
- * Cancel the appointment
- * 
- * @method cancel
- * @param {string} reason - Optional cancellation reason
- * @returns {Promise<Appointment>}
+ * Cancels the appointment.
  */
 appointmentSchema.methods.cancel = async function(reason = '') {
   if (!this.canCancel()) {
@@ -238,10 +207,7 @@ appointmentSchema.methods.cancel = async function(reason = '') {
 };
 
 /**
- * Confirm the appointment
- * 
- * @method confirm
- * @returns {Promise<Appointment>}
+ * Confirms the appointment.
  */
 appointmentSchema.methods.confirm = async function() {
   if (this.status !== 'pending') {
@@ -252,10 +218,7 @@ appointmentSchema.methods.confirm = async function() {
 };
 
 /**
- * Mark appointment as in progress
- * 
- * @method start
- * @returns {Promise<Appointment>}
+ * Marks appointment as in progress.
  */
 appointmentSchema.methods.start = async function() {
   if (!['pending', 'confirmed'].includes(this.status)) {
@@ -266,10 +229,7 @@ appointmentSchema.methods.start = async function() {
 };
 
 /**
- * Mark appointment as completed
- * 
- * @method complete
- * @returns {Promise<Appointment>}
+ * Marks appointment as completed.
  */
 appointmentSchema.methods.complete = async function() {
   if (this.status !== 'in_progress') {
@@ -280,10 +240,7 @@ appointmentSchema.methods.complete = async function() {
 };
 
 /**
- * Mark patient as no-show
- * 
- * @method markNoShow
- * @returns {Promise<Appointment>}
+ * Marks patient as no-show.
  */
 appointmentSchema.methods.markNoShow = async function() {
   if (['completed', 'cancelled'].includes(this.status)) {
@@ -293,62 +250,34 @@ appointmentSchema.methods.markNoShow = async function() {
   return this.save();
 };
 
-// ============================================
+// ==========================================
 // STATIC METHODS
-// * ============================================
+// ==========================================
 
 /**
- * Check for appointment conflicts
- * 
- * IMPORTANT: This method prevents double-booking.
- * It checks if the proposed time slot overlaps
- * with any existing appointments for the doctor.
- * 
- * @static
- * @method checkConflict
- * @param {string} doctorId - Doctor's ObjectId
- * @param {Date} date - Appointment date
- * @param {string} startTime - Start time
- * @param {string} endTime - End time
- * @param {string} excludeId - Optional appointment ID to exclude (for updates)
- * @returns {Promise<Appointment|null>} - Conflicting appointment or null
+ * Checks for appointment conflicts.
+ * Used to prevent double-booking.
  */
 appointmentSchema.statics.checkConflict = async function(doctorId, date, startTime, endTime, excludeId = null) {
-  // Build query to find conflicting appointments
   const query = {
     doctor: doctorId,
     date: new Date(date),
-    status: { $nin: ['cancelled', 'no_show'] } // Exclude cancelled/no-show appointments
+    status: { $nin: ['cancelled', 'no_show'] }
   };
   
-  // If updating, exclude the current appointment
   if (excludeId) {
     query._id = { $ne: excludeId };
   }
   
-  // Check for overlapping time slots
-  // Two appointments conflict if:
-  // - One starts before the other ends, AND
-  // - One ends after the other starts
   query.$or = [
-    {
-      // Existing appointment starts before new one ends
-      startTime: { $lt: endTime },
-      // AND existing appointment ends after new one starts
-      endTime: { $gt: startTime }
-    }
+    { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
   ];
   
   return await this.findOne(query);
 };
 
 /**
- * Find appointments for a specific date
- * 
- * @static
- * @method findByDate
- * @param {Date} date - Date to search
- * @returns {Promise<Appointment[]>}
+ * Finds appointments for a specific date.
  */
 appointmentSchema.statics.findByDate = function(date) {
   return this.find({ date: new Date(date) })
@@ -359,12 +288,7 @@ appointmentSchema.statics.findByDate = function(date) {
 };
 
 /**
- * Find today's appointments for a doctor
- * 
- * @static
- * @method findTodayForDoctor
- * @param {string} doctorId - Doctor's ObjectId
- * @returns {Promise<Appointment[]>}
+ * Finds today's appointments for a doctor.
  */
 appointmentSchema.statics.findTodayForDoctor = function(doctorId) {
   const today = new Date();
@@ -383,12 +307,7 @@ appointmentSchema.statics.findTodayForDoctor = function(doctorId) {
 };
 
 /**
- * Find appointments by patient
- * 
- * @static
- * @method findByPatient
- * @param {string} patientId - Patient's ObjectId
- * @returns {Promise<Appointment[]>}
+ * Finds appointments by patient.
  */
 appointmentSchema.statics.findByPatient = function(patientId) {
   return this.find({ patient: patientId })
@@ -397,20 +316,10 @@ appointmentSchema.statics.findByPatient = function(patientId) {
     .sort({ date: -1, startTime: -1 });
 };
 
-// ============================================
+// ==========================================
 // MODEL EXPORT
-// ============================================
+// ==========================================
 
-/**
- * Appointment Model
- * 
- * @typedef {Model<AppointmentDocument>} Appointment
- */
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 
 module.exports = Appointment;
-
-// ============================================
-// DEBUG: Log schema creation
-// ============================================
-console.log('[Appointment Model] Schema created successfully');

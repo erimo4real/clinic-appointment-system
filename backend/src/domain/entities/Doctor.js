@@ -4,8 +4,10 @@
  * =====================================================
  * 
  * Mongoose schema for Doctor collection.
- * Stores doctor profiles with specialty and qualifications.
+ * Stores doctor profiles with specialty, qualifications,
+ * and availability information.
  * 
+ * @schema doctorSchema
  * =====================================================
  */
 
@@ -13,29 +15,26 @@ const mongoose = require('mongoose');
 
 /**
  * Doctor Schema Definition
- * 
- * @schema doctorSchema
  */
 const doctorSchema = new mongoose.Schema({
   // ==========================================
   // REQUIRED FIELDS
   // ==========================================
   
-  /** 
+  /**
    * Reference to User document
-   * Each doctor must have a user account
-   * Uses ObjectId to reference User collection
+   * Each doctor must have a linked user account
    */
   user: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
     required: [true, 'Doctor must have a user account'],
-    unique: true // One user can only be one doctor
+    unique: true  // One user can only be one doctor
   },
   
   /**
    * Medical specialty/specialization
-   * Examples: Cardiology, Neurology, Pediatrics, etc.
+   * Examples: Cardiology, Neurology, Pediatrics
    */
   specialty: { 
     type: String, 
@@ -68,7 +67,7 @@ const doctorSchema = new mongoose.Schema({
   
   /**
    * Medical qualifications/degrees
-   * Examples: MD, MBBS, MS, PhD, etc.
+   * Examples: MD, MBBS, MS, PhD
    */
   qualification: { 
     type: String, 
@@ -76,9 +75,7 @@ const doctorSchema = new mongoose.Schema({
     trim: true
   },
 
-  /**
-   * Years of experience
-   */
+  /** Years of medical experience */
   experience: {
     type: Number,
     default: 0,
@@ -125,12 +122,11 @@ const doctorSchema = new mongoose.Schema({
     default: Date.now 
   }
 }, {
-  // Mongoose options
-  timestamps: false, // We manually manage createdAt
+  timestamps: false,  // We manually manage timestamps
   toJSON: { 
-    virtuals: true, // Include virtuals in JSON output
+    virtuals: true,
     transform: function(doc, ret) {
-      ret.id = ret._id; // Add id field for frontend compatibility
+      ret.id = ret._id;
       delete ret._id;
       delete ret.__v;
       return ret;
@@ -138,27 +134,15 @@ const doctorSchema = new mongoose.Schema({
   }
 });
 
-// ============================================
-// VIRTUAL PROPERTIES
-// ============================================
-
 /**
- * Get doctor's full name from referenced User
- * 
- * @virtual fullName
+ * Virtual property to get doctor's full name from User.
  */
 doctorSchema.virtual('fullName').get(function() {
   return this.user ? `${this.user.firstName} ${this.user.lastName}`.trim() : '';
 });
 
-// ============================================
-// INSTANCE METHODS
-// ============================================
-
 /**
- * Toggle availability status
- * 
- * @method toggleAvailability
+ * Instance method to toggle availability status.
  */
 doctorSchema.methods.toggleAvailability = function() {
   this.isAvailable = !this.isAvailable;
@@ -166,69 +150,42 @@ doctorSchema.methods.toggleAvailability = function() {
 };
 
 /**
- * Check if doctor is currently available
- * 
- * @method isAvailableNow
- * @returns {boolean}
+ * Instance method to check current availability.
  */
 doctorSchema.methods.isAvailableNow = function() {
   return this.isAvailable;
 };
 
-// ============================================
+// ==========================================
 // STATIC METHODS
-// ============================================
+// ==========================================
 
 /**
- * Find all available doctors
- * 
- * @static
- * @method findAvailable
- * @returns {Promise<Doctor[]>}
+ * Find all available doctors.
  */
 doctorSchema.statics.findAvailable = function() {
   return this.find({ isAvailable: true }).populate('user', 'firstName lastName email');
 };
 
 /**
- * Find doctors by specialty
- * 
- * @static
- * @method findBySpecialty
- * @param {string} specialty - Specialty to filter by
- * @returns {Promise<Doctor[]>}
+ * Find doctors by specialty.
  */
 doctorSchema.statics.findBySpecialty = function(specialty) {
   return this.find({ specialty, isAvailable: true }).populate('user', 'firstName lastName email');
 };
 
-// ============================================
-// INDEXES (FOR PERFORMANCE)
-// ============================================
+// ==========================================
+// INDEXES
+// ==========================================
 
-// Index on specialty for filtering
 doctorSchema.index({ specialty: 1 });
-
-// Index on isAvailable for faster filtering
 doctorSchema.index({ isAvailable: 1 });
-
-// Compound index for common query pattern
 doctorSchema.index({ specialty: 1, isAvailable: 1 });
 
-// ============================================
+// ==========================================
 // MODEL EXPORT
-// ============================================
+// ==========================================
 
-/**
- * Doctor Model
- * 
- * @typedef {Model<DoctorDocument>} Doctor
- */
 const Doctor = mongoose.model('Doctor', doctorSchema);
 
 module.exports = Doctor;
-
-// ============================================
-// DEBUG: Log schema creation
-// ============================================
-console.log('[Doctor Model] Schema created successfully');

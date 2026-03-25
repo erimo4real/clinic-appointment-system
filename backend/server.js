@@ -4,7 +4,7 @@
  * =====================================================
  * 
  * Main entry point for the Node.js/Express backend server.
- * This file initializes the Express app, connects to MongoDB,
+ * Initializes the Express app, connects to MongoDB,
  * and sets up all API routes.
  * 
  * =====================================================
@@ -16,16 +16,18 @@
  * =====================================================
  */
 
-// ============================================
-// IMPORTS & CONFIGURATION
-// ============================================
+// Load environment variables from .env file
+require('dotenv').config();
 
-require('dotenv').config(); // Load environment variables from .env file
-const express = require('express'); // Web framework
-const cors = require('cors'); // Cross-Origin Resource Sharing
-const connectDB = require('./src/infrastructure/config/db'); // MongoDB connection
+// Import required packages
+const express = require('express');
+const cors = require('cors');
 
-// Route imports (Presentation Layer)
+// Import database connection function
+const connectDB = require('./src/infrastructure/config/db');
+
+// Import all route handlers
+// Each route file handles a specific domain of the API
 const authRoutes = require('./src/application/routes/authRoutes');
 const doctorRoutes = require('./src/application/routes/doctorRoutes');
 const serviceRoutes = require('./src/application/routes/serviceRoutes');
@@ -34,29 +36,17 @@ const uploadRoutes = require('./src/application/routes/uploadRoutes');
 const adminRoutes = require('./src/application/routes/adminRoutes');
 const feedbackRoutes = require('./src/application/routes/feedbackRoutes');
 
-// ============================================
-// EXPRESS APP INITIALIZATION
-// ============================================
-
-const app = express(); // Create Express application instance
-
-// ============================================
-// DATABASE CONNECTION
-// ============================================
+// Create Express application instance
+const app = express();
 
 // Connect to MongoDB database
-// If connection fails, the server will not start
-// Check console output for connection status
+// The server will exit with code 1 if connection fails
 connectDB();
-
-// ============================================
-// MIDDLEWARE SETUP
-// ============================================
 
 /**
  * CORS Middleware
- * Allows cross-origin requests from frontend
- * In production, restrict this to your frontend domain
+ * Allows cross-origin requests from the frontend application.
+ * In production, you should restrict this to your specific frontend domain.
  */
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -65,122 +55,107 @@ app.use(cors({
 
 /**
  * JSON Parser Middleware
- * Parses incoming JSON requests
- * limit: 10MB max payload size
+ * Parses incoming JSON requests with a maximum payload size of 10MB.
+ * This is necessary for handling larger request bodies like file uploads.
  */
 app.use(express.json({ limit: '10mb' }));
 
 /**
  * URL Encoded Parser Middleware
- * Parses URL-encoded form data
- * extended: true allows rich objects/arrays
+ * Parses URL-encoded form data (typically from HTML forms).
+ * The 'extended: true' option allows for rich objects and arrays.
  */
 app.use(express.urlencoded({ extended: true }));
 
-// ============================================
-// API ROUTES
-// ============================================
+/**
+ * =====================================================
+ * API ROUTE REGISTRATION
+ * =====================================================
+ * All API routes are prefixed with /api for consistency.
+ * Routes are organized by domain (auth, doctors, services, etc.)
+ */
 
-// Authentication routes (login, register, password reset, etc.)
+// Authentication routes - handles login, register, password reset
 app.use('/api/auth', authRoutes);
 
-// Doctor management CRUD operations
+// Doctor management routes - CRUD operations for doctor profiles
 app.use('/api/doctors', doctorRoutes);
 
-// Service/Clinic services management
+// Service/Clinic services routes - manage available medical services
 app.use('/api/services', serviceRoutes);
 
-// Appointment scheduling & management
+// Appointment scheduling routes - booking and appointment management
 app.use('/api/appointments', appointmentRoutes);
 
-// File upload routes (Cloudinary)
+// File upload routes - handles profile images and documents via Cloudinary
 app.use('/api/upload', uploadRoutes);
 
-// Admin routes (requires admin role)
+// Admin routes - protected routes for administrative tasks
 app.use('/api/admin', adminRoutes);
 
-// Feedback routes (patient feedback for doctors)
+// Feedback routes - patient feedback system for doctors
 app.use('/api/feedback', feedbackRoutes);
 
-// ============================================
-// HEALTH CHECK ENDPOINT
-// ============================================
-
 /**
- * GET /api/health
- * Health check endpoint to verify server is running
- * Useful for monitoring and load balancers
+ * =====================================================
+ * HEALTH CHECK ENDPOINT
+ * =====================================================
+ * A simple endpoint to verify the server is running.
+ * Useful for monitoring services and load balancers.
  */
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Clinic Appointment API running',
-    timestamp: new Date().toISOString() // Useful for debugging - shows server time
+    timestamp: new Date().toISOString()
   });
 });
 
-// ============================================
-// ERROR HANDLING - 404 NOT FOUND
-// ============================================
-
-// Catch-all for undefined routes
-// This should be placed after all other routes
+/**
+ * =====================================================
+ * 404 NOT FOUND HANDLER
+ * =====================================================
+ * Catches all requests to undefined routes.
+ * Should be placed after all valid routes.
+ */
 app.use((req, res) => {
   res.status(404).json({ 
     message: 'Route not found',
-    path: req.path, // Helpful for debugging - shows which path was not found
-    method: req.method // Shows which HTTP method was used
+    path: req.path,
+    method: req.method
   });
 });
 
-// ============================================
-// GLOBAL ERROR HANDLER
-// ============================================
-
 /**
- * Global error handling middleware
- * Catches all unhandled errors across the application
- * Logs error details for debugging
+ * =====================================================
+ * GLOBAL ERROR HANDLER
+ * =====================================================
+ * Catches all unhandled errors across the application.
+ * Logs error details for debugging and returns a
+ * standardized error response to the client.
  */
 app.use((err, req, res, next) => {
-  console.error('===========================================');
-  console.error('ERROR OCCURRED:');
-  console.error('-------------------------------------------');
-  console.error('Message:', err.message);
-  console.error('Stack:', err.stack);
-  console.error('Path:', req.path);
-  console.error('Method:', req.method);
-  console.error('Body:', req.body); // May contain sensitive data - be careful in production
-  console.error('===========================================');
-  
   res.status(err.status || 500).json({
     message: err.message || 'Internal Server Error',
-    // Include stack trace in development only
+    // Include stack trace only in development environment
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
 
-// ============================================
-// START SERVER
-// ============================================
+/**
+ * =====================================================
+ * SERVER STARTUP
+ * =====================================================
+ * Starts the Express server on the configured port.
+ * The port is read from environment variables with a default of 5000.
+ */
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log('===========================================');
-  console.log('🏥 CLINIC APPOINTMENT SYSTEM');
-  console.log('===========================================');
   console.log(`Server running on port: ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`MongoDB URI: ${process.env.MONGODB_URI}`);
-  console.log('===========================================');
-  console.log('API Endpoints:');
-  console.log('  - Auth:     http://localhost:' + PORT + '/api/auth');
-  console.log('  - Doctors:  http://localhost:' + PORT + '/api/doctors');
-  console.log('  - Services: http://localhost:' + PORT + '/api/services');
-  console.log('  - Appoint:   http://localhost:' + PORT + '/api/appointments');
-  console.log('  - Health:   http://localhost:' + PORT + '/api/health');
-  console.log('===========================================');
 });
 
-module.exports = app; // Export for testing purposes
+// Export app for testing purposes
+module.exports = app;

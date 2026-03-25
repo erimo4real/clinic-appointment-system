@@ -1,11 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../../shared/services/api';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
 export const fetchAllUsers = createAsyncThunk('admin/fetchUsers', async (_, { rejectWithValue }) => {
   try {
-    const response = await api.get(`${API_URL}/admin/users`);
+    const response = await api.get('/admin/users');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch users' });
@@ -14,7 +12,7 @@ export const fetchAllUsers = createAsyncThunk('admin/fetchUsers', async (_, { re
 
 export const fetchAllDoctors = createAsyncThunk('admin/fetchDoctors', async (_, { rejectWithValue }) => {
   try {
-    const response = await api.get(`${API_URL}/admin/doctors`);
+    const response = await api.get('/admin/doctors');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch doctors' });
@@ -23,7 +21,7 @@ export const fetchAllDoctors = createAsyncThunk('admin/fetchDoctors', async (_, 
 
 export const fetchAllAppointments = createAsyncThunk('admin/fetchAppointments', async (_, { rejectWithValue }) => {
   try {
-    const response = await api.get(`${API_URL}/admin/appointments`);
+    const response = await api.get('/admin/appointments');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch appointments' });
@@ -32,7 +30,7 @@ export const fetchAllAppointments = createAsyncThunk('admin/fetchAppointments', 
 
 export const fetchAllServices = createAsyncThunk('admin/fetchServices', async (_, { rejectWithValue }) => {
   try {
-    const response = await api.get(`${API_URL}/admin/services`);
+    const response = await api.get('/admin/services');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch services' });
@@ -41,7 +39,7 @@ export const fetchAllServices = createAsyncThunk('admin/fetchServices', async (_
 
 export const fetchDashboardStats = createAsyncThunk('admin/fetchStats', async (_, { rejectWithValue }) => {
   try {
-    const response = await api.get(`${API_URL}/admin/stats`);
+    const response = await api.get('/admin/stats');
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch stats' });
@@ -50,7 +48,7 @@ export const fetchDashboardStats = createAsyncThunk('admin/fetchStats', async (_
 
 export const createUser = createAsyncThunk('admin/createUser', async (userData, { rejectWithValue }) => {
   try {
-    const response = await api.post(`${API_URL}/admin/users`, userData);
+    const response = await api.post(`/admin/users`, userData);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to create user' });
@@ -59,7 +57,7 @@ export const createUser = createAsyncThunk('admin/createUser', async (userData, 
 
 export const updateUser = createAsyncThunk('admin/updateUser', async ({ id, data }, { rejectWithValue }) => {
   try {
-    const response = await api.put(`${API_URL}/admin/users/${id}`, data);
+    const response = await api.put(`/admin/users/${id}`, data);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to update user' });
@@ -68,7 +66,7 @@ export const updateUser = createAsyncThunk('admin/updateUser', async ({ id, data
 
 export const deleteUser = createAsyncThunk('admin/deleteUser', async (id, { rejectWithValue }) => {
   try {
-    await api.delete(`${API_URL}/admin/users/${id}`);
+    await api.delete(`/admin/users/${id}`);
     return id;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to delete user' });
@@ -77,7 +75,7 @@ export const deleteUser = createAsyncThunk('admin/deleteUser', async (id, { reje
 
 export const createDoctor = createAsyncThunk('admin/createDoctor', async (doctorData, { rejectWithValue }) => {
   try {
-    const response = await api.post(`${API_URL}/admin/doctors`, doctorData);
+    const response = await api.post(`/admin/doctors`, doctorData);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to create doctor' });
@@ -86,7 +84,7 @@ export const createDoctor = createAsyncThunk('admin/createDoctor', async (doctor
 
 export const updateDoctor = createAsyncThunk('admin/updateDoctor', async ({ id, data }, { rejectWithValue }) => {
   try {
-    const response = await api.put(`${API_URL}/admin/doctors/${id}`, data);
+    const response = await api.put(`/admin/doctors/${id}`, data);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to update doctor' });
@@ -95,7 +93,7 @@ export const updateDoctor = createAsyncThunk('admin/updateDoctor', async ({ id, 
 
 export const deleteDoctor = createAsyncThunk('admin/deleteDoctor', async (id, { rejectWithValue }) => {
   try {
-    await api.delete(`${API_URL}/admin/doctors/${id}`);
+    await api.delete(`/admin/doctors/${id}`);
     return id;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to delete doctor' });
@@ -104,7 +102,7 @@ export const deleteDoctor = createAsyncThunk('admin/deleteDoctor', async (id, { 
 
 export const createService = createAsyncThunk('admin/createService', async (serviceData, { rejectWithValue }) => {
   try {
-    const response = await api.post(`${API_URL}/admin/services`, serviceData);
+    const response = await api.post(`/admin/services`, serviceData);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to create service' });
@@ -113,7 +111,7 @@ export const createService = createAsyncThunk('admin/createService', async (serv
 
 export const updateService = createAsyncThunk('admin/updateService', async ({ id, data }, { rejectWithValue }) => {
   try {
-    const response = await api.put(`${API_URL}/admin/services/${id}`, data);
+    const response = await api.put(`/admin/services/${id}`, data);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to update service' });
@@ -122,7 +120,7 @@ export const updateService = createAsyncThunk('admin/updateService', async ({ id
 
 export const deleteService = createAsyncThunk('admin/deleteService', async (id, { rejectWithValue }) => {
   try {
-    await api.delete(`${API_URL}/admin/services/${id}`);
+    await api.delete(`/admin/services/${id}`);
     return id;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to delete service' });
@@ -131,7 +129,7 @@ export const deleteService = createAsyncThunk('admin/deleteService', async (id, 
 
 export const updateAppointment = createAsyncThunk('admin/updateAppointment', async ({ id, data }, { rejectWithValue }) => {
   try {
-    const response = await api.put(`${API_URL}/admin/appointments/${id}`, data);
+    const response = await api.put(`/admin/appointments/${id}`, data);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to update appointment' });
@@ -140,7 +138,7 @@ export const updateAppointment = createAsyncThunk('admin/updateAppointment', asy
 
 export const deleteAppointment = createAsyncThunk('admin/deleteAppointment', async (id, { rejectWithValue }) => {
   try {
-    await api.delete(`${API_URL}/admin/appointments/${id}`);
+    await api.delete(`/admin/appointments/${id}`);
     return id;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Failed to delete appointment' });

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../../shared/services/api';
 
 const Header = () => (
   <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -30,7 +31,7 @@ const Header = () => (
   </header>
 );
 
-const Footer = () => (
+const Footer = ({ services = [] }) => (
   <footer className="bg-gray-900 text-gray-400 py-12">
     <div className="max-w-7xl mx-auto px-4">
       <div className="grid md:grid-cols-4 gap-8">
@@ -53,12 +54,23 @@ const Footer = () => (
           </ul>
         </div>
         <div>
-          <h4 className="text-white font-semibold mb-4">Services</h4>
+          <h4 className="text-white font-semibold mb-4">Our Services</h4>
           <ul className="space-y-2">
-            <li><span className="hover:text-white">General Medicine</span></li>
-            <li><span className="hover:text-white">Cardiology</span></li>
-            <li><span className="hover:text-white">Pediatrics</span></li>
-            <li><span className="hover:text-white">Orthopedics</span></li>
+            {services.slice(0, 4).map((service, index) => (
+              <li key={index}>
+                <Link to="/services" className="hover:text-white">
+                  {service.name || 'Service'}
+                </Link>
+              </li>
+            ))}
+            {services.length === 0 && (
+              <>
+                <li><span className="hover:text-white">General Medicine</span></li>
+                <li><span className="hover:text-white">Cardiology</span></li>
+                <li><span className="hover:text-white">Pediatrics</span></li>
+                <li><span className="hover:text-white">Orthopedics</span></li>
+              </>
+            )}
           </ul>
         </div>
         <div>
@@ -71,23 +83,58 @@ const Footer = () => (
         </div>
       </div>
       <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-        <p>&copy; 2024 MedBook Pro. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} MedBook Pro. All rights reserved.</p>
       </div>
     </div>
   </footer>
 );
 
 const ServicesPage = () => {
-  const services = [
-    { icon: '🩺', title: 'General Medicine', description: 'Comprehensive care for common health issues and routine checkups. Our experienced physicians provide preventive care, diagnosis, and treatment for a wide range of medical conditions.', price: 'From $80' },
-    { icon: '❤️', title: 'Cardiology', description: 'Expert heart care and cardiovascular disease prevention. Our cardiologists offer advanced diagnostics, treatment plans, and ongoing management for heart conditions.', price: 'From $150' },
-    { icon: '🦴', title: 'Orthopedics', description: 'Bone, joint, and muscle care from specialists. We provide treatment for sports injuries, arthritis, and musculoskeletal disorders with cutting-edge techniques.', price: 'From $180' },
-    { icon: '👶', title: 'Pediatrics', description: 'Healthcare services for infants, children, and adolescents. Our pediatric team ensures your children receive the best care in a comfortable environment.', price: 'From $100' },
-    { icon: '🧠', title: 'Neurology', description: 'Brain and nervous system disorder treatment. Our neurologists diagnose and treat conditions affecting the brain, spine, and nervous system.', price: 'From $200' },
-    { icon: '👁️', title: 'Ophthalmology', description: 'Complete eye care and vision correction services. From routine eye exams to advanced surgical procedures, we care for your vision.', price: 'From $120' },
-    { icon: '🦷', title: 'Dental Care', description: 'Comprehensive dental services including preventive care, fillings, extractions, and cosmetic dentistry for the whole family.', price: 'From $75' },
-    { icon: '🧪', title: 'Laboratory', description: 'Full range of diagnostic tests and laboratory services. Quick and accurate results for better healthcare decisions.', price: 'From $50' },
-  ];
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await api.get('/services');
+        setServices(response.data || []);
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  const getIcon = (serviceName) => {
+    const name = (serviceName || '').toLowerCase();
+    if (name.includes('cardiac') || name.includes('heart')) return '❤️';
+    if (name.includes('pediatric') || name.includes('child')) return '👶';
+    if (name.includes('ortho') || name.includes('bone') || name.includes('joint')) return '🦴';
+    if (name.includes('neuro') || name.includes('brain')) return '🧠';
+    if (name.includes('derma') || name.includes('skin')) return '🧴';
+    if (name.includes('ophthal') || name.includes('eye')) return '👁️';
+    if (name.includes('dental') || name.includes('tooth')) return '🦷';
+    if (name.includes('lab') || name.includes('blood') || name.includes('test')) return '🧪';
+    if (name.includes('x-ray') || name.includes('imaging') || name.includes('radio')) return '📷';
+    if (name.includes('physical') || name.includes('annual')) return '🩺';
+    return '🏥';
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-medical-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading services...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -98,24 +145,46 @@ const ServicesPage = () => {
           <p className="text-xl text-white/80">Comprehensive healthcare solutions for you and your family</p>
         </div>
       </div>
+      
       <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((service, index) => (
-            <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow">
-              <div className="text-5xl mb-4">{service.icon}</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">{service.title}</h3>
-              <p className="text-gray-600 mb-4">{service.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-medical-600 font-semibold">{service.price}</span>
-                <Link to="/booking" className="text-medical-600 font-medium hover:underline">
-                  Book Now →
-                </Link>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-8">
+            Unable to load services. Please try again later.
+          </div>
+        )}
+        
+        {services.length === 0 && !loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No services available at the moment.</p>
+            <p className="text-gray-400 text-sm mt-2">Please check back later.</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {services.map((service) => (
+              <div key={service._id || service.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow">
+                <div className="text-5xl mb-4">{getIcon(service.name)}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{service.name}</h3>
+                <p className="text-gray-600 mb-4">{service.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-medical-600 font-semibold">
+                    {service.price ? `$${service.price}` : 'Contact for price'}
+                  </span>
+                  <Link to="/booking" className="text-medical-600 font-medium hover:underline">
+                    Book Now →
+                  </Link>
+                </div>
+                {service.duration && (
+                  <p className="text-gray-400 text-sm mt-2">
+                    Duration: {service.duration} minutes
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-      <Footer />
+      
+      <Footer services={services} />
     </div>
   );
 };

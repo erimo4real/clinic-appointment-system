@@ -3,18 +3,18 @@
  * UPLOAD ROUTES
  * =====================================================
  * 
- * File upload endpoints using Cloudinary.
+ * HTTP endpoints for file uploads via Cloudinary.
  * Handles profile images, documents, and medical files.
  * 
  * @layer Presentation/Routes
- * 
  * =====================================================
  * ENDPOINTS:
  * 
- * POST   /api/upload/profile        - Upload profile image
- * POST   /api/upload/document       - Upload general document
- * POST   /api/upload/medical        - Upload medical file
- * DELETE /api/upload/:publicId     - Delete uploaded file
+ * POST   /api/upload/profile  - Upload profile image
+ * POST   /api/upload/document - Upload general document
+ * POST   /api/upload/medical  - Upload medical file
+ * DELETE /api/upload/:publicId - Delete uploaded file
+ * GET    /api/upload/url/:publicId - Get file URL with transformations
  * =====================================================
  */
 
@@ -30,28 +30,19 @@ const {
 } = require('../../infrastructure/config/cloudinary');
 
 /**
- * =====================================================
- * UPLOAD PROFILE IMAGE
- * =====================================================
- */
-
-/**
  * POST /api/upload/profile
  * 
- * Upload user profile image
+ * Uploads a user profile image.
+ * Images are automatically resized and cropped.
  * 
  * @route POST /api/upload/profile
- * @access Private
- * @body {File} image - Image file (max 5MB)
- * 
- * @returns {200} - Uploaded image URL
- * @returns {400} - Invalid file type
- * @returns {401} - Not authenticated
+ * @requires Authentication
+ * @body {File} image - Image file (JPEG, PNG, GIF, WebP; max 5MB)
+ * @returns {200} { message, url, publicId }
+ * @returns {400} No image provided or invalid file type
  */
 router.post('/profile', auth, uploadProfileImage.single('image'), async (req, res) => {
   try {
-    console.log('[Upload] Profile image uploaded:', req.file);
-    
     if (!req.file) {
       return res.status(400).json({ message: 'No image file provided' });
     }
@@ -62,35 +53,25 @@ router.post('/profile', auth, uploadProfileImage.single('image'), async (req, re
       publicId: req.file.filename,
     });
   } catch (error) {
-    console.error('[Upload] Profile upload error:', error.message);
     res.status(500).json({ message: 'Error uploading image', error: error.message });
   }
 });
 
 /**
- * =====================================================
- * UPLOAD DOCUMENT
- * =====================================================
- */
-
-/**
  * POST /api/upload/document
  * 
- * Upload general document
+ * Uploads a general document.
+ * Accessible by admin and receptionist roles.
  * 
  * @route POST /api/upload/document
- * @access Private (admin, receptionist)
- * @body {File} document - Document file (max 10MB)
- * 
- * @returns {200} - Uploaded document URL
- * @returns {400} - Invalid file
- * @returns {401} - Not authenticated
- * @returns {403} - Not authorized
+ * @requires Authentication (admin, receptionist)
+ * @body {File} document - Document file (JPEG, PNG, PDF, DOC, DOCX; max 10MB)
+ * @returns {200} { message, url, publicId, format, size }
+ * @returns {400} No document provided
+ * @returns {403} Not authorized
  */
 router.post('/document', auth, authorize('admin', 'receptionist'), uploadDocument.single('document'), async (req, res) => {
   try {
-    console.log('[Upload] Document uploaded:', req.file);
-    
     if (!req.file) {
       return res.status(400).json({ message: 'No document file provided' });
     }
@@ -103,34 +84,24 @@ router.post('/document', auth, authorize('admin', 'receptionist'), uploadDocumen
       size: req.file.size,
     });
   } catch (error) {
-    console.error('[Upload] Document upload error:', error.message);
     res.status(500).json({ message: 'Error uploading document', error: error.message });
   }
 });
 
 /**
- * =====================================================
- * UPLOAD MEDICAL FILE
- * =====================================================
- */
-
-/**
  * POST /api/upload/medical
  * 
- * Upload medical file (lab reports, prescriptions, etc.)
+ * Uploads a medical file (lab reports, prescriptions, etc.).
+ * Accessible by all authenticated users.
  * 
  * @route POST /api/upload/medical
- * @access Private
- * @body {File} file - Medical file (max 10MB)
- * 
- * @returns {200} - Uploaded file URL
- * @returns {400} - Invalid file
- * @returns {401} - Not authenticated
+ * @requires Authentication
+ * @body {File} file - Medical file (JPEG, PNG, PDF, DOC, DOCX; max 10MB)
+ * @returns {200} { message, url, publicId, format, size }
+ * @returns {400} No file provided
  */
 router.post('/medical', auth, uploadMedicalFile.single('file'), async (req, res) => {
   try {
-    console.log('[Upload] Medical file uploaded:', req.file);
-    
     if (!req.file) {
       return res.status(400).json({ message: 'No file provided' });
     }
@@ -143,35 +114,24 @@ router.post('/medical', auth, uploadMedicalFile.single('file'), async (req, res)
       size: req.file.size,
     });
   } catch (error) {
-    console.error('[Upload] Medical file upload error:', error.message);
     res.status(500).json({ message: 'Error uploading file', error: error.message });
   }
 });
 
 /**
- * =====================================================
- * DELETE FILE
- * =====================================================
- */
-
-/**
  * DELETE /api/upload/:publicId
  * 
- * Delete uploaded file from Cloudinary
+ * Deletes an uploaded file from Cloudinary.
  * 
  * @route DELETE /api/upload/:publicId
- * @access Private
- * @param {string} publicId - File's public ID
- * 
- * @returns {200} - File deleted
- * @returns {400} - Invalid public ID
- * @returns {401} - Not authenticated
+ * @requires Authentication
+ * @param {string} publicId - Cloudinary public ID of the file
+ * @returns {200} { message, result }
+ * @returns {400} Public ID required
  */
 router.delete('/:publicId', auth, async (req, res) => {
   try {
     const { publicId } = req.params;
-    
-    console.log('[Upload] Deleting file:', publicId);
     
     if (!publicId) {
       return res.status(400).json({ message: 'Public ID is required' });
@@ -179,36 +139,27 @@ router.delete('/:publicId', auth, async (req, res) => {
 
     const result = await deleteFile(publicId);
     
-    console.log('[Upload] File deleted:', result);
-    
     res.json({
       message: 'File deleted successfully',
       result,
     });
   } catch (error) {
-    console.error('[Upload] Delete error:', error.message);
     res.status(500).json({ message: 'Error deleting file', error: error.message });
   }
 });
 
 /**
- * =====================================================
- * GET FILE URL
- * =====================================================
- */
-
-/**
  * GET /api/upload/url/:publicId
  * 
- * Get file URL with optional transformations
+ * Retrieves a file URL with optional transformations.
+ * Public endpoint - no authentication required.
  * 
  * @route GET /api/upload/url/:publicId
- * @access Public
- * @query {number} [width] - Resize width
- * @query {number} [height] - Resize height
- * @query {string} [crop] - Crop mode (fill, fit, scale, etc.)
- * 
- * @returns {200} - File URL
+ * @param {string} publicId - Cloudinary public ID
+ * @query {number} width - Resize width (optional)
+ * @query {number} height - Resize height (optional)
+ * @query {string} crop - Crop mode: fill, fit, scale, etc. (optional)
+ * @returns {200} { url }
  */
 router.get('/url/:publicId', async (req, res) => {
   try {
@@ -224,24 +175,8 @@ router.get('/url/:publicId', async (req, res) => {
     
     res.json({ url });
   } catch (error) {
-    console.error('[Upload] Get URL error:', error.message);
     res.status(500).json({ message: 'Error getting URL', error: error.message });
   }
 });
 
-// =====================================================
-// EXPORTS
-// =====================================================
-
 module.exports = router;
-
-// =====================================================
-// DEBUG: Log route registration
-// =====================================================
-console.log('[Upload Routes] File upload routes loaded');
-console.log('[Upload Routes] Available endpoints:');
-console.log('  POST   /api/upload/profile     - Upload profile image');
-console.log('  POST   /api/upload/document   - Upload document (admin/receptionist)');
-console.log('  POST   /api/upload/medical    - Upload medical file');
-console.log('  DELETE /api/upload/:publicId  - Delete file');
-console.log('  GET    /api/upload/url/:publicId - Get file URL');

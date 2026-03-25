@@ -2,10 +2,11 @@
   "name": "clinic-appointment-backend",
   "version": "1.0.0",
   "description": "Clinic Appointment System - Healthcare Scheduling Platform",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node seed/seed.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

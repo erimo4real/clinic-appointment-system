@@ -4,29 +4,40 @@
  * =====================================================
  * 
  * Mongoose schema for Feedback collection.
- * Stores patient feedback for doctors (private, not visible to others).
+ * Stores patient feedback for doctors including
+ * ratings, comments, and doctor responses.
  * 
+ * @schema feedbackSchema
  * =====================================================
  */
 
 const mongoose = require('mongoose');
 
+/**
+ * Feedback Schema Definition
+ */
 const feedbackSchema = new mongoose.Schema({
-  // Patient who gave feedback
+  /**
+   * Patient who gave the feedback
+   */
   patient: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Patient is required']
   },
 
-  // Doctor receiving feedback
+  /**
+   * Doctor receiving the feedback
+   */
   doctor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Doctor',
     required: [true, 'Doctor is required']
   },
 
-  // Rating (1-5 stars)
+  /**
+   * Rating from 1 to 5 stars
+   */
   rating: {
     type: Number,
     min: 1,
@@ -34,14 +45,18 @@ const feedbackSchema = new mongoose.Schema({
     required: [true, 'Rating is required']
   },
 
-  // Like or dislike
+  /**
+   * Type of feedback: like or dislike
+   */
   type: {
     type: String,
     enum: ['like', 'dislike'],
     required: [true, 'Feedback type is required']
   },
 
-  // Reason/comment for feedback
+  /**
+   * Patient's comment or reason
+   */
   reason: {
     type: String,
     required: [true, 'Reason is required'],
@@ -49,37 +64,50 @@ const feedbackSchema = new mongoose.Schema({
     maxlength: [1000, 'Reason cannot exceed 1000 characters']
   },
 
-  // Doctor's response (optional)
+  /**
+   * Doctor's response to the feedback (optional)
+   */
   response: {
     type: String,
     trim: true,
     maxlength: [1000, 'Response cannot exceed 1000 characters']
   },
 
-  // Response date
+  /**
+   * Date when doctor responded
+   */
   responseDate: {
     type: Date
   },
 
-  // Status: pending, reviewed, action_taken
+  /**
+   * Review status: pending, reviewed, or action taken
+   */
   status: {
     type: String,
     enum: ['pending', 'reviewed', 'action_taken'],
     default: 'pending'
   },
 
-  // Admin notes/action taken
+  /**
+   * Admin notes or action taken
+   */
   adminNotes: {
     type: String,
     trim: true
   },
 
-  // Timestamp
+  /**
+   * Creation timestamp
+   */
   createdAt: {
     type: Date,
     default: Date.now
   },
 
+  /**
+   * Last update timestamp
+   */
   updatedAt: {
     type: Date,
     default: Date.now
@@ -97,13 +125,11 @@ const feedbackSchema = new mongoose.Schema({
   }
 });
 
-// Index for performance
-feedbackSchema.index({ doctor: 1, patient: 1 }, { unique: true });
+// Indexes for efficient queries
+feedbackSchema.index({ doctor: 1, patient: 1 }, { unique: true });  // One feedback per patient per doctor
 feedbackSchema.index({ status: 1 });
 feedbackSchema.index({ createdAt: -1 });
 
 const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 module.exports = Feedback;
-
-console.log('[Feedback Model] Schema created successfully');

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../../shared/services/api';
 
 const Header = () => (
   <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -34,23 +35,68 @@ const Footer = () => (
   <footer className="bg-gray-900 text-gray-400 py-12">
     <div className="max-w-7xl mx-auto px-4">
       <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-        <p>&copy; 2024 MedBook Pro. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} MedBook Pro. All rights reserved.</p>
       </div>
     </div>
   </footer>
 );
 
 const DoctorsPage = () => {
-  const doctors = [
-    { name: 'Dr. Sarah Johnson', specialty: 'Cardiology', qualification: 'MD, FACC', experience: '15 years', image: '👩‍⚕️', bio: 'Dr. Johnson is a board-certified cardiologist with extensive experience in preventive cardiology and heart failure management.' },
-    { name: 'Dr. Michael Chen', specialty: 'Neurology', qualification: 'MD, PhD', experience: '12 years', image: '👨‍⚕️', bio: 'Specializing in stroke prevention and treatment, Dr. Chen brings cutting-edge research to patient care.' },
-    { name: 'Dr. Emily Williams', specialty: 'Pediatrics', qualification: 'MD, FAAP', experience: '10 years', image: '👩‍⚕️', bio: 'Dr. Williams is passionate about child health and development, providing comprehensive pediatric care.' },
-    { name: 'Dr. James Brown', specialty: 'Orthopedics', qualification: 'MD, FAAOS', experience: '18 years', image: '👨‍⚕️', bio: 'An expert in sports medicine and joint replacement, Dr. Brown has helped thousands of patients regain mobility.' },
-    { name: 'Dr. Lisa Anderson', specialty: 'Ophthalmology', qualification: 'MD, FACS', experience: '14 years', image: '👩‍⚕️', bio: 'Dr. Anderson specializes in cataract surgery and laser vision correction with exceptional outcomes.' },
-    { name: 'Dr. Robert Martinez', specialty: 'General Medicine', qualification: 'MD', experience: '20 years', image: '👨‍⚕️', bio: 'A compassionate physician focused on preventive care and chronic disease management.' },
-    { name: 'Dr. Jennifer Lee', specialty: 'Dermatology', qualification: 'MD, FAAD', experience: '11 years', image: '👩‍⚕️', bio: 'Dr. Lee provides comprehensive skin care, from acne treatment to skin cancer screening.' },
-    { name: 'Dr. David Wilson', specialty: 'Internal Medicine', qualification: 'MD, FACP', experience: '16 years', image: '👨‍⚕️', bio: 'Specializing in adult medicine with a focus on wellness and disease prevention.' },
-  ];
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [specialties, setSpecialties] = useState([]);
+  const [selectedSpecialty, setSelectedSpecialty] = useState('');
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await api.get('/doctors');
+        const doctorsData = response.data || [];
+        setDoctors(doctorsData);
+        
+        // Extract unique specialties
+        const uniqueSpecialties = [...new Set(doctorsData.map(d => d.specialty).filter(Boolean))];
+        setSpecialties(uniqueSpecialties);
+      } catch (err) {
+        console.error('Error fetching doctors:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
+  const getDoctorName = (doctor) => {
+    if (doctor.user) {
+      const firstName = doctor.user.firstName || '';
+      const lastName = doctor.user.lastName || '';
+      const name = `${firstName} ${lastName}`.trim();
+      return name ? `Dr. ${name}` : 'Doctor';
+    }
+    return doctor.fullName || doctor.name || 'Doctor';
+  };
+
+  const getDoctorEmail = (doctor) => {
+    return doctor.user?.email || doctor.email || '';
+  };
+
+  const filteredDoctors = selectedSpecialty
+    ? doctors.filter(d => d.specialty === selectedSpecialty)
+    : doctors;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-medical-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading doctors...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,29 +107,99 @@ const DoctorsPage = () => {
           <p className="text-xl text-white/80">Meet our team of experienced medical professionals</p>
         </div>
       </div>
+      
       <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {doctors.map((doctor, index) => (
-            <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="bg-gradient-to-br from-medical-100 to-primary-100 p-8 flex items-center justify-center">
-                <span className="text-7xl">{doctor.image}</span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{doctor.name}</h3>
-                <p className="text-medical-600 font-medium mb-1">{doctor.specialty}</p>
-                <p className="text-gray-500 text-sm mb-3">{doctor.qualification}</p>
-                <p className="text-gray-600 text-sm mb-4">{doctor.bio}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">{doctor.experience} experience</span>
-                  <Link to="/booking" className="text-medical-600 font-medium hover:underline">
-                    Book Appointment →
-                  </Link>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-8">
+            Unable to load doctors. Please try again later.
+          </div>
+        )}
+
+        {/* Specialty Filter */}
+        {specialties.length > 1 && (
+          <div className="mb-8 flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedSpecialty('')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                selectedSpecialty === ''
+                  ? 'bg-medical-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              All Specialties
+            </button>
+            {specialties.map((specialty) => (
+              <button
+                key={specialty}
+                onClick={() => setSelectedSpecialty(specialty)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  selectedSpecialty === specialty
+                    ? 'bg-medical-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {specialty}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {filteredDoctors.length === 0 && !loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No doctors available at the moment.</p>
+            <p className="text-gray-400 text-sm mt-2">Please check back later.</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredDoctors.map((doctor) => (
+              <div key={doctor._id || doctor.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+                <div className="bg-gradient-to-br from-medical-100 to-primary-100 p-8 flex items-center justify-center">
+                  {doctor.profileImage ? (
+                    <img 
+                      src={doctor.profileImage} 
+                      alt={getDoctorName(doctor)} 
+                      className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                  ) : (
+                    <span className="text-7xl">👨‍⚕️</span>
+                  )}
+                </div>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{getDoctorName(doctor)}</h3>
+                  <p className="text-medical-600 font-medium mb-1">{doctor.specialty}</p>
+                  <p className="text-gray-500 text-sm mb-3">{doctor.qualification}</p>
+                  {doctor.bio && (
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">{doctor.bio}</p>
+                  )}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <span className="text-sm text-gray-500">
+                      {doctor.experience ? `${doctor.experience} years experience` : 'Experience available'}
+                    </span>
+                    <Link 
+                      to="/booking" 
+                      state={{ doctorId: doctor._id || doctor.id }}
+                      className="text-medical-600 font-medium hover:underline"
+                    >
+                      Book Appointment →
+                    </Link>
+                  </div>
+                  {doctor.consultationFee && (
+                    <div className="mt-3 text-medical-600 font-semibold">
+                      Consultation: ${doctor.consultationFee}
+                    </div>
+                  )}
+                  {doctor.user?.phone && (
+                    <div className="mt-2 text-gray-500 text-sm">
+                      {doctor.user.phone}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
+      
       <Footer />
     </div>
   );

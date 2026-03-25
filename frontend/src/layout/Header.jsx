@@ -39,9 +39,16 @@ const LogoutIcon = () => (
   </svg>
 );
 
+const BellIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
+);
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const location = useLocation();
@@ -53,8 +60,22 @@ const Header = () => {
     setIsProfileOpen(false);
   };
 
+  const notifications = [
+    { id: 1, title: 'Appointment confirmed', time: '2 hours ago' },
+    { id: 2, title: 'New doctor available', time: '1 day ago' },
+  ];
+
+  const getRoleBadge = (role) => {
+    const badges = {
+      admin: 'bg-purple-100 text-purple-700',
+      doctor: 'bg-blue-100 text-blue-700',
+      patient: 'bg-green-100 text-green-700',
+    };
+    return badges[role] || 'bg-gray-100 text-gray-700';
+  };
+
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-3">
@@ -99,49 +120,101 @@ const Header = () => {
             </Link>
           </nav>
 
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center gap-2">
             {isAuthenticated ? (
-              <div className="relative">
+              <>
+                {/* Notification Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setIsNotificationOpen(!isNotificationOpen);
+                      setIsProfileOpen(false);
+                    }}
+                    className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <BellIcon />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                  </button>
+
+                  {isNotificationOpen && (
+                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <h3 className="font-semibold text-gray-900">Notifications</h3>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {notifications.map((notif) => (
+                          <div key={notif.id} className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                            <p className="text-sm text-gray-900 font-medium">{notif.title}</p>
+                            <p className="text-xs text-gray-500">{notif.time}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Profile Dropdown */}
+                <div className="relative">
                   <button 
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <UserIcon />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">
-                    {user?.first_name || user?.username || 'User'}
-                  </span>
-                </button>
-                
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-                    <Link 
-                      to="/dashboard" 
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={() => setIsProfileOpen(false)}
-                    >
-                      <DashboardIcon />
-                      <span className="ml-2">Dashboard</span>
-                    </Link>
-                    <Link 
-                      to="/profile" 
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={() => setIsProfileOpen(false)}
-                    >
+                    onClick={() => {
+                      setIsProfileOpen(!isProfileOpen);
+                      setIsNotificationOpen(false);
+                    }}
+                    className="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <UserIcon />
-                      <span className="ml-2">My Profile</span>
-                    </Link>
-                    <button 
-                      onClick={handleLogout}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <LogoutIcon />
-                      <span className="ml-2">Logout</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {user?.first_name || user?.username || 'User'}
+                    </span>
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {user?.first_name} {user?.last_name}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                        <span className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full ${getRoleBadge(user?.role)}`}>
+                          {user?.role}
+                        </span>
+                      </div>
+                      <div className="py-1">
+                        {user?.role === 'admin' && (
+                          <Link 
+                            to="/admin" 
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <DashboardIcon />
+                            <span className="ml-2">Admin Panel</span>
+                          </Link>
+                        )}
+                        <Link 
+                          to="/profile" 
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <UserIcon />
+                          <span className="ml-2">My Profile</span>
+                        </Link>
+                        <button 
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <LogoutIcon />
+                          <span className="ml-2">Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
               <>
                 <Link 
@@ -214,19 +287,28 @@ const Header = () => {
               <hr className="my-2" />
               {isAuthenticated ? (
                 <>
+                  {user?.role === 'admin' && (
+                    <Link 
+                      to="/admin" 
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium text-center"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
                   <Link 
-                    to="/dashboard" 
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium text-center"
+                    to="/profile" 
+                    className="px-3 py-2 text-gray-600 rounded-lg text-sm font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Dashboard
+                    My Profile
                   </Link>
                   <button 
                     onClick={() => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="px-3 py-2 text-red-600 rounded-lg text-sm font-medium text-center"
+                    className="px-3 py-2 text-red-600 rounded-lg text-sm font-medium text-left"
                   >
                     Logout
                   </button>

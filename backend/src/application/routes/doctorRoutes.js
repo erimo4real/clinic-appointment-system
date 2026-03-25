@@ -1,9 +1,10 @@
 /**
  * =====================================================
- * DOCTOR ROUTES (Presentation Layer)
+ * DOCTOR ROUTES
  * =====================================================
  * 
  * HTTP endpoints for doctor management.
+ * Handles CRUD operations for doctor profiles.
  * 
  * @layer Presentation/Routes
  * =====================================================
@@ -16,7 +17,13 @@ const { auth, authorize } = require('../../infrastructure/middleware/auth');
 
 /**
  * GET /api/doctors
- * Public - list all doctors
+ * 
+ * Retrieves a list of all available doctors.
+ * Optionally filter by specialty.
+ * 
+ * @route GET /api/doctors
+ * @query {string} specialty - Filter by medical specialty (optional)
+ * @returns {200} Array of doctor profiles
  */
 router.get('/', async (req, res) => {
   try {
@@ -30,7 +37,14 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/doctors/:id
- * Public - get doctor by ID
+ * 
+ * Retrieves a specific doctor by their ID.
+ * Returns the doctor's profile with user information.
+ * 
+ * @route GET /api/doctors/:id
+ * @param {string} id - Doctor's unique ID
+ * @returns {200} Doctor profile
+ * @returns {404} Doctor not found
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -46,7 +60,20 @@ router.get('/:id', async (req, res) => {
 
 /**
  * POST /api/doctors
- * Admin only - create doctor
+ * 
+ * Creates a new doctor profile.
+ * Requires admin authentication.
+ * 
+ * @route POST /api/doctors
+ * @requires Authentication (admin only)
+ * @body {string} user - User ID associated with the doctor
+ * @body {string} specialty - Medical specialty
+ * @body {string} qualification - Medical degrees/qualifications
+ * @body {number} experience - Years of experience
+ * @body {string} bio - Doctor's biography (optional)
+ * @body {number} consultationFee - Consultation fee
+ * @returns {201} Doctor created successfully
+ * @returns {400} Validation error or doctor already exists
  */
 router.post('/', auth, authorize('admin'), async (req, res) => {
   try {
@@ -59,7 +86,21 @@ router.post('/', auth, authorize('admin'), async (req, res) => {
 
 /**
  * PUT /api/doctors/:id
- * Admin/Doctor - update doctor
+ * 
+ * Updates an existing doctor profile.
+ * Accessible by admin or the doctor themselves.
+ * 
+ * @route PUT /api/doctors/:id
+ * @requires Authentication (admin or doctor)
+ * @param {string} id - Doctor's unique ID
+ * @body {string} specialty - Medical specialty (optional)
+ * @body {string} qualification - Medical degrees (optional)
+ * @body {number} experience - Years of experience (optional)
+ * @body {string} bio - Biography (optional)
+ * @body {number} consultationFee - Consultation fee (optional)
+ * @body {boolean} isAvailable - Availability status (optional)
+ * @returns {200} Doctor updated successfully
+ * @returns {400} Validation error
  */
 router.put('/:id', auth, authorize('admin', 'doctor'), async (req, res) => {
   try {
@@ -72,7 +113,15 @@ router.put('/:id', auth, authorize('admin', 'doctor'), async (req, res) => {
 
 /**
  * DELETE /api/doctors/:id
- * Admin only - deactivate doctor
+ * 
+ * Deactivates a doctor profile (soft delete).
+ * Doctor can no longer receive appointments.
+ * 
+ * @route DELETE /api/doctors/:id
+ * @requires Authentication (admin only)
+ * @param {string} id - Doctor's unique ID
+ * @returns {200} Doctor deactivated
+ * @returns {400} Error deactivating doctor
  */
 router.delete('/:id', auth, authorize('admin'), async (req, res) => {
   try {

@@ -26,9 +26,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../../shared/services/api';
 
-// API Base URL - Change here if backend URL changes
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
 /**
  * =====================================================
  * ASYNC THUNKS - API CALLS
@@ -55,7 +52,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
   try {
     console.log('[Auth Slice] Attempting login for:', credentials.username);
     
-    const response = await api.post(`${API_URL}/auth/login`, credentials, { withCredentials: true });
+    const response = await api.post('/auth/login', credentials, { withCredentials: true });
     
     console.log('[Auth Slice] Login successful:', response.data.user);
     return response.data;
@@ -80,7 +77,7 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
   try {
     console.log('[Auth Slice] Attempting registration for:', userData.email);
     
-    const response = await api.post(`${API_URL}/auth/register`, userData, { withCredentials: true });
+    const response = await api.post('/auth/register', userData, { withCredentials: true });
     
     console.log('[Auth Slice] Registration successful:', response.data.user);
     return response.data;
@@ -104,7 +101,7 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
   try {
     console.log('[Auth Slice] Fetching current user profile');
     
-    const response = await api.get(`${API_URL}/auth/me`);
+    const response = await api.get('/auth/me');
     
     console.log('[Auth Slice] Current user fetched:', response.data);
     return response.data;
@@ -122,7 +119,7 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (profi
   try {
     console.log('[Auth Slice] Updating profile:', profileData);
     
-    const response = await api.put(`${API_URL}/auth/profile`, profileData);
+    const response = await api.put('/auth/profile', profileData);
     
     console.log('[Auth Slice] Profile updated:', response.data);
     return response.data;

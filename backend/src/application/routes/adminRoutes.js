@@ -1,10 +1,11 @@
 /**
  * =====================================================
- * ADMIN ROUTES (Presentation Layer)
+ * ADMIN ROUTES
  * =====================================================
  * 
- * HTTP endpoints for admin operations.
- * Requires admin role authentication.
+ * HTTP endpoints for administrative operations.
+ * Full CRUD access to all system resources.
+ * All routes require admin authentication.
  * 
  * @layer Presentation/Routes
  * =====================================================
@@ -18,7 +19,10 @@ const Doctor = require('../../domain/entities/Doctor');
 const Service = require('../../domain/entities/Service');
 const Appointment = require('../../domain/entities/Appointment');
 
-// Admin middleware - check if user is admin
+/**
+ * Middleware to verify user has admin role.
+ * Applied to all routes in this router.
+ */
 const requireAdmin = async (req, res, next) => {
   try {
     if (!req.user) {
@@ -33,13 +37,18 @@ const requireAdmin = async (req, res, next) => {
   }
 };
 
-// Apply admin middleware to all routes
+// Apply authentication and admin check to all routes
 router.use(auth);
 router.use(requireAdmin);
 
 /**
  * GET /api/admin/stats
- * Get dashboard statistics
+ * 
+ * Retrieves dashboard statistics for the admin panel.
+ * Includes counts of users, doctors, appointments, and revenue.
+ * 
+ * @route GET /api/admin/stats
+ * @returns {200} Dashboard statistics object
  */
 router.get('/stats', async (req, res) => {
   try {
@@ -75,7 +84,11 @@ router.get('/stats', async (req, res) => {
 
 /**
  * GET /api/admin/users
- * Get all users
+ * 
+ * Retrieves all users in the system.
+ * 
+ * @route GET /api/admin/users
+ * @returns {200} Array of user objects
  */
 router.get('/users', async (req, res) => {
   try {
@@ -101,7 +114,19 @@ router.get('/users', async (req, res) => {
 
 /**
  * POST /api/admin/users
- * Create new user
+ * 
+ * Creates a new user account.
+ * 
+ * @route POST /api/admin/users
+ * @body {string} username - Unique username
+ * @body {string} email - User's email
+ * @body {string} password - User's password
+ * @body {string} first_name - First name (optional)
+ * @body {string} last_name - Last name (optional)
+ * @body {string} phone - Phone number (optional)
+ * @body {string} role - User role (default: 'patient')
+ * @returns {201} User created successfully
+ * @returns {400} User already exists
  */
 router.post('/users', async (req, res) => {
   try {
@@ -134,7 +159,20 @@ router.post('/users', async (req, res) => {
 
 /**
  * PUT /api/admin/users/:id
- * Update user
+ * 
+ * Updates an existing user.
+ * 
+ * @route PUT /api/admin/users/:id
+ * @param {string} id - User's unique ID
+ * @body {string} username - New username (optional)
+ * @body {string} email - New email (optional)
+ * @body {string} first_name - New first name (optional)
+ * @body {string} last_name - New last name (optional)
+ * @body {string} phone - New phone (optional)
+ * @body {string} role - New role (optional)
+ * @body {boolean} is_active - Active status (optional)
+ * @returns {200} User updated successfully
+ * @returns {404} User not found
  */
 router.put('/users/:id', async (req, res) => {
   try {
@@ -162,7 +200,13 @@ router.put('/users/:id', async (req, res) => {
 
 /**
  * DELETE /api/admin/users/:id
- * Delete user
+ * 
+ * Permanently deletes a user.
+ * 
+ * @route DELETE /api/admin/users/:id
+ * @param {string} id - User's unique ID
+ * @returns {200} User deleted successfully
+ * @returns {404} User not found
  */
 router.delete('/users/:id', async (req, res) => {
   try {
@@ -178,7 +222,11 @@ router.delete('/users/:id', async (req, res) => {
 
 /**
  * GET /api/admin/doctors
- * Get all doctors
+ * 
+ * Retrieves all doctors with their user information.
+ * 
+ * @route GET /api/admin/doctors
+ * @returns {200} Array of doctor objects with user details
  */
 router.get('/doctors', async (req, res) => {
   try {
@@ -208,20 +256,34 @@ router.get('/doctors', async (req, res) => {
 
 /**
  * POST /api/admin/doctors
- * Create new doctor (creates both User and Doctor)
+ * 
+ * Creates a new doctor with both user account and doctor profile.
+ * 
+ * @route POST /api/admin/doctors
+ * @body {string} name - Doctor's full name
+ * @body {string} email - Doctor's email
+ * @body {string} phone - Phone number (optional)
+ * @body {string} specialty - Medical specialty
+ * @body {string} qualification - Medical qualifications
+ * @body {number} experience - Years of experience (optional)
+ * @body {number} consultation_fee - Consultation fee
+ * @body {string} bio - Biography (optional)
+ * @body {boolean} is_available - Availability status (optional)
+ * @returns {201} Doctor created with credentials
  */
 router.post('/doctors', async (req, res) => {
   try {
     const { name, email, phone, specialty, qualification, experience, consultation_fee, bio, is_available } = req.body;
     
-    // Split name into first and last
+    // Split name into first and last parts
     const nameParts = name.split(' ');
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ') || '';
     
-    // Create user account for doctor
-    const password = Math.random().toString(36).slice(-8); // Generate random password
+    // Generate random password for the doctor
+    const password = Math.random().toString(36).slice(-8);
     
+    // Create user account for the doctor
     const user = new User({
       username: email.split('@')[0],
       email,
@@ -234,7 +296,7 @@ router.post('/doctors', async (req, res) => {
 
     await user.save();
 
-    // Create doctor profile
+    // Create doctor profile linked to user
     const doctor = new Doctor({
       user: user._id,
       specialty,
@@ -261,7 +323,19 @@ router.post('/doctors', async (req, res) => {
 
 /**
  * PUT /api/admin/doctors/:id
- * Update doctor
+ * 
+ * Updates a doctor's profile information.
+ * 
+ * @route PUT /api/admin/doctors/:id
+ * @param {string} id - Doctor's unique ID
+ * @body {string} name - New name (optional)
+ * @body {string} specialty - New specialty (optional)
+ * @body {string} qualification - New qualifications (optional)
+ * @body {number} experience - New experience years (optional)
+ * @body {number} consultation_fee - New fee (optional)
+ * @body {string} bio - New bio (optional)
+ * @body {boolean} is_available - New availability (optional)
+ * @returns {200} Doctor updated successfully
  */
 router.put('/doctors/:id', async (req, res) => {
   try {
@@ -272,7 +346,7 @@ router.put('/doctors/:id', async (req, res) => {
       return res.status(404).json({ message: 'Doctor not found' });
     }
 
-    // Update user if name provided
+    // Update user name if provided
     if (name && doctor.user) {
       const nameParts = name.split(' ');
       doctor.user.firstName = nameParts[0];
@@ -296,7 +370,13 @@ router.put('/doctors/:id', async (req, res) => {
 
 /**
  * DELETE /api/admin/doctors/:id
- * Delete doctor
+ * 
+ * Deletes a doctor and their associated user account.
+ * 
+ * @route DELETE /api/admin/doctors/:id
+ * @param {string} id - Doctor's unique ID
+ * @returns {200} Doctor deleted successfully
+ * @returns {404} Doctor not found
  */
 router.delete('/doctors/:id', async (req, res) => {
   try {
@@ -305,10 +385,10 @@ router.delete('/doctors/:id', async (req, res) => {
       return res.status(404).json({ message: 'Doctor not found' });
     }
 
-    // Delete associated user
+    // Delete associated user account
     await User.findByIdAndDelete(doctor.user);
     
-    // Delete doctor
+    // Delete doctor profile
     await Doctor.findByIdAndDelete(req.params.id);
     
     res.json({ message: 'Doctor deleted successfully' });
@@ -319,7 +399,11 @@ router.delete('/doctors/:id', async (req, res) => {
 
 /**
  * GET /api/admin/services
- * Get all services
+ * 
+ * Retrieves all services (active and inactive).
+ * 
+ * @route GET /api/admin/services
+ * @returns {200} Array of service objects
  */
 router.get('/services', async (req, res) => {
   try {
@@ -343,7 +427,16 @@ router.get('/services', async (req, res) => {
 
 /**
  * POST /api/admin/services
- * Create new service
+ * 
+ * Creates a new medical service.
+ * 
+ * @route POST /api/admin/services
+ * @body {string} name - Service name (unique)
+ * @body {string} description - Service description
+ * @body {number} price - Service price
+ * @body {number} duration - Duration in minutes (default: 30)
+ * @body {boolean} is_active - Active status (default: true)
+ * @returns {201} Service created successfully
  */
 router.post('/services', async (req, res) => {
   try {
@@ -373,7 +466,17 @@ router.post('/services', async (req, res) => {
 
 /**
  * PUT /api/admin/services/:id
- * Update service
+ * 
+ * Updates an existing service.
+ * 
+ * @route PUT /api/admin/services/:id
+ * @param {string} id - Service's unique ID
+ * @body {string} name - New name (optional)
+ * @body {string} description - New description (optional)
+ * @body {number} duration - New duration (optional)
+ * @body {number} price - New price (optional)
+ * @body {boolean} is_active - New status (optional)
+ * @returns {200} Service updated successfully
  */
 router.put('/services/:id', async (req, res) => {
   try {
@@ -402,7 +505,13 @@ router.put('/services/:id', async (req, res) => {
 
 /**
  * DELETE /api/admin/services/:id
- * Delete service
+ * 
+ * Permanently deletes a service.
+ * 
+ * @route DELETE /api/admin/services/:id
+ * @param {string} id - Service's unique ID
+ * @returns {200} Service deleted successfully
+ * @returns {404} Service not found
  */
 router.delete('/services/:id', async (req, res) => {
   try {
@@ -418,7 +527,11 @@ router.delete('/services/:id', async (req, res) => {
 
 /**
  * GET /api/admin/appointments
- * Get all appointments
+ * 
+ * Retrieves all appointments in the system.
+ * 
+ * @route GET /api/admin/appointments
+ * @returns {200} Array of appointment objects
  */
 router.get('/appointments', async (req, res) => {
   try {
@@ -460,7 +573,14 @@ router.get('/appointments', async (req, res) => {
 
 /**
  * PUT /api/admin/appointments/:id
- * Update appointment
+ * 
+ * Updates an appointment's status or notes.
+ * 
+ * @route PUT /api/admin/appointments/:id
+ * @param {string} id - Appointment's unique ID
+ * @body {string} status - New status (optional)
+ * @body {string} notes - Updated notes (optional)
+ * @returns {200} Appointment updated successfully
  */
 router.put('/appointments/:id', async (req, res) => {
   try {
@@ -483,7 +603,13 @@ router.put('/appointments/:id', async (req, res) => {
 
 /**
  * DELETE /api/admin/appointments/:id
- * Delete appointment
+ * 
+ * Permanently deletes an appointment.
+ * 
+ * @route DELETE /api/admin/appointments/:id
+ * @param {string} id - Appointment's unique ID
+ * @returns {200} Appointment deleted successfully
+ * @returns {404} Appointment not found
  */
 router.delete('/appointments/:id', async (req, res) => {
   try {
@@ -498,5 +624,3 @@ router.delete('/appointments/:id', async (req, res) => {
 });
 
 module.exports = router;
-
-console.log('[Admin Routes] Admin routes loaded with full CRUD operations');

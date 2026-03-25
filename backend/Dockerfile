@@ -8,8 +8,12 @@ RUN npm install
 
 COPY . .
 
+RUN apk add --no-cache bash
+
 EXPOSE 5000
 
 ENV NODE_ENV=production
 
-CMD ["node", "server.js"]
+RUN chmod +x /app/docker-entrypoint.sh
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

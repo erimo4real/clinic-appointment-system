@@ -1,9 +1,10 @@
 /**
  * =====================================================
- * SERVICE ROUTES (Presentation Layer)
+ * SERVICE ROUTES
  * =====================================================
  * 
- * HTTP endpoints for service management.
+ * HTTP endpoints for medical services management.
+ * Handles CRUD operations for clinic services.
  * 
  * @layer Presentation/Routes
  * =====================================================
@@ -16,7 +17,11 @@ const { auth, authorize } = require('../../infrastructure/middleware/auth');
 
 /**
  * GET /api/services
- * Public - list services
+ * 
+ * Retrieves all active medical services offered by the clinic.
+ * 
+ * @route GET /api/services
+ * @returns {200} Array of active services
  */
 router.get('/', async (req, res) => {
   try {
@@ -29,7 +34,13 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/services/:id
- * Public - get service
+ * 
+ * Retrieves a specific service by its ID.
+ * 
+ * @route GET /api/services/:id
+ * @param {string} id - Service's unique ID
+ * @returns {200} Service details
+ * @returns {404} Service not found
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -45,7 +56,18 @@ router.get('/:id', async (req, res) => {
 
 /**
  * POST /api/services
- * Admin - create service
+ * 
+ * Creates a new medical service.
+ * Requires admin authentication.
+ * 
+ * @route POST /api/services
+ * @requires Authentication (admin only)
+ * @body {string} name - Service name (required, unique)
+ * @body {string} description - Service description
+ * @body {number} price - Service price in dollars
+ * @body {number} duration - Service duration in minutes (default: 30)
+ * @returns {201} Service created successfully
+ * @returns {400} Validation error
  */
 router.post('/', auth, authorize('admin'), async (req, res) => {
   try {
@@ -58,7 +80,20 @@ router.post('/', auth, authorize('admin'), async (req, res) => {
 
 /**
  * PUT /api/services/:id
- * Admin - update service
+ * 
+ * Updates an existing service.
+ * Requires admin authentication.
+ * 
+ * @route PUT /api/services/:id
+ * @requires Authentication (admin only)
+ * @param {string} id - Service's unique ID
+ * @body {string} name - Service name (optional)
+ * @body {string} description - Description (optional)
+ * @body {number} price - Price (optional)
+ * @body {number} duration - Duration in minutes (optional)
+ * @body {boolean} isActive - Active status (optional)
+ * @returns {200} Service updated successfully
+ * @returns {400} Validation error
  */
 router.put('/:id', auth, authorize('admin'), async (req, res) => {
   try {
@@ -71,7 +106,15 @@ router.put('/:id', auth, authorize('admin'), async (req, res) => {
 
 /**
  * DELETE /api/services/:id
- * Admin - delete service
+ * 
+ * Deactivates a service (soft delete).
+ * Service will no longer appear in active listings.
+ * 
+ * @route DELETE /api/services/:id
+ * @requires Authentication (admin only)
+ * @param {string} id - Service's unique ID
+ * @returns {200} Service deactivated
+ * @returns {400} Error deactivating service
  */
 router.delete('/:id', auth, authorize('admin'), async (req, res) => {
   try {

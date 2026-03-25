@@ -154,6 +154,89 @@ db.users.updateOne({ email: "admin@example.com" }, { $set: { role: "admin" } })
 - Role-based dashboards
 - Admin panel with full CRUD
 
+## Docker Setup
+
+### Quick Start with Docker
+
+1. **Copy environment file**
+```bash
+cp .env.docker.example .env.docker
+# Edit .env.docker with your configuration
+```
+
+2. **Start all services**
+```bash
+# Windows
+setup-docker.bat start
+
+# Linux/Mac
+./setup-docker.sh start
+```
+
+3. **Seed the database (first time only)**
+```bash
+# Windows
+setup-docker.bat seed
+
+# Linux/Mac
+./setup-docker.sh seed
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `start` | Start all services (MongoDB, Backend, Frontend) |
+| `stop` | Stop all services |
+| `restart` | Restart all services |
+| `seed` | Seed the database with sample data |
+| `logs` | View service logs |
+| `status` | Show service status |
+| `rebuild` | Rebuild and restart services |
+| `clean` | Remove all containers and volumes |
+
+### Docker URLs
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost |
+| Backend API | http://localhost:5000 |
+| API Health | http://localhost:5000/api/health |
+| MongoDB | mongodb://localhost:27017 |
+
+### Test Credentials
+
+After seeding the database:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@medbookpro.com | admin123 |
+| Doctor | dr.smith@medbookpro.com | doctor123 |
+| Patient | patient1@example.com | patient123 |
+
+### Environment Variables
+
+Create `.env.docker` from `.env.docker.example`:
+
+```env
+# JWT Secrets
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
+
+# Database Seeding (set to 'true' for first run)
+RUN_SEED=false
+
+# Email Configuration
+EMAIL_SERVICE=gmail
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+
+# Cloudinary Configuration
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
 ## License
 
 MIT License

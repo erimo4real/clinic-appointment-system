@@ -1,50 +1,57 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchDoctors } from '../../features/doctors/store/doctorSlice';
+import api from '../../shared/services/api';
 import Header from '../../layout/Header';
 import Footer from '../../layout/Footer';
-import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
 
+/**
+ * Loading screen shown while page initializes
+ */
 const LoadingScreen = () => {
   const [dots, setDots] = useState('');
+  const [pulse, setPulse] = useState(false);
   
   useEffect(() => {
-    const interval = setInterval(() => {
+    const dotsInterval = setInterval(() => {
       setDots(d => d.length < 3 ? d + '.' : '');
     }, 400);
-    return () => clearInterval(interval);
+    
+    const pulseInterval = setInterval(() => {
+      setPulse(p => !p);
+    }, 800);
+    
+    return () => {
+      clearInterval(dotsInterval);
+      clearInterval(pulseInterval);
+    };
   }, []);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center z-50">
       <div className="text-center">
         <div className="relative mb-8">
-          <svg className="w-20 h-20 text-blue-600 mx-auto heartbeat" fill="currentColor" viewBox="0 0 24 24">
+          <svg 
+            className={`w-24 h-24 text-red-500 mx-auto transition-transform duration-300 ${pulse ? 'scale-125' : 'scale-100'}`} 
+            fill="currentColor" 
+            viewBox="0 0 24 24"
+            style={{ filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6))' }}
+          >
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
           </svg>
+          <div className={`absolute inset-0 bg-red-400 rounded-full blur-xl opacity-30 transition-opacity duration-300 ${pulse ? 'opacity-60' : 'opacity-30'}`} />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">MedBook Pro</h2>
         <p className="text-gray-500">Loading{dots}</p>
       </div>
-      <style>{`
-        @keyframes heartbeat {
-          0%, 100% { transform: scale(1); }
-          15% { transform: scale(1.15); }
-          30% { transform: scale(1); }
-          45% { transform: scale(1.1); }
-        }
-        .heartbeat {
-          animation: heartbeat 1.5s ease-in-out infinite;
-          filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.5));
-        }
-      `}</style>
     </div>
   );
 };
 
-const Hero = () => {
+/**
+ * Hero section with main call-to-action
+ */
+const Hero = ({ doctorCount = 0 }) => {
   return (
     <section className="relative bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-20 lg:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,7 +59,7 @@ const Hero = () => {
           <div>
             <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6">
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-              Trusted by 10,000+ Patients
+              Trusted by {doctorCount > 0 ? `${doctorCount * 100}+` : '10,000+'} Patients
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
               Your Health, <br />
@@ -74,15 +81,15 @@ const Hero = () => {
             </div>
             <div className="flex items-center mt-8 space-x-8">
               <div>
-                <div className="text-2xl font-bold text-gray-900">50+</div>
+                <div className="text-2xl font-bold text-gray-900">{doctorCount > 0 ? doctorCount : '50+'}</div>
                 <div className="text-sm text-gray-500">Expert Doctors</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">10K+</div>
+                <div className="text-2xl font-bold text-gray-900">{doctorCount > 0 ? doctorCount * 200 : '10K+'}</div>
                 <div className="text-sm text-gray-500">Happy Patients</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">15+</div>
+                <div className="text-2xl font-bold text-gray-900">{doctorCount > 0 ? Math.min(doctorCount, 15) : '15+'}</div>
                 <div className="text-sm text-gray-500">Specialties</div>
               </div>
             </div>
@@ -113,26 +120,21 @@ const Hero = () => {
   );
 };
 
-const Services = () => {
-  const services = [
-    { icon: '🩺', title: 'General Medicine', description: 'Comprehensive care for common health issues and routine checkups' },
-    { icon: '❤️', title: 'Cardiology', description: 'Expert heart care and cardiovascular disease prevention' },
-    { icon: '🦴', title: 'Orthopedics', description: 'Bone, joint, and muscle care from specialists' },
-    { icon: '👶', title: 'Pediatrics', description: 'Healthcare services for infants, children, and adolescents' },
-    { icon: '🧠', title: 'Neurology', description: 'Brain and nervous system disorder treatment' },
-    { icon: '👁️', title: 'Ophthalmology', description: 'Complete eye care and vision correction services' },
-  ];
-
+/**
+ * Services section - fetches from API or uses fallback
+ */
+const Services = ({ services }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const visibleServices = 3;
 
   // Auto-slide effect
   React.useEffect(() => {
+    if (services.length <= visibleServices) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % services.length);
-    }, 4000); // Change every 4 seconds
+    }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [services.length]);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % services.length);
@@ -143,12 +145,21 @@ const Services = () => {
   };
 
   const getVisibleServices = () => {
+    if (services.length === 0) {
+      return [
+        { icon: '🩺', title: 'General Medicine', description: 'Comprehensive care for common health issues' },
+        { icon: '❤️', title: 'Cardiology', description: 'Expert heart care and cardiovascular prevention' },
+        { icon: '🦴', title: 'Orthopedics', description: 'Bone, joint, and muscle care' },
+      ];
+    }
     const result = [];
     for (let i = 0; i < visibleServices; i++) {
       result.push(services[(currentIndex + i) % services.length]);
     }
     return result;
   };
+
+  const visible = getVisibleServices();
 
   return (
     <section id="services" className="py-20 bg-gray-50">
@@ -160,72 +171,76 @@ const Services = () => {
         
         <div className="relative">
           <div className="grid md:grid-cols-3 gap-8">
-            {getVisibleServices().map((service, index) => (
+            {visible.map((service, index) => (
               <Card key={index} className="hover:border-blue-200 hover:shadow-lg">
                 <CardContent className="pt-6">
-                  <div className="text-4xl mb-4">{service.icon}</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.title}</h3>
+                  <div className="text-4xl mb-4">{service.icon || '🏥'}</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name || service.title}</h3>
                   <p className="text-gray-600">{service.description}</p>
+                  {service.price && (
+                    <p className="text-blue-600 font-semibold mt-2">${service.price}</p>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
           
-          <button 
-            onClick={prevSlide}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
-          >
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <button 
-            onClick={nextSlide}
-            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
-          >
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+          {services.length > visibleServices && (
+            <>
+              <button 
+                onClick={prevSlide}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button 
+                onClick={nextSlide}
+                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
         
-        <div className="flex justify-center mt-8 space-x-2">
-          {services.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-3 h-3 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            />
-          ))}
-        </div>
+        {services.length > visibleServices && (
+          <div className="flex justify-center mt-8 space-x-2">
+            {services.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 };
 
-const Doctors = () => {
-  const doctors = [
-    { name: 'Dr. Sarah Johnson', specialty: 'Cardiology', qualification: 'MD, FACC', image: '👩‍⚕️' },
-    { name: 'Dr. Michael Chen', specialty: 'Neurology', qualification: 'MD, PhD', image: '👨‍⚕️' },
-    { name: 'Dr. Emily Williams', specialty: 'Pediatrics', qualification: 'MD, FAAP', image: '👩‍⚕️' },
-    { name: 'Dr. James Brown', specialty: 'Orthopedics', qualification: 'MD, FAAOS', image: '👨‍⚕️' },
-    { name: 'Dr. Lisa Anderson', specialty: 'Ophthalmology', qualification: 'MD, FACS', image: '👩‍⚕️' },
-    { name: 'Dr. Robert Martinez', specialty: 'General Medicine', qualification: 'MD', image: '👨‍⚕️' },
-  ];
-
+/**
+ * Doctors section - fetches from API or uses fallback
+ */
+const Doctors = ({ doctors }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const visibleDoctors = 4;
 
   // Auto-slide effect
   React.useEffect(() => {
+    if (doctors.length <= visibleDoctors) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % doctors.length);
-    }, 5000); // Change every 5 seconds
+    }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [doctors.length]);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % doctors.length);
@@ -236,11 +251,28 @@ const Doctors = () => {
   };
 
   const getVisibleDoctors = () => {
+    if (doctors.length === 0) {
+      return [
+        { name: 'Dr. John Smith', specialty: 'Cardiology', qualification: 'MD, FACC', image: '👨‍⚕️' },
+        { name: 'Dr. Sarah Jones', specialty: 'General Medicine', qualification: 'MD, MBBS', image: '👩‍⚕️' },
+        { name: 'Dr. David Lee', specialty: 'Pediatrics', qualification: 'MD, FAAP', image: '👨‍⚕️' },
+        { name: 'Dr. Emily Brown', specialty: 'Dermatology', qualification: 'MD, FAAD', image: '👩‍⚕️' },
+      ];
+    }
     const result = [];
     for (let i = 0; i < visibleDoctors; i++) {
       result.push(doctors[(currentIndex + i) % doctors.length]);
     }
     return result;
+  };
+
+  const visible = getVisibleDoctors();
+
+  const getDoctorName = (doctor) => {
+    if (doctor.user) {
+      return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
+    }
+    return doctor.fullName || doctor.name || 'Doctor';
   };
 
   return (
@@ -253,15 +285,22 @@ const Doctors = () => {
         
         <div className="relative">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {getVisibleDoctors().map((doctor, index) => (
+            {visible.map((doctor, index) => (
               <Card key={index} className="text-center hover:shadow-lg">
                 <CardContent className="pt-6">
                   <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl">
-                    {doctor.image}
+                    {doctor.profileImage ? (
+                      <img src={doctor.profileImage} alt={getDoctorName(doctor)} className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      doctor.image || '👨‍⚕️'
+                    )}
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{doctor.name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{getDoctorName(doctor)}</h3>
                   <p className="text-blue-600 font-medium">{doctor.specialty}</p>
                   <p className="text-gray-500 text-sm">{doctor.qualification}</p>
+                  {doctor.experience && (
+                    <p className="text-gray-400 text-xs mt-1">{doctor.experience} years experience</p>
+                  )}
                   <Link to="/booking" className="mt-4 inline-block text-blue-600 font-medium hover:text-blue-700">
                     Book Appointment →
                   </Link>
@@ -270,42 +309,51 @@ const Doctors = () => {
             ))}
           </div>
           
-          <button 
-            onClick={prevSlide}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
-          >
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <button 
-            onClick={nextSlide}
-            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
-          >
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+          {doctors.length > visibleDoctors && (
+            <>
+              <button 
+                onClick={prevSlide}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button 
+                onClick={nextSlide}
+                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
         
-        <div className="flex justify-center mt-8 space-x-2">
-          {doctors.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-3 h-3 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            />
-          ))}
-        </div>
+        {doctors.length > visibleDoctors && (
+          <div className="flex justify-center mt-8 space-x-2">
+            {doctors.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 };
 
-const About = () => {
+/**
+ * About section with benefits
+ */
+const About = ({ doctorCount = 0 }) => {
   return (
     <section id="about" className="py-20 bg-blue-600 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -360,7 +408,7 @@ const About = () => {
                 <div className="text-white/80">Years Experience</div>
               </div>
               <div className="bg-white/20 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold">50+</div>
+                <div className="text-4xl font-bold">{doctorCount > 0 ? doctorCount : '50+'}</div>
                 <div className="text-white/80">Medical Experts</div>
               </div>
               <div className="bg-white/20 rounded-xl p-6 text-center">
@@ -375,13 +423,45 @@ const About = () => {
   );
 };
 
+/**
+ * Main Landing Page Component
+ * Fetches doctors and services from API
+ */
 const LandingPage = () => {
   const [loading, setLoading] = useState(true);
-  
+  const [doctors, setDoctors] = useState([]);
+  const [services, setServices] = useState([]);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch doctors and services in parallel
+        const [doctorsRes, servicesRes] = await Promise.all([
+          api.get('/doctors'),
+          api.get('/services')
+        ]);
+
+        setDoctors(doctorsRes.data || []);
+        setServices(servicesRes.data || []);
+      } catch (err) {
+        console.error('Error fetching landing page data:', err);
+        setError(err.message);
+        // Use empty arrays - fallback data will be shown
+        setDoctors([]);
+        setServices([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    // Hide loading screen after 2 seconds max
     const timer = setTimeout(() => {
       setLoading(false);
     }, 2000);
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -392,10 +472,10 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <Hero />
-      <Services />
-      <Doctors />
-      <About />
+      <Hero doctorCount={doctors.length} />
+      <Services services={services} />
+      <Doctors doctors={doctors} />
+      <About doctorCount={doctors.length} />
       <Footer />
     </div>
   );

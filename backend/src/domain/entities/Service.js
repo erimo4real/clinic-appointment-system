@@ -6,6 +6,7 @@
  * Mongoose schema for Service collection.
  * Represents medical services offered by the clinic.
  * 
+ * @schema serviceSchema
  * =====================================================
  */
 
@@ -13,17 +14,15 @@ const mongoose = require('mongoose');
 
 /**
  * Service Schema Definition
- * 
- * @schema serviceSchema
  */
 const serviceSchema = new mongoose.Schema({
   // ==========================================
   // REQUIRED FIELDS
   // ==========================================
   
-  /** 
+  /**
    * Service name
-   * Examples: General Checkup, Blood Test, X-Ray, etc.
+   * Examples: General Checkup, Blood Test, X-Ray
    */
   name: { 
     type: String, 
@@ -56,15 +55,20 @@ const serviceSchema = new mongoose.Schema({
   // OPTIONAL FIELDS
   // ==========================================
   
-  /** Service duration in minutes */
+  /**
+   * Service duration in minutes
+   * Default: 30 minutes
+   */
   duration: { 
     type: Number, 
-    default: 30, // Default 30 minutes
+    default: 30,
     min: [5, 'Duration must be at least 5 minutes'],
     max: [480, 'Duration cannot exceed 8 hours (480 minutes)']
   },
   
-  /** Whether service is currently offered */
+  /**
+   * Whether service is currently offered
+   */
   isActive: { 
     type: Boolean, 
     default: true 
@@ -74,13 +78,14 @@ const serviceSchema = new mongoose.Schema({
   // TIMESTAMPS
   // ==========================================
   
-  /** Service creation timestamp */
+  /**
+   * Service creation timestamp
+   */
   createdAt: { 
     type: Date, 
     default: Date.now 
   }
 }, {
-  // Mongoose options
   timestamps: false,
   toJSON: { 
     virtuals: true,
@@ -93,14 +98,9 @@ const serviceSchema = new mongoose.Schema({
   }
 });
 
-// ============================================
-// VIRTUAL PROPERTIES
-// ============================================
-
 /**
- * Get formatted duration (e.g., "30 minutes")
- * 
- * @virtual formattedDuration
+ * Virtual property to get formatted duration string.
+ * Example: "1h 30m" or "45 minutes"
  */
 serviceSchema.virtual('formattedDuration').get(function() {
   if (this.duration >= 60) {
@@ -112,51 +112,34 @@ serviceSchema.virtual('formattedDuration').get(function() {
 });
 
 /**
- * Get formatted price with currency symbol
- * 
- * @virtual formattedPrice
+ * Virtual property to get formatted price with currency.
+ * Example: "$150.00"
  */
 serviceSchema.virtual('formattedPrice').get(function() {
   return `$${this.price.toFixed(2)}`;
 });
 
-// ============================================
-// INSTANCE METHODS
-// ============================================
-
 /**
- * Toggle active status
- * 
- * @method toggleActive
+ * Instance method to toggle active status.
  */
 serviceSchema.methods.toggleActive = function() {
   this.isActive = !this.isActive;
   return this.save();
 };
 
-// ============================================
+// ==========================================
 // STATIC METHODS
-// * ============================================
+// ==========================================
 
 /**
- * Find all active services
- * 
- * @static
- * @method findActive
- * @returns {Promise<Service[]>}
+ * Find all active services.
  */
 serviceSchema.statics.findActive = function() {
   return this.find({ isActive: true });
 };
 
 /**
- * Find services within price range
- * 
- * @static
- * @method findByPriceRange
- * @param {number} min - Minimum price
- * @param {number} max - Maximum price
- * @returns {Promise<Service[]>}
+ * Find services within a price range.
  */
 serviceSchema.statics.findByPriceRange = function(min, max) {
   return this.find({ 
@@ -165,33 +148,18 @@ serviceSchema.statics.findByPriceRange = function(min, max) {
   });
 };
 
-// ============================================
-// INDEXES (FOR PERFORMANCE)
-// ============================================
+// ==========================================
+// INDEXES
+// ==========================================
 
-// Index on name for faster searches
-serviceSchema.index({ name: 'text', description: 'text' }); // Text index for search
-
-// Index on isActive for filtering
+serviceSchema.index({ name: 'text', description: 'text' });  // Text search
 serviceSchema.index({ isActive: 1 });
-
-// Index on price for sorting
 serviceSchema.index({ price: 1 });
 
-// ============================================
+// ==========================================
 // MODEL EXPORT
-// ============================================
+// ==========================================
 
-/**
- * Service Model
- * 
- * @typedef {Model<ServiceDocument>} Service
- */
 const Service = mongoose.model('Service', serviceSchema);
 
 module.exports = Service;
-
-// ============================================
-// DEBUG: Log schema creation
-// ============================================
-console.log('[Service Model] Schema created successfully');
