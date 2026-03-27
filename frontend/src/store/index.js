@@ -142,7 +142,7 @@ export const selectDoctorsError = (state) => state.doctors.error;
  * 4. To dispatch actions:
  *    - store.dispatch({ type: 'auth/login/pending' })
  * 5. Subscribe to changes:
- *    - store.subscribe(() => console.log(store.getState()))
+ *    - store.subscribe(() => store.getState())
  * 
  * =====================================================
  */

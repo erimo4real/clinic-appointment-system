@@ -10,7 +10,6 @@ const HeartIcon = () => (
 
 const Footer = () => {
   const [services, setServices] = useState([]);
-  const [doctors, setDoctors] = useState([]);
   const [stats, setStats] = useState({ doctorCount: 0, serviceCount: 0 });
 
   useEffect(() => {
@@ -24,8 +23,7 @@ const Footer = () => {
         const doctorsData = doctorsRes.data || [];
         const servicesData = servicesRes.data || [];
 
-        setDoctors(doctorsData);
-        setServices(servicesData.slice(0, 4)); // Show only first 4 services
+        setServices(servicesData.slice(0, 4));
         setStats({
           doctorCount: doctorsData.length,
           serviceCount: servicesData.length
@@ -37,15 +35,6 @@ const Footer = () => {
 
     fetchFooterData();
   }, []);
-
-  const getDoctorName = (doctor) => {
-    if (doctor.user) {
-      const firstName = doctor.user.firstName || '';
-      const lastName = doctor.user.lastName || '';
-      return `Dr. ${firstName} ${lastName}`.trim();
-    }
-    return doctor.fullName || doctor.name || 'Doctor';
-  };
 
   return (
     <footer className="bg-gray-900 text-gray-400 py-12">

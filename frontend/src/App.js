@@ -9,9 +9,9 @@
  * @component App
  */
 
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 
 import { ToastProvider } from './components/ui/Toast';
 import { ThemeProvider } from './components/ui/Theme';
@@ -27,7 +27,6 @@ import BookingPage from './features/appointments/components/BookingPage';
 import DoctorsPage from './features/doctors/components/DoctorsPage';
 import ServicesPage from './features/services/components/ServicesPage';
 
-// Admin Components
 import AdminLayout from './features/admin/components/AdminLayout';
 import AdminDashboard from './features/admin/components/AdminDashboard';
 import UserManagement from './features/admin/components/UserManagement';
@@ -35,21 +34,18 @@ import DoctorManagement from './features/admin/components/DoctorManagement';
 import AppointmentManagement from './features/admin/components/AppointmentManagement';
 import ServiceManagement from './features/admin/components/ServiceManagement';
 
-// Profile Components
 import PatientProfile from './features/profile/components/PatientProfile';
 import DoctorProfile from './features/profile/components/DoctorProfile';
 
-/**
- * Protected Route Component
- * 
- * Restricts access based on authentication and roles
- * 
- * @param {Object} props
- * @param {React.ReactNode} props.children - Child components
- * @param {string[]} [props.allowedRoles] - Allowed user roles
- */
+import { fetchCurrentUser, logout } from './features/auth/store/authSlice';
+import Header from './layout/Header';
+
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  
+  if (!isAuthenticated && loading) {
+    return null;
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -62,11 +58,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-/**
- * Admin Route Wrapper
- * 
- * Wraps admin routes with admin layout and protection
- */
 const AdminRoute = ({ children }) => {
   return (
     <ProtectedRoute allowedRoles={['admin']}>
@@ -77,35 +68,79 @@ const AdminRoute = ({ children }) => {
   );
 };
 
-/**
- * Main App Component
- * 
- * Defines all application routes
- */
+const DoctorRoute = ({ children }) => {
+  return (
+    <ProtectedRoute allowedRoles={['doctor']}>
+      <DoctorProfile />
+    </ProtectedRoute>
+  );
+};
+
+const StaffRoute = ({ children }) => {
+  return (
+    <ProtectedRoute allowedRoles={['receptionist', 'admin']}>
+      {children}
+    </ProtectedRoute>
+  );
+};
+
 const App = () => {
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  const [initialized, setInitialized] = useState(false);
+  
+  useEffect(() => {
+    if (!initialized) {
+      setInitialized(true);
+      if (isAuthenticated) {
+        dispatch(fetchCurrentUser());
+      }
+    }
+  }, [initialized]);
+  
+  const handleLogout = async () => {
+    await dispatch(logout());
+    navigate('/login');
+  };
+  
+  const getDashboardRoute = () => {
+    if (!user) return '/login';
+    switch (user.role) {
+      case 'admin':
+        return '/admin';
+      case 'doctor':
+        return '/profile';
+      case 'receptionist':
+        return '/dashboard';
+      default:
+        return '/profile';
+    }
+  };
   
   return (
     <ThemeProvider>
       <ToastProvider>
+        {isAuthenticated && <Header user={user} onLogout={handleLogout} />}
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/doctors" element={<DoctorsPage />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/login" element={isAuthenticated ? (user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/profile" replace />) : <LoginPage />} />
-          <Route path="/register" element={isAuthenticated ? (user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/profile" replace />) : <RegisterPage />} />
+          <Route path="/login" element={isAuthenticated && !loading ? <Navigate to={getDashboardRoute()} replace /> : <LoginPage />} />
+          <Route path="/register" element={isAuthenticated && !loading ? <Navigate to={getDashboardRoute()} replace /> : <RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordConfirmPage />} />
           <Route path="/booking" element={<BookingPage />} />
           
-          {/* Protected Routes - Role-based */}
+          {/* Patient Dashboard */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
               {user?.role === 'admin' ? <Navigate to="/admin" replace /> :
                user?.role === 'doctor' ? <Navigate to="/profile" replace /> : 
-               <Navigate to="/profile" replace />}
+               user?.role === 'receptionist' ? <Navigate to="/admin" replace /> :
+               <PatientProfile />}
             </ProtectedRoute>
           } />
           

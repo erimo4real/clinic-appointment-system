@@ -132,4 +132,30 @@ router.delete('/:id', auth, authorize('admin'), async (req, res) => {
   }
 });
 
+/**
+ * GET /api/doctors/:id/available-slots
+ * 
+ * Retrieves available appointment slots for a doctor on a specific date.
+ * 
+ * @route GET /api/doctors/:id/available-slots
+ * @param {string} id - Doctor's unique ID
+ * @query {string} date - Date in YYYY-MM-DD format
+ * @returns {200} Array of available time slots
+ */
+router.get('/:id/available-slots', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date } = req.query;
+    
+    if (!date) {
+      return res.status(400).json({ message: 'Date parameter is required' });
+    }
+    
+    const slots = await DoctorService.getAvailableSlots(id, date);
+    res.json(slots);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

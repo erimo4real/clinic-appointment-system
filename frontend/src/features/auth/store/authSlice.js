@@ -50,15 +50,9 @@ import api from '../../../shared/services/api';
  */
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
-    console.log('[Auth Slice] Attempting login for:', credentials.username);
-    
     const response = await api.post('/auth/login', credentials, { withCredentials: true });
-    
-    console.log('[Auth Slice] Login successful:', response.data.user);
     return response.data;
-    
   } catch (error) {
-    console.error('[Auth Slice] Login failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Login failed' });
   }
 });
@@ -75,15 +69,9 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
  */
 export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
-    console.log('[Auth Slice] Attempting registration for:', userData.email);
-    
     const response = await api.post('/auth/register', userData, { withCredentials: true });
-    
-    console.log('[Auth Slice] Registration successful:', response.data.user);
     return response.data;
-    
   } catch (error) {
-    console.error('[Auth Slice] Registration failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Registration failed' });
   }
 });
@@ -99,15 +87,9 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
  */
 export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, { rejectWithValue }) => {
   try {
-    console.log('[Auth Slice] Fetching current user profile');
-    
     const response = await api.get('/auth/me');
-    
-    console.log('[Auth Slice] Current user fetched:', response.data);
     return response.data;
-    
   } catch (error) {
-    console.error('[Auth Slice] Fetch user failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch user' });
   }
 });
@@ -117,16 +99,22 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
  */
 export const updateProfile = createAsyncThunk('auth/updateProfile', async (profileData, { rejectWithValue }) => {
   try {
-    console.log('[Auth Slice] Updating profile:', profileData);
-    
     const response = await api.put('/auth/profile', profileData);
-    
-    console.log('[Auth Slice] Profile updated:', response.data);
     return response.data;
-    
   } catch (error) {
-    console.error('[Auth Slice] Update profile failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to update profile' });
+  }
+});
+
+/**
+ * Logout user
+ */
+export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
+  try {
+    await api.post('/auth/logout');
+    return { success: true };
+  } catch (error) {
+    return rejectWithValue(error.response?.data || { error: 'Logout failed' });
   }
 });
 
@@ -164,7 +152,6 @@ const authSlice = createSlice({
      * @sideEffects Removes tokens from localStorage
      */
     logout: (state) => {
-      console.log('[Auth Slice] Logging out user');
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
@@ -190,19 +177,16 @@ const authSlice = createSlice({
       // LOGIN HANDLERS
       // ==================
       .addCase(login.pending, (state) => {
-        console.log('[Auth Slice] Login pending...');
         state.loading = true;
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        console.log('[Auth Slice] Login fulfilled:', action.payload.user);
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
-        console.log('[Auth Slice] Login rejected:', action.payload);
         state.loading = false;
         state.error = action.payload?.message || 'Login failed';
       })
@@ -211,19 +195,16 @@ const authSlice = createSlice({
       // REGISTER HANDLERS
       // ==================
       .addCase(register.pending, (state) => {
-        console.log('[Auth Slice] Registration pending...');
         state.loading = true;
         state.error = null;
       })
       .addCase(register.fulfilled, (state, action) => {
-        console.log('[Auth Slice] Registration fulfilled:', action.payload.user);
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.error = null;
       })
       .addCase(register.rejected, (state, action) => {
-        console.log('[Auth Slice] Registration rejected:', action.payload);
         state.loading = false;
         state.error = action.payload?.message || 'Registration failed';
       })
@@ -231,15 +212,28 @@ const authSlice = createSlice({
       // ==================
       // FETCH USER HANDLERS
       // ==================
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
-        console.log('[Auth Slice] User profile fetched:', action.payload);
+        state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
-        console.log('[Auth Slice] Fetch user rejected:', action.payload);
+        state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
+      })
+      
+      // ==================
+      // LOGOUT HANDLER
+      // ==================
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.loading = false;
+        state.error = null;
       });
   },
 });
@@ -251,7 +245,8 @@ const authSlice = createSlice({
  */
 
 // Action creators
-export const { logout, clearError } = authSlice.actions;
+export const { clearError } = authSlice.actions;
+export { logoutUser as logout };
 
 // Reducer (default export)
 export default authSlice.reducer;
@@ -273,7 +268,7 @@ export default authSlice.reducer;
  *    store.dispatch(login({ username: 'test', password: 'pass123' }))
  * 
  * 4. Subscribe to changes:
- *    store.subscribe(() => console.log('State changed:', store.getState().auth))
+ *    store.subscribe(() => store.getState().auth)
  * 
  * 5. Check localStorage tokens:
  *    localStorage.getItem('accessToken')

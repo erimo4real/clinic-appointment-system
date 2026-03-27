@@ -48,16 +48,10 @@ import api from '../../../shared/services/api';
  */
 export const fetchDoctors = createAsyncThunk('doctors/fetchAll', async (specialty, { rejectWithValue }) => {
   try {
-    console.log('[Doctor Slice] Fetching doctors, specialty:', specialty);
-    
     const params = specialty ? `?specialty=${specialty}` : '';
     const response = await api.get(`/doctors${params}`);
-    
-    console.log('[Doctor Slice] Doctors fetched:', response.data.length);
     return response.data;
-    
   } catch (error) {
-    console.error('[Doctor Slice] Fetch doctors failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch doctors' });
   }
 });
@@ -74,15 +68,9 @@ export const fetchDoctors = createAsyncThunk('doctors/fetchAll', async (specialt
  */
 export const fetchDoctorById = createAsyncThunk('doctors/fetchById', async (id, { rejectWithValue }) => {
   try {
-    console.log('[Doctor Slice] Fetching doctor:', id);
-    
     const response = await api.get(`/doctors/${id}`);
-    
-    console.log('[Doctor Slice] Doctor fetched:', response.data);
     return response.data;
-    
   } catch (error) {
-    console.error('[Doctor Slice] Fetch doctor failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch doctor' });
   }
 });
@@ -98,15 +86,9 @@ export const fetchDoctorById = createAsyncThunk('doctors/fetchById', async (id, 
  */
 export const fetchServices = createAsyncThunk('doctors/fetchServices', async (_, { rejectWithValue }) => {
   try {
-    console.log('[Doctor Slice] Fetching services');
-    
     const response = await api.get(`/services`);
-    
-    console.log('[Doctor Slice] Services fetched:', response.data.length);
     return response.data;
-    
   } catch (error) {
-    console.error('[Doctor Slice] Fetch services failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch services' });
   }
 });
@@ -123,15 +105,9 @@ export const fetchServices = createAsyncThunk('doctors/fetchServices', async (_,
  */
 export const fetchDoctorSchedule = createAsyncThunk('doctors/fetchSchedule', async (id, { rejectWithValue }) => {
   try {
-    console.log('[Doctor Slice] Fetching schedule for doctor:', id);
-    
     const response = await api.get(`/doctors/${id}/schedule`);
-    
-    console.log('[Doctor Slice] Schedule fetched:', response.data);
     return response.data;
-    
   } catch (error) {
-    console.error('[Doctor Slice] Fetch schedule failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch schedule' });
   }
 });
@@ -148,15 +124,9 @@ export const fetchDoctorSchedule = createAsyncThunk('doctors/fetchSchedule', asy
  */
 export const fetchAvailableSlots = createAsyncThunk('doctors/fetchSlots', async ({ doctorId, date }, { rejectWithValue }) => {
   try {
-    console.log('[Doctor Slice] Fetching slots for doctor:', doctorId, 'date:', date);
-    
     const response = await api.get(`/doctors/${doctorId}/available-slots?date=${date}`);
-    
-    console.log('[Doctor Slice] Slots fetched:', response.data.length);
     return response.data;
-    
   } catch (error) {
-    console.error('[Doctor Slice] Fetch slots failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch slots' });
   }
 });

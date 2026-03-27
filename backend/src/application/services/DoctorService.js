@@ -12,6 +12,7 @@
 
 const DoctorRepository = require('../../domain/repositories/DoctorRepository');
 const UserRepository = require('../../domain/repositories/UserRepository');
+const Appointment = require('../../domain/entities/Appointment');
 
 class DoctorService {
   /**
@@ -89,6 +90,50 @@ class DoctorService {
    */
   async deactivateDoctor(id) {
     return await DoctorRepository.deactivate(id);
+  }
+
+  /**
+   * Get available appointment slots for a doctor on a specific date.
+   * 
+   * @param {string} doctorId - Doctor's database ID
+   * @param {string} date - Date in YYYY-MM-DD format
+   * @returns {Array} Array of available time slots
+   */
+  async getAvailableSlots(doctorId, date) {
+    const doctor = await DoctorRepository.findById(doctorId);
+    if (!doctor) {
+      throw new Error('Doctor not found');
+    }
+
+    const startDate = new Date(date);
+    const endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1);
+
+    const appointments = await Appointment.find({
+      doctor: doctorId,
+      date: {
+        $gte: startDate,
+        $lt: endDate
+      },
+      status: { $ne: 'cancelled' }
+    });
+
+    const bookedSlots = appointments.map(apt => apt.startTime);
+
+    const allSlots = [];
+    const startHour = 9;
+    const endHour = 17;
+    
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let min = 0; min < 60; min += 30) {
+        const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+        if (!bookedSlots.includes(time)) {
+          allSlots.push(time);
+        }
+      }
+    }
+
+    return allSlots;
   }
 }
 

@@ -29,9 +29,8 @@ done
 # Check if database seeding is requested
 # Set RUN_SEED=true in docker-compose.yml for first-time setup
 if [ "$RUN_SEED" = "true" ] || [ "$RUN_SEED" = "1" ]; then
-  echo "Seeding database..."
-  node seed/seed.js
-  echo "Database seeding complete"
+  echo "Seeding database in background..."
+  node seed/seed.js > /dev/null 2>&1 &
 fi
 
 # Start the Node.js server

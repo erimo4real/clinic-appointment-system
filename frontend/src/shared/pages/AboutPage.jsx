@@ -47,7 +47,6 @@ const AboutPage = () => {
     services: 0,
     specialties: 0
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -69,8 +68,6 @@ const AboutPage = () => {
         });
       } catch (err) {
         console.error('Error fetching stats:', err);
-      } finally {
-        setLoading(false);
       }
     };
 

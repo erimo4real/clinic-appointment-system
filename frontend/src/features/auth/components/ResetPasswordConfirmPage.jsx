@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api from '../../../shared/services/api';
 
 const ResetPasswordConfirmPage = () => {

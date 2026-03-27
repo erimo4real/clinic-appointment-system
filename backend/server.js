@@ -22,6 +22,7 @@ require('dotenv').config();
 // Import required packages
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 // Import database connection function
 const connectDB = require('./src/infrastructure/config/db');
@@ -43,13 +44,15 @@ const app = express();
 // The server will exit with code 1 if connection fails
 connectDB();
 
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
+
 /**
  * CORS Middleware
  * Allows cross-origin requests from the frontend application.
  * In production, you should restrict this to your specific frontend domain.
  */
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: true,
   credentials: true,
 }));
 
@@ -66,6 +69,12 @@ app.use(express.json({ limit: '10mb' }));
  * The 'extended: true' option allows for rich objects and arrays.
  */
 app.use(express.urlencoded({ extended: true }));
+
+/**
+ * Cookie Parser Middleware
+ * Parses cookies from the request header
+ */
+app.use(cookieParser());
 
 /**
  * =====================================================

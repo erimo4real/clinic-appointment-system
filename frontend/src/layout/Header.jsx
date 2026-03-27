@@ -1,7 +1,7 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../features/auth/store/authSlice';
+import { logout as logoutAction } from '../features/auth/store/authSlice';
 
 const HeartIcon = () => (
   <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -45,18 +45,27 @@ const BellIcon = () => (
   </svg>
 );
 
-const Header = () => {
+const Header = ({ user: propUser, onLogout }) => {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const authState = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const location = useLocation();
   
+  const user = propUser || authState.user;
+  const isAuthenticated = authState.isAuthenticated;
+  
   const isActive = (path) => location.pathname === path;
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      await dispatch(logoutAction());
+      navigate('/login');
+    }
     setIsProfileOpen(false);
   };
 
@@ -166,7 +175,7 @@ const Header = () => {
                       <UserIcon />
                     </div>
                     <span className="text-sm font-medium text-gray-700">
-                      {user?.first_name || user?.username || 'User'}
+                      {user?.firstName || user?.first_name || user?.username || 'User'}
                     </span>
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

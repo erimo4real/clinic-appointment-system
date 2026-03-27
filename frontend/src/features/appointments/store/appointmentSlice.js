@@ -46,15 +46,9 @@ import api from '../../../shared/services/api';
  */
 export const fetchAppointments = createAsyncThunk('appointments/fetchAll', async (_, { rejectWithValue }) => {
   try {
-    console.log('[Appointment Slice] Fetching all appointments');
-    
     const response = await api.get('/appointments');
-    
-    console.log('[Appointment Slice] Appointments fetched:', response.data.length);
     return response.data;
-    
   } catch (error) {
-    console.error('[Appointment Slice] Fetch appointments failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch appointments' });
   }
 });
@@ -71,15 +65,9 @@ export const fetchAppointments = createAsyncThunk('appointments/fetchAll', async
 export const fetchTodayAppointments = createAsyncThunk('appointments/fetchToday', async (_, { rejectWithValue }) => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    console.log('[Appointment Slice] Fetching today appointments:', today);
-    
     const response = await api.get(`/appointments?date=${today}`);
-    
-    console.log('[Appointment Slice] Today appointments fetched:', response.data.length);
     return response.data;
-    
   } catch (error) {
-    console.error('[Appointment Slice] Fetch today appointments failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch today appointments' });
   }
 });
@@ -95,15 +83,9 @@ export const fetchTodayAppointments = createAsyncThunk('appointments/fetchToday'
  */
 export const fetchDashboardStats = createAsyncThunk('appointments/fetchStats', async (_, { rejectWithValue }) => {
   try {
-    console.log('[Appointment Slice] Fetching dashboard stats');
-    
     const response = await api.get('/appointments/stats');
-    
-    console.log('[Appointment Slice] Stats fetched:', response.data);
     return response.data;
-    
   } catch (error) {
-    console.error('[Appointment Slice] Fetch stats failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch stats' });
   }
 });
@@ -129,15 +111,9 @@ export const fetchDashboardStats = createAsyncThunk('appointments/fetchStats', a
  */
 export const createAppointment = createAsyncThunk('appointments/create', async (appointmentData, { rejectWithValue }) => {
   try {
-    console.log('[Appointment Slice] Creating appointment:', appointmentData);
-    
     const response = await api.post('/appointments', appointmentData);
-    
-    console.log('[Appointment Slice] Appointment created:', response.data);
     return response.data;
-    
   } catch (error) {
-    console.error('[Appointment Slice] Create appointment failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to create appointment' });
   }
 });
@@ -154,15 +130,9 @@ export const createAppointment = createAsyncThunk('appointments/create', async (
  */
 export const updateAppointment = createAsyncThunk('appointments/update', async ({ id, ...data }, { rejectWithValue }) => {
   try {
-    console.log('[Appointment Slice] Updating appointment:', id, data);
-    
     const response = await api.put(`/appointments/${id}`, data);
-    
-    console.log('[Appointment Slice] Appointment updated:', response.data);
     return response.data;
-    
   } catch (error) {
-    console.error('[Appointment Slice] Update appointment failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to update appointment' });
   }
 });
@@ -179,45 +149,27 @@ export const updateAppointment = createAsyncThunk('appointments/update', async (
  */
 export const cancelAppointment = createAsyncThunk('appointments/cancel', async (id, { rejectWithValue }) => {
   try {
-    console.log('[Appointment Slice] Cancelling appointment:', id);
-    
     const response = await api.delete(`/appointments/${id}`);
-    
-    console.log('[Appointment Slice] Appointment cancelled');
     return { id, ...response.data };
-    
   } catch (error) {
-    console.error('[Appointment Slice] Cancel appointment failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to cancel appointment' });
   }
 });
 
 export const fetchDoctorAppointments = createAsyncThunk('appointments/fetchDoctor', async (doctorId, { rejectWithValue }) => {
   try {
-    console.log('[Appointment Slice] Fetching doctor appointments:', doctorId);
-    
     const response = await api.get(`/appointments/doctor/${doctorId}`);
-    
-    console.log('[Appointment Slice] Doctor appointments fetched:', response.data.length);
     return response.data;
-    
   } catch (error) {
-    console.error('[Appointment Slice] Fetch doctor appointments failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch doctor appointments' });
   }
 });
 
 export const fetchMyAppointments = createAsyncThunk('appointments/fetchMy', async (_, { rejectWithValue }) => {
   try {
-    console.log('[Appointment Slice] Fetching my appointments');
-    
     const response = await api.get('/appointments');
-    
-    console.log('[Appointment Slice] My appointments fetched:', response.data.length);
     return response.data;
-    
   } catch (error) {
-    console.error('[Appointment Slice] Fetch my appointments failed:', error.response?.data || error.message);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch my appointments' });
   }
 });

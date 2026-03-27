@@ -431,7 +431,6 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(true);
   const [doctors, setDoctors] = useState([]);
   const [services, setServices] = useState([]);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -446,7 +445,6 @@ const LandingPage = () => {
         setServices(servicesRes.data || []);
       } catch (err) {
         console.error('Error fetching landing page data:', err);
-        setError(err.message);
         // Use empty arrays - fallback data will be shown
         setDoctors([]);
         setServices([]);

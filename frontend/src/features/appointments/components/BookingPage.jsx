@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors, fetchAvailableSlots, fetchServices } from '../../doctors/store/doctorSlice';
 import { createAppointment } from '../store/appointmentSlice';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card';
+import { Card, CardContent } from '../../../components/ui/Card';
 
 const Header = () => (
   <header className="bg-white border-b border-gray-200">
@@ -26,7 +26,6 @@ const Header = () => (
 
 const BookingPage = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { doctors, availableSlots, services, loading } = useSelector((state) => state.doctors);
   
   const [step, setStep] = useState(1);

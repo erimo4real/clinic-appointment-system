@@ -62,7 +62,7 @@ const seedData = {
       qualification: 'MD, FACC',
       experience: 15,
       bio: 'Dr. John Smith is a board-certified cardiologist with over 15 years of experience in treating heart conditions, preventive cardiology, and heart failure management.',
-      consultationFee: 150
+      consultationFee: 15000
     },
     {
       username: 'drjones',
@@ -76,7 +76,7 @@ const seedData = {
       qualification: 'MD, MBBS',
       experience: 10,
       bio: 'Dr. Sarah Jones is a general practitioner specializing in family medicine and preventive care. She is passionate about holistic patient care.',
-      consultationFee: 80
+      consultationFee: 8000
     },
     {
       username: 'drlee',
@@ -90,7 +90,7 @@ const seedData = {
       qualification: 'MD, FAAP',
       experience: 12,
       bio: 'Dr. David Lee specializes in pediatric care, providing comprehensive healthcare for children from infancy through adolescence.',
-      consultationFee: 100
+      consultationFee: 10000
     },
     {
       username: 'drbrown',
@@ -104,7 +104,7 @@ const seedData = {
       qualification: 'MD, FAAD',
       experience: 8,
       bio: 'Dr. Emily Brown is a dermatologist specializing in medical and cosmetic dermatology procedures including skin cancer screening.',
-      consultationFee: 120
+      consultationFee: 12000
     },
     {
       username: 'drwilson',
@@ -118,7 +118,7 @@ const seedData = {
       qualification: 'MD, FAAOS',
       experience: 20,
       bio: 'Dr. Michael Wilson is an orthopedic surgeon specializing in sports medicine and joint replacement surgery.',
-      consultationFee: 200
+      consultationFee: 20000
     },
     {
       username: 'droberts',
@@ -132,7 +132,7 @@ const seedData = {
       qualification: 'MD, PhD',
       experience: 14,
       bio: 'Dr. Jennifer Roberts is a neurologist specializing in stroke prevention, epilepsy treatment, and neurodegenerative disorders.',
-      consultationFee: 180
+      consultationFee: 18000
     },
     {
       username: 'drmartinez',
@@ -146,7 +146,7 @@ const seedData = {
       qualification: 'MD, FACG',
       experience: 11,
       bio: 'Dr. Carlos Martinez specializes in digestive health, liver diseases, and advanced endoscopic procedures.',
-      consultationFee: 160
+      consultationFee: 16000
     },
     {
       username: 'drkim',
@@ -160,7 +160,7 @@ const seedData = {
       qualification: 'MD, FACS',
       experience: 9,
       bio: 'Dr. Min-jun Kim is an ophthalmologist offering comprehensive eye care including cataract surgery and LASIK vision correction.',
-      consultationFee: 140
+      consultationFee: 14000
     },
     {
       username: 'drtaylor',
@@ -174,7 +174,7 @@ const seedData = {
       qualification: 'MD, FAPA',
       experience: 13,
       bio: 'Dr. Amanda Taylor is a psychiatrist specializing in anxiety, depression, and mood disorders with a focus on therapy-integrated treatment.',
-      consultationFee: 170
+      consultationFee: 17000
     },
     {
       username: 'dranderson',
@@ -188,7 +188,7 @@ const seedData = {
       qualification: 'MD, FCCP',
       experience: 16,
       bio: 'Dr. Robert Anderson specializes in respiratory diseases, asthma management, and sleep disorders.',
-      consultationFee: 155
+      consultationFee: 15500
     },
     {
       username: 'drthomas',
@@ -202,7 +202,7 @@ const seedData = {
       qualification: 'MD, FACE',
       experience: 10,
       bio: 'Dr. Lisa Thomas is an endocrinologist specializing in diabetes management, thyroid disorders, and hormonal imbalances.',
-      consultationFee: 145
+      consultationFee: 14500
     },
     {
       username: 'drwhite',
@@ -216,7 +216,7 @@ const seedData = {
       qualification: 'MD, FACS',
       experience: 18,
       bio: 'Dr. James White is a urologist offering comprehensive care for urinary tract conditions and male reproductive health.',
-      consultationFee: 165
+      consultationFee: 16500
     },
     {
       username: 'drharris',
@@ -230,7 +230,7 @@ const seedData = {
       qualification: 'MD, FACOG',
       experience: 12,
       bio: 'Dr. Michelle Harris is an OB/GYN providing comprehensive womens health services from adolescence through menopause.',
-      consultationFee: 130
+      consultationFee: 13000
     },
     {
       username: 'drclark',
@@ -244,7 +244,7 @@ const seedData = {
       qualification: 'MD, FACP',
       experience: 22,
       bio: 'Dr. William Clark is a medical oncologist specializing in cancer diagnosis, treatment, and survivorship care.',
-      consultationFee: 220
+      consultationFee: 22000
     },
     {
       username: 'drlewis',
@@ -258,7 +258,7 @@ const seedData = {
       qualification: 'MD, FACR',
       experience: 11,
       bio: 'Dr. Susan Lewis is a rheumatologist specializing in autoimmune diseases, arthritis, and inflammatory conditions.',
-      consultationFee: 150
+      consultationFee: 15000
     }
   ],
 
@@ -267,140 +267,140 @@ const seedData = {
     {
       name: 'General Consultation',
       description: 'Standard consultation with a general practitioner for common health issues and preventive care.',
-      price: 80,
+      price: 8000,
       duration: 30,
       isActive: true
     },
     {
       name: 'Annual Physical Exam',
       description: 'Comprehensive yearly health examination including vital signs, blood tests, and health counseling.',
-      price: 200,
+      price: 20000,
       duration: 60,
       isActive: true
     },
     {
       name: 'Cardiac Checkup',
       description: 'Complete heart health evaluation including ECG, stress test, and cardiovascular risk assessment.',
-      price: 250,
+      price: 25000,
       duration: 60,
       isActive: true
     },
     {
       name: 'Pediatric Checkup',
       description: 'Thorough health examination for children including growth assessment and developmental screening.',
-      price: 100,
+      price: 10000,
       duration: 45,
       isActive: true
     },
     {
       name: 'Dermatology Consultation',
       description: 'Skin health evaluation, mole screening, and treatment for various dermatological conditions.',
-      price: 120,
+      price: 12000,
       duration: 30,
       isActive: true
     },
     {
       name: 'Orthopedic Evaluation',
       description: 'Comprehensive musculoskeletal assessment including joint mobility and imaging review.',
-      price: 150,
+      price: 15000,
       duration: 45,
       isActive: true
     },
     {
       name: 'Neurology Consultation',
       description: 'Expert evaluation of neurological conditions including headaches, seizures, and movement disorders.',
-      price: 180,
+      price: 18000,
       duration: 45,
       isActive: true
     },
     {
       name: 'Eye Examination',
       description: 'Complete vision testing and eye health assessment including retinal examination.',
-      price: 100,
+      price: 10000,
       duration: 40,
       isActive: true
     },
     {
       name: 'Mental Health Consultation',
       description: 'Psychiatric evaluation and treatment planning for mental health conditions.',
-      price: 170,
+      price: 17000,
       duration: 60,
       isActive: true
     },
     {
       name: 'Blood Test Panel',
       description: 'Comprehensive blood work including CBC, metabolic panel, lipid profile, and thyroid function.',
-      price: 75,
+      price: 7500,
       duration: 15,
       isActive: true
     },
     {
       name: 'X-Ray Imaging',
       description: 'Diagnostic X-ray imaging for various body parts including chest, extremities, and spine.',
-      price: 100,
+      price: 10000,
       duration: 30,
       isActive: true
     },
     {
       name: 'Ultrasound Scan',
       description: 'Non-invasive imaging for abdominal, pelvic, or cardiac evaluation.',
-      price: 180,
+      price: 18000,
       duration: 45,
       isActive: true
     },
     {
       name: 'CT Scan',
       description: 'Advanced computed tomography imaging for detailed internal visualization.',
-      price: 350,
+      price: 35000,
       duration: 30,
       isActive: true
     },
     {
       name: 'MRI Scan',
       description: 'Magnetic resonance imaging for soft tissue and neurological evaluation.',
-      price: 500,
+      price: 50000,
       duration: 60,
       isActive: true
     },
     {
       name: 'ECG/EKG',
       description: 'Electrocardiogram to assess heart rhythm and detect cardiac abnormalities.',
-      price: 60,
+      price: 6000,
       duration: 20,
       isActive: true
     },
     {
       name: 'Vaccination',
       description: 'Various vaccinations including flu shots, travel vaccines, and childhood immunizations.',
-      price: 45,
+      price: 4500,
       duration: 15,
       isActive: true
     },
     {
       name: 'Wound Care',
       description: 'Professional wound assessment, cleaning, and treatment for acute and chronic wounds.',
-      price: 85,
+      price: 8500,
       duration: 30,
       isActive: true
     },
     {
       name: 'Allergy Testing',
       description: 'Comprehensive allergy screening to identify environmental and food sensitivities.',
-      price: 150,
+      price: 15000,
       duration: 45,
       isActive: true
     },
     {
       name: 'Diabetes Management',
       description: 'Comprehensive diabetes care including glucose monitoring, medication management, and lifestyle counseling.',
-      price: 120,
+      price: 12000,
       duration: 40,
       isActive: true
     },
     {
       name: 'Pre-Surgical Consultation',
       description: 'Pre-operative assessment and clearance for surgical procedures.',
-      price: 130,
+      price: 13000,
       duration: 45,
       isActive: true
     }
@@ -812,27 +812,28 @@ async function seedReceptionist() {
   return receptionist;
 }
 
-// ==========================================
-// MAIN SEED FUNCTION
-// ==========================================
+/**
+ * Creates sample appointments.
+ */
+async function seedAppointments(doctors, services, patients) {
+  if (doctors.length < 2 || services.length < 2 || patients.length < 2) {
+    console.log('[Seed] Skipping appointments - not enough data');
+    return;
+  }
 
-async function seed() {
-  try {
-    console.log('===========================================');
-    console.log('Clinic System - Database Seed');
-    console.log('===========================================');
-    console.log(`[Seed] Connecting to: ${MONGODB_URI}`);
+  for (const aptData of seedData.appointments) {
+    const appointmentDate = new Date();
+    appointmentDate.setDate(appointmentDate.getDate() + aptData.daysFromNow);
+    appointmentDate.setHours(9, 0, 0, 0);
 
-    await mongoose.connect(MONGODB_URI);
-    console.log('[Seed] Connected to MongoDB');
+    const [startHour, startMin] = aptData.startTime.split(':').map(Number);
+    appointmentDate.setHours(startHour, startMin);
 
-    await clearDatabase();
-    await seedAdmin();
-    await seedReceptionist();
-    const doctors = await seedDoctors();
-    const services = await seedServices();
-    const patients = await seedPatients();
-    await seedAppointments(doctors, services, patients);
+    const [endHour, endMin] = aptData.endTime.split(':').map(Number);
+    const endDate = new Date(appointmentDate);
+    endDate.setHours(endHour, endMin);
+
+    await Appointment.create({
       patient: patients[aptData.patientIndex]._id,
       doctor: doctors[aptData.doctorIndex].doctor._id,
       service: services[aptData.serviceIndex]._id,
@@ -863,24 +864,28 @@ async function seed() {
 
     await clearDatabase();
     await seedAdmin();
+    await seedReceptionist();
     const doctors = await seedDoctors();
     const services = await seedServices();
     const patients = await seedPatients();
     await seedAppointments(doctors, services, patients);
 
-    console.log('\n===========================================');
-    console.log('Database Seed Complete');
-    console.log('===========================================');
+    console.log('[Seed] ============================================');
+    console.log('[Seed] Database seeding completed successfully!');
+    console.log('[Seed] ============================================');
+
     console.log('\nSummary:');
     console.log(`  - 1 Admin user`);
+    console.log(`  - 1 Receptionist user`);
     console.log(`  - ${doctors.length} Doctors`);
     console.log(`  - ${services.length} Services`);
     console.log(`  - ${patients.length} Patients`);
     console.log(`  - ${seedData.appointments.length} Appointments`);
     console.log('\nTest Credentials:');
-    console.log('  Admin:   admin@medbookpro.com / admin123');
-    console.log('  Doctor:  dr.smith@medbookpro.com / doctor123');
-    console.log('  Patient: patient1@example.com / patient123');
+    console.log('  Admin:        admin@medbookpro.com / admin123');
+    console.log('  Receptionist: staff@medbookpro.com / staff123');
+    console.log('  Doctor:       dr.smith@medbookpro.com / doctor123');
+    console.log('  Patient:      patient1@example.com / patient123');
     console.log('===========================================\n');
 
   } catch (error) {

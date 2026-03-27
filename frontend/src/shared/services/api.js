@@ -19,8 +19,9 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const isAuthEndpoint = originalRequest.url.includes('/auth/');
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       
       try {
@@ -32,7 +33,7 @@ api.interceptors.response.use(
         
         return api(originalRequest);
       } catch (refreshError) {
-        window.location.href = '/login';
+        return Promise.reject(refreshError);
       }
     }
     

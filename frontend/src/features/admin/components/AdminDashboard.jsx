@@ -5,7 +5,7 @@ import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDocto
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
-  const { stats, appointments, users, doctors, loading } = useSelector((state) => state.admin);
+  const { stats, appointments, users, doctors } = useSelector((state) => state.admin);
 
   useEffect(() => {
     dispatch(fetchDashboardStats());

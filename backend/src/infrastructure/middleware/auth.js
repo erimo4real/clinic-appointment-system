@@ -38,17 +38,16 @@ const User = require('../../domain/entities/User');
  */
 const auth = async (req, res, next) => {
   try {
-    // Extract token from Authorization header
-    const authHeader = req.header('Authorization');
+    // First check for token in cookie (from httpOnly cookie)
+    let token = req.cookies.accessToken;
     
-    if (!authHeader) {
-      return res.status(401).json({ 
-        message: 'No token provided. Authorization denied.'
-      });
+    // If no cookie token, check Authorization header
+    if (!token) {
+      const authHeader = req.header('Authorization');
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+      }
     }
-    
-    // Remove "Bearer " prefix to get the actual token
-    const token = authHeader.replace('Bearer ', '');
     
     if (!token) {
       return res.status(401).json({ 

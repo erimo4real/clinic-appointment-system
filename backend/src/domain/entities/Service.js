@@ -113,10 +113,10 @@ serviceSchema.virtual('formattedDuration').get(function() {
 
 /**
  * Virtual property to get formatted price with currency.
- * Example: "$150.00"
+ * Example: "₦150,000.00"
  */
 serviceSchema.virtual('formattedPrice').get(function() {
-  return `$${this.price.toFixed(2)}`;
+  return `₦${this.price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 });
 
 /**

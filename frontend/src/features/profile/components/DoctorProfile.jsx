@@ -24,7 +24,7 @@ const StarRating = ({ rating, readonly = false }) => {
 const DoctorProfile = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { doctorFeedback, doctorStats, loading } = useSelector((state) => state.feedback);
+  const { doctorFeedback, doctorStats } = useSelector((state) => state.feedback);
   const { appointments } = useSelector((state) => state.appointments);
   const { currentDoctor } = useSelector((state) => state.doctors);
 

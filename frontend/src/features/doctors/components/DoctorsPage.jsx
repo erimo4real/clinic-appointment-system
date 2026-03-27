@@ -79,10 +79,6 @@ const DoctorsPage = () => {
     return doctor.fullName || doctor.name || 'Doctor';
   };
 
-  const getDoctorEmail = (doctor) => {
-    return doctor.user?.email || doctor.email || '';
-  };
-
   const filteredDoctors = selectedSpecialty
     ? doctors.filter(d => d.specialty === selectedSpecialty)
     : doctors;

@@ -93,7 +93,7 @@ const doctorSchema = new mongoose.Schema({
     maxlength: [1000, 'Bio cannot exceed 1000 characters']
   },
   
-  /** Consultation fee in dollars */
+  /** Consultation fee in Naira */
   consultationFee: { 
     type: Number, 
     required: [true, 'Consultation fee is required'],
@@ -139,6 +139,14 @@ const doctorSchema = new mongoose.Schema({
  */
 doctorSchema.virtual('fullName').get(function() {
   return this.user ? `${this.user.firstName} ${this.user.lastName}`.trim() : '';
+});
+
+/**
+ * Virtual property to get formatted consultation fee with currency.
+ * Example: "₦15,000.00"
+ */
+doctorSchema.virtual('formattedFee').get(function() {
+  return `₦${this.consultationFee.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 });
 
 /**
