@@ -9,8 +9,8 @@
  * @component App
  */
 
-import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { ToastProvider } from './components/ui/Toast';
@@ -37,7 +37,6 @@ import ServiceManagement from './features/admin/components/ServiceManagement';
 import PatientProfile from './features/profile/components/PatientProfile';
 import DoctorProfile from './features/profile/components/DoctorProfile';
 
-import { fetchCurrentUser, logout } from './features/auth/store/authSlice';
 import Header from './layout/Header';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -68,41 +67,8 @@ const AdminRoute = ({ children }) => {
   );
 };
 
-const DoctorRoute = ({ children }) => {
-  return (
-    <ProtectedRoute allowedRoles={['doctor']}>
-      <DoctorProfile />
-    </ProtectedRoute>
-  );
-};
-
-const StaffRoute = ({ children }) => {
-  return (
-    <ProtectedRoute allowedRoles={['receptionist', 'admin']}>
-      {children}
-    </ProtectedRoute>
-  );
-};
-
 const App = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
-  const [initialized, setInitialized] = useState(false);
-  
-  useEffect(() => {
-    if (!initialized) {
-      setInitialized(true);
-      if (isAuthenticated) {
-        dispatch(fetchCurrentUser());
-      }
-    }
-  }, [initialized]);
-  
-  const handleLogout = async () => {
-    await dispatch(logout());
-    navigate('/login');
-  };
   
   const getDashboardRoute = () => {
     if (!user) return '/login';
@@ -121,7 +87,7 @@ const App = () => {
   return (
     <ThemeProvider>
       <ToastProvider>
-        {isAuthenticated && <Header user={user} onLogout={handleLogout} />}
+        {isAuthenticated && <Header user={user} />}
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
