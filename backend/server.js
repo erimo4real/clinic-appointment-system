@@ -137,12 +137,15 @@ app.get('/api/health', (req, res) => {
  * Seed endpoint - call to populate database
  */
 app.get('/api/seed', async (req, res) => {
+  res.setTimeout(60000); // 60 second timeout
   try {
+    console.log('Starting seed, MONGODB_URI:', process.env.MONGODB_URI ? 'set' : 'not set');
     const seed = require('./seed/seed.js');
     await seed();
+    console.log('Seed complete');
     res.json({ message: 'Database seeded successfully!' });
   } catch (err) {
-    console.error('Seed error:', err);
+    console.error('Seed error:', err.message, err.stack);
     res.status(500).json({ message: 'Seed error: ' + err.message });
   }
 });
