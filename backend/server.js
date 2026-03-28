@@ -134,8 +134,28 @@ app.get('/api/health', (req, res) => {
 });
 
 /**
+ * Seed endpoint - call to populate database
+ */
+app.get('/api/seed', async (req, res) => {
+  try {
+    const seed = require('./seed/seed.js');
+    await seed();
+    res.json({ message: 'Database seeded successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: 'Seed error: ' + err.message });
+  }
+});
+
+/**
+ * Health check endpoint
+ */
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Clinic Appointment API running' });
+});
+
+/**
  * =====================================================
- * 404 NOT FOUND HANDLER
+ * 404 HANDLER
  * =====================================================
  * Catches all requests to undefined routes.
  * Should be placed after all valid routes.
