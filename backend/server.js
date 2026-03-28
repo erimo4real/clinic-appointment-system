@@ -42,7 +42,17 @@ const app = express();
 
 // Connect to MongoDB database
 // The server will exit with code 1 if connection fails
-connectDB();
+connectDB().then(() => {
+  // Run seed if RUN_SEED is true
+  if (process.env.RUN_SEED === 'true' || process.env.RUN_SEED === '1') {
+    console.log('Running database seed...');
+    require('./seed/seed.js').then(() => {
+      console.log('Database seeding complete');
+    }).catch(err => {
+      console.error('Seed error:', err.message);
+    });
+  }
+});
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
 

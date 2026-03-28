@@ -263,8 +263,6 @@ userSchema.statics.findByRole = function(role) {
 // INDEXES
 // ==========================================
 
-userSchema.index({ email: 1 });          // Faster login lookups
-userSchema.index({ username: 1 });       // Faster lookups
 userSchema.index({ role: 1 });          // Faster role filtering
 userSchema.index({ email: 1, role: 1 }); // Common query pattern
 
