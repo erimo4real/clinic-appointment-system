@@ -892,7 +892,9 @@ async function seed() {
     console.error('[Seed] Error:', error.message);
     throw error;
   } finally {
-    await mongoose.connection.close();
+    if (require.main === module) {
+      await mongoose.connection.close();
+    }
   }
 }
 

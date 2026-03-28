@@ -142,6 +142,7 @@ app.get('/api/seed', async (req, res) => {
     await seed();
     res.json({ message: 'Database seeded successfully!' });
   } catch (err) {
+    console.error('Seed error:', err);
     res.status(500).json({ message: 'Seed error: ' + err.message });
   }
 });
