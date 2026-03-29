@@ -134,19 +134,38 @@ app.get('/api/health', (req, res) => {
 });
 
 /**
- * Seed endpoint - call to populate database
+ * Seed endpoint - creates admin user and basic data
  */
 app.get('/api/seed', async (req, res) => {
-  res.setTimeout(60000); // 60 second timeout
   try {
-    console.log('Starting seed, MONGODB_URI:', process.env.MONGODB_URI ? 'set' : 'not set');
-    const seed = require('./seed/seed.js');
-    await seed();
-    console.log('Seed complete');
-    res.json({ message: 'Database seeded successfully!' });
+    const User = require('./src/domain/entities/User');
+    const Service = require('./src/domain/entities/Service');
+    const bcrypt = require('bcryptjs');
+    
+    const adminExists = await User.findOne({ email: 'admin@medbookpro.com' });
+    if (adminExists) {
+      return res.json({ message: 'Already seeded! Login with admin@medbookpro.com / admin123' });
+    }
+    
+    const admin = await User.create({
+      username: 'admin',
+      email: 'admin@medbookpro.com',
+      password: await bcrypt.hash('admin123', 10),
+      firstName: 'System',
+      lastName: 'Administrator',
+      role: 'admin',
+      phone: '+1234567890'
+    });
+    
+    await Service.insertMany([
+      { name: 'General Consultation', description: 'Standard consultation', price: 8000, duration: 30, isActive: true },
+      { name: 'Cardiac Checkup', description: 'Heart health evaluation', price: 25000, duration: 60, isActive: true },
+      { name: 'Pediatric Checkup', description: 'Child health examination', price: 10000, duration: 45, isActive: true },
+    ]);
+    
+    res.json({ message: 'Seeded! Login: admin@medbookpro.com / admin123' });
   } catch (err) {
-    console.error('Seed error:', err.message, err.stack);
-    res.status(500).json({ message: 'Seed error: ' + err.message });
+    res.status(500).json({ message: 'Error: ' + err.message });
   }
 });
 
