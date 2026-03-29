@@ -20,7 +20,8 @@ const Doctor = require('../src/domain/entities/Doctor');
 const Service = require('../src/domain/entities/Service');
 const Appointment = require('../src/domain/entities/Appointment');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/clinic_appointment';
+// Use the same MONGODB_URI as the server
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // ==========================================
 // SEED DATA DEFINITIONS
@@ -723,11 +724,16 @@ const seedData = {
  * Clears all existing data from collections.
  */
 async function clearDatabase() {
-  await User.deleteMany({});
-  await Doctor.deleteMany({});
-  await Service.deleteMany({});
-  await Appointment.deleteMany({});
-  console.log('[Seed] Database cleared');
+  try {
+    await User.deleteMany({});
+    await Doctor.deleteMany({});
+    await Service.deleteMany({});
+    await Appointment.deleteMany({});
+    await Feedback.deleteMany({});
+    console.log('[Seed] Database cleared');
+  } catch (err) {
+    console.log('[Seed] Some collections may not exist, continuing...');
+  }
 }
 
 /**
