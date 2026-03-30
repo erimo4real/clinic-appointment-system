@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../shared/services/api';
 import Header from '../../layout/Header';
 import Footer from '../../layout/Footer';
 import { Card, CardContent } from '../../components/ui/Card';
@@ -435,17 +434,17 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch doctors and services in parallel
+        const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
+        
         const [doctorsRes, servicesRes] = await Promise.all([
-          api.get('/doctors'),
-          api.get('/services')
+          fetch(API_URL + '/doctors').then(r => r.json()).catch(() => []),
+          fetch(API_URL + '/services').then(r => r.json()).catch(() => [])
         ]);
 
-        setDoctors(doctorsRes.data || []);
-        setServices(servicesRes.data || []);
+        setDoctors(doctorsRes || []);
+        setServices(servicesRes || []);
       } catch (err) {
         console.error('Error fetching landing page data:', err);
-        // Use empty arrays - fallback data will be shown
         setDoctors([]);
         setServices([]);
       } finally {
@@ -455,7 +454,6 @@ const LandingPage = () => {
 
     fetchData();
 
-    // Hide loading screen after 2 seconds max
     const timer = setTimeout(() => {
       setLoading(false);
     }, 2000);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../../shared/services/api';
+
+const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
 
 const Header = () => (
   <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -51,11 +52,10 @@ const DoctorsPage = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await api.get('/doctors');
-        const doctorsData = response.data || [];
-        setDoctors(doctorsData);
+        const response = await fetch(API_URL + '/doctors');
+        const doctorsData = await response.json();
+        setDoctors(doctorsData || []);
         
-        // Extract unique specialties
         const uniqueSpecialties = [...new Set(doctorsData.map(d => d.specialty).filter(Boolean))];
         setSpecialties(uniqueSpecialties);
       } catch (err) {

@@ -7,6 +7,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 api.interceptors.request.use(
@@ -22,7 +23,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        await api.post('/auth/refresh-token', {}, { withCredentials: true });
+        await api.post('/auth/refresh-token', {});
         return api(originalRequest);
       } catch (refreshError) {
         return Promise.reject(refreshError);

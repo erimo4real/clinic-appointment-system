@@ -67,7 +67,12 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
 app.use(cors({
   origin: true,
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 /**
  * JSON Parser Middleware
