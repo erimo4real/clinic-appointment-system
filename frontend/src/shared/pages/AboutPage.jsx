@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
+
+const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
 
 const Header = () => (
   <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -51,14 +52,13 @@ const AboutPage = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch doctors and services in parallel
         const [doctorsRes, servicesRes] = await Promise.all([
-          api.get('/doctors'),
-          api.get('/services')
+          fetch(API_URL + '/doctors').then(r => r.json()),
+          fetch(API_URL + '/services').then(r => r.json())
         ]);
 
-        const doctors = doctorsRes.data || [];
-        const services = servicesRes.data || [];
+        const doctors = doctorsRes || [];
+        const services = servicesRes || [];
         const specialties = [...new Set(doctors.map(d => d.specialty).filter(Boolean))];
 
         setStats({
