@@ -36,6 +36,10 @@ const appointmentRoutes = require('./src/application/routes/appointmentRoutes');
 const uploadRoutes = require('./src/application/routes/uploadRoutes');
 const adminRoutes = require('./src/application/routes/adminRoutes');
 const feedbackRoutes = require('./src/application/routes/feedbackRoutes');
+const medicalRecordRoutes = require('./src/application/routes/medicalRecordRoutes');
+const prescriptionRoutes = require('./src/application/routes/prescriptionRoutes');
+const searchRoutes = require('./src/application/routes/searchRoutes');
+const notificationRoutes = require('./src/application/routes/notificationRoutes');
 
 // Create Express application instance
 const app = express();
@@ -122,6 +126,18 @@ app.use('/api/admin', adminRoutes);
 
 // Feedback routes - patient feedback system for doctors
 app.use('/api/feedback', feedbackRoutes);
+
+// Medical records routes
+app.use('/api/medical-records', medicalRecordRoutes);
+
+// Prescriptions routes
+app.use('/api/prescriptions', prescriptionRoutes);
+
+// Search routes
+app.use('/api/search', searchRoutes);
+
+// Notification routes
+app.use('/api/notifications', notificationRoutes);
 
 /**
  * =====================================================
