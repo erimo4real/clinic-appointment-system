@@ -54,9 +54,10 @@ const DoctorsPage = () => {
       try {
         const response = await fetch(API_URL + '/doctors');
         const doctorsData = await response.json();
-        setDoctors(doctorsData || []);
+        const data = Array.isArray(doctorsData) ? doctorsData : [];
+        setDoctors(data);
         
-        const uniqueSpecialties = [...new Set(doctorsData.map(d => d.specialty).filter(Boolean))];
+        const uniqueSpecialties = [...new Set(data.map(d => d.specialty).filter(Boolean))];
         setSpecialties(uniqueSpecialties);
       } catch (err) {
         console.error('Error fetching doctors:', err);

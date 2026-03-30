@@ -100,7 +100,7 @@ const ServicesPage = () => {
       try {
         const response = await fetch(API_URL + '/services');
         const data = await response.json();
-        setServices(data || []);
+        setServices(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching services:', err);
         setError(err.message);

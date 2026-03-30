@@ -57,8 +57,8 @@ const AboutPage = () => {
           fetch(API_URL + '/services').then(r => r.json())
         ]);
 
-        const doctors = doctorsRes || [];
-        const services = servicesRes || [];
+        const doctors = Array.isArray(doctorsRes) ? doctorsRes : [];
+        const services = Array.isArray(servicesRes) ? servicesRes : [];
         const specialties = [...new Set(doctors.map(d => d.specialty).filter(Boolean))];
 
         setStats({
