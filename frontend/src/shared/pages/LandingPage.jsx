@@ -426,6 +426,11 @@ const About = ({ doctorCount = 0 }) => {
  * Main Landing Page Component
  * Fetches doctors and services from API
  */
+const getApiUrl = () => {
+  const base = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
+  return base.replace(/\/$/, '') + '/api';
+};
+
 const LandingPage = () => {
   const [loading, setLoading] = useState(true);
   const [doctors, setDoctors] = useState([]);
@@ -434,7 +439,7 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api';
+        const API_URL = getApiUrl();
         
         const [doctorsRes, servicesRes] = await Promise.all([
           fetch(API_URL + '/doctors').then(r => r.json()).catch(() => []),

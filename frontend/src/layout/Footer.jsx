@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api';
+const getApiUrl = () => {
+  const base = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
+  return base.replace(/\/$/, '') + '/api';
+};
+
+const API_URL = getApiUrl();
 
 const HeartIcon = () => (
   <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
