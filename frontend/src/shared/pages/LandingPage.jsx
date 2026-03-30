@@ -434,15 +434,15 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
+        const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api';
         
         const [doctorsRes, servicesRes] = await Promise.all([
           fetch(API_URL + '/doctors').then(r => r.json()).catch(() => []),
           fetch(API_URL + '/services').then(r => r.json()).catch(() => [])
         ]);
 
-        setDoctors(doctorsRes || []);
-        setServices(servicesRes || []);
+        setDoctors(Array.isArray(doctorsRes) ? doctorsRes : []);
+        setServices(Array.isArray(servicesRes) ? servicesRes : []);
       } catch (err) {
         console.error('Error fetching landing page data:', err);
         setDoctors([]);

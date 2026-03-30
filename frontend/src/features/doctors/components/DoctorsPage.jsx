@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api';
 
 const Header = () => (
   <header className="bg-white shadow-sm sticky top-0 z-50">

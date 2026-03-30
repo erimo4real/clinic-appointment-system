@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api';
 
 const HeartIcon = () => (
   <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
@@ -21,8 +21,8 @@ const Footer = () => {
           fetch(API_URL + '/services').then(r => r.json())
         ]);
 
-        const doctorsData = doctorsRes || [];
-        const servicesData = servicesRes || [];
+        const doctorsData = Array.isArray(doctorsRes) ? doctorsRes : [];
+        const servicesData = Array.isArray(servicesRes) ? servicesRes : [];
 
         setServices(servicesData.slice(0, 4));
         setStats({
