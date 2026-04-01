@@ -61,7 +61,7 @@ connectDB().then(() => {
   console.error('Database connection error:', err.message);
 });
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://clinic-appointment-management-sys.netlify.app';
 
 /**
  * CORS Middleware
@@ -69,7 +69,7 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
  * In production, you should restrict this to your specific frontend domain.
  */
 app.use(cors({
-  origin: true,
+  origin: FRONTEND_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
