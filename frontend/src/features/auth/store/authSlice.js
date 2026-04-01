@@ -111,13 +111,9 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (profi
  */
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     await api.post('/auth/logout');
     return { success: true };
   } catch (error) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     return rejectWithValue(error.response?.data || { error: 'Logout failed' });
   }
 });
@@ -150,20 +146,9 @@ const authSlice = createSlice({
    */
   reducers: {
     /**
-     * Set auth state from localStorage
-     */
-    setAuth: (state, action) => {
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
-      state.loading = false;
-      state.error = null;
-    },
-    
-    /**
      * Logout user
      * 
      * @action logout
-     * @sideEffects Removes tokens from localStorage
      */
     logout: (state) => {
       state.user = null;
@@ -259,7 +244,7 @@ const authSlice = createSlice({
  */
 
 // Action creators
-export const { clearError, setAuth, logout } = authSlice.actions;
+export const { clearError, logout } = authSlice.actions;
 export { logoutUser };
 
 // Reducer (default export)

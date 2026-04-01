@@ -66,17 +66,9 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.repl
 /**
  * CORS Middleware
  * Allows cross-origin requests from the frontend application.
- * In production, you should restrict this to your specific frontend domain.
  */
 app.use(cors({
-  origin: (origin, callback) => {
-    const normalizedOrigin = origin?.replace(/\/$/, '') || origin;
-    if (!origin || normalizedOrigin === FRONTEND_ORIGIN) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']

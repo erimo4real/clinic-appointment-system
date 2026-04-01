@@ -9,9 +9,10 @@
  * @component App
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { fetchCurrentUser } from './features/auth/store/authSlice';
 
 import { ToastProvider } from './components/ui/Toast';
 import { ThemeProvider } from './components/ui/Theme';
@@ -27,8 +28,6 @@ import BookingPage from './features/appointments/components/BookingPage';
 import DoctorsPage from './features/doctors/components/DoctorsPage';
 import ServicesPage from './features/services/components/ServicesPage';
 
-import { setAuth } from './features/auth/store/authSlice';
-
 import AdminLayout from './features/admin/components/AdminLayout';
 import AdminDashboard from './features/admin/components/AdminDashboard';
 import UserManagement from './features/admin/components/UserManagement';
@@ -41,11 +40,18 @@ import DoctorProfile from './features/profile/components/DoctorProfile';
 
 import Header from './layout/Header';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children, allowedRoles, sessionChecked }) => {
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
   
-  if (!isAuthenticated && loading) {
-    return null;
+  if (loading || !sessionChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
+          <div className="text-teal-600 font-medium">Loading...</div>
+        </div>
+      </div>
+    );
   }
   
   if (!isAuthenticated) {
@@ -59,9 +65,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-const AdminRoute = ({ children }) => {
+const AdminRoute = ({ children, sessionChecked }) => {
   return (
-    <ProtectedRoute allowedRoles={['admin']}>
+    <ProtectedRoute allowedRoles={['admin']} sessionChecked={sessionChecked}>
       <AdminLayout>
         {children}
       </AdminLayout>
@@ -72,20 +78,32 @@ const AdminRoute = ({ children }) => {
 const App = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
-  
+  const [sessionChecked, setSessionChecked] = useState(false);
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
+    const checkSession = async () => {
       try {
-        const userData = JSON.parse(savedUser);
-        dispatch(setAuth({ user: userData }));
-      } catch (e) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        await dispatch(fetchCurrentUser()).unwrap();
+      } catch (error) {
+        // Session not valid or no cookies - that's ok, user needs to login
       }
-    }
+      setSessionChecked(true);
+    };
+    checkSession();
   }, [dispatch]);
+
+  if (!sessionChecked) {
+    return (
+      <ThemeProvider>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
+            <div className="text-teal-600 font-medium">Loading...</div>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
   
   const getDashboardRoute = () => {
     if (!user) return '/login';
@@ -119,7 +137,7 @@ const App = () => {
           
           {/* Patient Dashboard */}
           <Route path="/dashboard" element={
-            <ProtectedRoute>
+            <ProtectedRoute sessionChecked={sessionChecked}>
               {user?.role === 'admin' ? <Navigate to="/admin" replace /> :
                user?.role === 'doctor' ? <Navigate to="/profile" replace /> : 
                user?.role === 'receptionist' ? <Navigate to="/admin" replace /> :
@@ -129,34 +147,34 @@ const App = () => {
           
           {/* Admin Routes */}
           <Route path="/admin" element={
-            <AdminRoute>
+            <AdminRoute sessionChecked={sessionChecked}>
               <AdminDashboard />
             </AdminRoute>
           } />
           <Route path="/admin/users" element={
-            <AdminRoute>
+            <AdminRoute sessionChecked={sessionChecked}>
               <UserManagement />
             </AdminRoute>
           } />
           <Route path="/admin/doctors" element={
-            <AdminRoute>
+            <AdminRoute sessionChecked={sessionChecked}>
               <DoctorManagement />
             </AdminRoute>
           } />
           <Route path="/admin/appointments" element={
-            <AdminRoute>
+            <AdminRoute sessionChecked={sessionChecked}>
               <AppointmentManagement />
             </AdminRoute>
           } />
           <Route path="/admin/services" element={
-            <AdminRoute>
+            <AdminRoute sessionChecked={sessionChecked}>
               <ServiceManagement />
             </AdminRoute>
           } />
 
           {/* Profile Routes */}
           <Route path="/profile" element={
-            <ProtectedRoute>
+            <ProtectedRoute sessionChecked={sessionChecked}>
               {user?.role === 'doctor' ? <DoctorProfile /> : <PatientProfile />}
             </ProtectedRoute>
           } />

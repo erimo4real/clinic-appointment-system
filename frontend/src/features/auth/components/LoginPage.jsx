@@ -22,11 +22,6 @@ const LoginPage = () => {
     e.preventDefault();
     const result = await dispatch(login(formData));
     if (login.fulfilled.match(result)) {
-      // Store token in localStorage for session persistence
-      if (result.payload.token) {
-        localStorage.setItem('token', result.payload.token);
-        localStorage.setItem('user', JSON.stringify(result.payload.user));
-      }
       navigate('/dashboard');
     }
   };
