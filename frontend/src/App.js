@@ -9,7 +9,7 @@
  * @component App
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -26,6 +26,8 @@ import ResetPasswordConfirmPage from './features/auth/components/ResetPasswordCo
 import BookingPage from './features/appointments/components/BookingPage';
 import DoctorsPage from './features/doctors/components/DoctorsPage';
 import ServicesPage from './features/services/components/ServicesPage';
+
+import { fetchCurrentUser } from './features/auth/store/authSlice';
 
 import AdminLayout from './features/admin/components/AdminLayout';
 import AdminDashboard from './features/admin/components/AdminDashboard';
@@ -68,7 +70,12 @@ const AdminRoute = ({ children }) => {
 };
 
 const App = () => {
+  const dispatch = useDispatch();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  
+  useEffect(() => {
+    dispatch(fetchCurrentUser());
+  }, [dispatch]);
   
   const getDashboardRoute = () => {
     if (!user) return '/login';
