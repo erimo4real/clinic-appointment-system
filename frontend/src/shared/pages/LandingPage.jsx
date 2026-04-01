@@ -144,12 +144,8 @@ const Services = ({ services }) => {
   };
 
   const getVisibleServices = () => {
-    if (services.length === 0) {
-      return [
-        { icon: '🩺', title: 'General Medicine', description: 'Comprehensive care for common health issues' },
-        { icon: '❤️', title: 'Cardiology', description: 'Expert heart care and cardiovascular prevention' },
-        { icon: '🦴', title: 'Orthopedics', description: 'Bone, joint, and muscle care' },
-      ];
+    if (!services || services.length === 0) {
+      return [];
     }
     const result = [];
     for (let i = 0; i < visibleServices; i++) {
@@ -159,6 +155,10 @@ const Services = ({ services }) => {
   };
 
   const visible = getVisibleServices();
+
+  if (!services || services.length === 0) {
+    return null;
+  }
 
   return (
     <section id="services" className="py-20 bg-gray-50">
@@ -171,13 +171,13 @@ const Services = ({ services }) => {
         <div className="relative">
           <div className="grid md:grid-cols-3 gap-8">
             {visible.map((service, index) => (
-              <Card key={index} className="hover:border-blue-200 hover:shadow-lg">
+              <Card key={index} className="hover:border-medical-200 hover:shadow-lg">
                 <CardContent className="pt-6">
                   <div className="text-4xl mb-4">{service.icon || '🏥'}</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name || service.title}</h3>
-                  <p className="text-gray-600">{service.description}</p>
-                  {service.price && (
-                    <p className="text-blue-600 font-semibold mt-2">${service.price}</p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name || 'Service'}</h3>
+                  <p className="text-gray-600">{service.description || ''}</p>
+                  {service.formattedPrice && (
+                    <p className="text-medical-600 font-semibold mt-2">{service.formattedPrice}</p>
                   )}
                 </CardContent>
               </Card>
