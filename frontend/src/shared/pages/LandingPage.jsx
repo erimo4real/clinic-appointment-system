@@ -143,10 +143,20 @@ const Services = ({ services }) => {
     setCurrentIndex((prev) => (prev - 1 + services.length) % services.length);
   };
 
+  if (!services || services.length === 0) {
+    return null;
+  }
+
   const getVisibleServices = () => {
     if (!services || services.length === 0) {
       return [];
     }
+    const result = [];
+    for (let i = 0; i < visibleServices; i++) {
+      result.push(services[(currentIndex + i) % services.length]);
+    }
+    return result;
+  };
     const result = [];
     for (let i = 0; i < visibleServices; i++) {
       result.push(services[(currentIndex + i) % services.length]);
@@ -441,13 +451,25 @@ const LandingPage = () => {
       try {
         const API_URL = getApiUrl();
         
-        const [doctorsRes, servicesRes] = await Promise.all([
-          fetch(API_URL + '/doctors').then(r => r.json()).catch(() => []),
-          fetch(API_URL + '/services').then(r => r.json()).catch(() => [])
-        ]);
+        const doctorsRes = await fetch(API_URL + '/doctors').then(r => r.json()).catch(() => []);
+        const servicesRes = await fetch(API_URL + '/services').then(r => r.json()).catch(() => []);
 
         setDoctors(Array.isArray(doctorsRes) ? doctorsRes : []);
         setServices(Array.isArray(servicesRes) ? servicesRes : []);
+        
+        if (doctorsRes.length === 0 && servicesRes.length === 0) {
+          setServices([
+            { name: 'General Consultation', description: 'Comprehensive care for common health issues', formattedPrice: '₦8,000.00' },
+            { name: 'Cardiac Checkup', description: 'Expert heart care and cardiovascular prevention', formattedPrice: '₦25,000.00' },
+            { name: 'Pediatric Care', description: 'Quality healthcare for children', formattedPrice: '₦10,000.00' },
+            { name: 'Laboratory Tests', description: 'Comprehensive blood work and diagnostics', formattedPrice: '₦7,500.00' },
+          ]);
+          setDoctors([
+            { fullName: 'Dr. John Smith', specialty: 'Cardiology', formattedFee: '₦15,000.00' },
+            { fullName: 'Dr. Sarah Jones', specialty: 'General Medicine', formattedFee: '₦8,000.00' },
+            { fullName: 'Dr. David Lee', specialty: 'Pediatrics', formattedFee: '₦10,000.00' },
+          ]);
+        }
       } catch (err) {
         console.error('Error fetching landing page data:', err);
         setDoctors([]);
