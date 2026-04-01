@@ -165,18 +165,8 @@ const Services = ({ services }) => {
     }
     return result;
   };
-    const result = [];
-    for (let i = 0; i < visibleServices; i++) {
-      result.push(services[(currentIndex + i) % services.length]);
-    }
-    return result;
-  };
 
   const visible = getVisibleServices();
-
-  if (!services || services.length === 0) {
-    return null;
-  }
 
   return (
     <section id="services" className="py-20 bg-gray-50">
