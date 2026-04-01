@@ -187,7 +187,7 @@ const DoctorsPage = () => {
                   </div>
                   {doctor.consultationFee && (
                     <div className="mt-3 text-medical-600 font-semibold">
-                      Consultation: ${doctor.consultationFee}
+                      Consultation: ₦{doctor.consultationFee?.toLocaleString()}
                     </div>
                   )}
                   {doctor.user?.phone && (

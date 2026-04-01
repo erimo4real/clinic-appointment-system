@@ -186,7 +186,7 @@ const DoctorProfile = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Consultation Fee</span>
-                  <span className="text-gray-900">${currentDoctor?.consultation_fee}</span>
+                  <span className="text-gray-900">₦{currentDoctor?.consultation_fee?.toLocaleString()}</span>
                 </div>
               </CardContent>
             </Card>

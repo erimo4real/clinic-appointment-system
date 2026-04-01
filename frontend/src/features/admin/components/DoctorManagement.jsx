@@ -176,7 +176,7 @@ const DoctorManagement = () => {
                     </TableCell>
                     <TableCell>{doctor.qualification || '-'}</TableCell>
                     <TableCell>{doctor.experience} years</TableCell>
-                    <TableCell>${doctor.consultation_fee}</TableCell>
+                    <TableCell>₦{doctor.consultation_fee?.toLocaleString()}</TableCell>
                     <TableCell>
                       <Badge variant={doctor.is_available ? 'success' : 'secondary'}>
                         {doctor.is_available ? 'Available' : 'Unavailable'}
@@ -267,7 +267,7 @@ const DoctorManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Consultation Fee ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Consultation Fee (₦)</label>
                   <Input
                     type="number"
                     value={formData.consultation_fee}

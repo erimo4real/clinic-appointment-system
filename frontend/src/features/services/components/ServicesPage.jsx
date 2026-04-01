@@ -174,7 +174,7 @@ const ServicesPage = () => {
                 <p className="text-gray-600 mb-4">{service.description}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-medical-600 font-semibold">
-                    {service.price ? `$${service.price}` : 'Contact for price'}
+                    {service.price ? `₦${service.price.toLocaleString()}` : 'Contact for price'}
                   </span>
                   <Link to="/booking" className="text-medical-600 font-medium hover:underline">
                     Book Now →

@@ -107,7 +107,7 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">${totalRevenue.toLocaleString()}</p>
+              <p className="text-2xl font-semibold text-gray-900 mt-1">₦{totalRevenue.toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
               <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

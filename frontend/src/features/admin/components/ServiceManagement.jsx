@@ -165,7 +165,7 @@ const ServiceManagement = () => {
                     </TableCell>
                     <TableCell>{service.duration} minutes</TableCell>
                     <TableCell>
-                      <span className="font-semibold text-green-600">${service.price}</span>
+                      <span className="font-semibold text-green-600">₦{service.price?.toLocaleString()}</span>
                     </TableCell>
                     <TableCell>
                       <Badge variant={service.is_active ? 'success' : 'secondary'}>
@@ -227,7 +227,7 @@ const ServiceManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₦)</label>
                   <Input
                     type="number"
                     value={formData.price}

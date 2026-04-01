@@ -172,7 +172,7 @@ const BookingPage = () => {
                         <div>
                           <h3 className="font-semibold text-gray-900">{doctor.name}</h3>
                           <p className="text-blue-600 text-sm">{doctor.specialty}</p>
-                          <p className="text-gray-500 text-sm">${doctor.consultation_fee}</p>
+                          <p className="text-gray-500 text-sm">₦{doctor.consultation_fee?.toLocaleString()}</p>
                         </div>
                       </div>
                     </button>
@@ -202,7 +202,7 @@ const BookingPage = () => {
                         <h3 className="font-semibold text-gray-900">{service.name}</h3>
                         <p className="text-gray-500 text-sm">{service.duration} minutes</p>
                       </div>
-                      <span className="text-blue-600 font-semibold">${service.price}</span>
+                      <span className="text-blue-600 font-semibold">₦{service.price?.toLocaleString()}</span>
                     </div>
                   </button>
                 ))}
@@ -283,7 +283,7 @@ const BookingPage = () => {
                   </div>
                   <div className="flex justify-between border-t pt-4">
                     <span className="text-gray-500">Total</span>
-                    <span className="font-bold text-blue-600 text-xl">${bookingData.service?.price}</span>
+                    <span className="font-bold text-blue-600 text-xl">₦{bookingData.service?.price?.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
