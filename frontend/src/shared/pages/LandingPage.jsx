@@ -104,7 +104,7 @@ const Hero = ({ doctorCount = 0 }) => {
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900">Featured Doctor</h3>
-                <p className="text-medical-600 font-medium">{doctors.length > 0 ? doctors[0].specialty : 'Cardiology'}</p>
+                <p className="text-medical-600 font-medium">Cardiology</p>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
