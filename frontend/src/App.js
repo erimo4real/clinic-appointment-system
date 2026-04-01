@@ -27,6 +27,8 @@ import BookingPage from './features/appointments/components/BookingPage';
 import DoctorsPage from './features/doctors/components/DoctorsPage';
 import ServicesPage from './features/services/components/ServicesPage';
 
+import { setAuth } from './features/auth/store/authSlice';
+
 import AdminLayout from './features/admin/components/AdminLayout';
 import AdminDashboard from './features/admin/components/AdminDashboard';
 import UserManagement from './features/admin/components/UserManagement';
@@ -70,6 +72,20 @@ const AdminRoute = ({ children }) => {
 const App = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        dispatch(setAuth({ user: userData }));
+      } catch (e) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+  }, [dispatch]);
   
   const getDashboardRoute = () => {
     if (!user) return '/login';
