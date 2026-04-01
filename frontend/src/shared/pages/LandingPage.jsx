@@ -94,22 +94,30 @@ const Hero = ({ doctorCount = 0 }) => {
             </div>
           </div>
           <div className="relative">
-            <div className="absolute -top-4 -left-4 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"></div>
-            <div className="absolute -bottom-4 -right-4 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"></div>
+            <div className="absolute -top-4 -left-4 w-72 h-72 bg-medical-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"></div>
+            <div className="absolute -bottom-4 -right-4 w-72 h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"></div>
             <div className="relative bg-white rounded-2xl shadow-2xl p-8">
-              <div className="aspect-video bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl mb-6 flex items-center justify-center">
-                <svg className="w-24 h-24 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </div>
-              <div className="space-y-4">
-                <div className="h-4 bg-gray-100 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-100 rounded w-1/2"></div>
-                <div className="flex space-x-2 pt-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg"></div>
-                  <div className="w-12 h-12 bg-indigo-100 rounded-lg"></div>
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg"></div>
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-medical-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-10 h-10 text-medical-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
                 </div>
+                <h3 className="text-xl font-semibold text-gray-900">Featured Doctor</h3>
+                <p className="text-medical-600 font-medium">{doctors.length > 0 ? doctors[0].specialty : 'Cardiology'}</p>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-yellow-500">⭐</span>
+                  <span className="text-gray-700">15+ Years Experience</span>
+                </div>
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-medical-500">✓</span>
+                  <span className="text-gray-700">Available Today</span>
+                </div>
+                <Link to="/booking" className="block w-full bg-medical-600 text-white text-center py-3 rounded-lg font-medium hover:bg-medical-700 transition-colors">
+                  Book Now
+                </Link>
               </div>
             </div>
           </div>
