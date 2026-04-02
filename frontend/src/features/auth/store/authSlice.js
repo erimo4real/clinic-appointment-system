@@ -245,7 +245,6 @@ const authSlice = createSlice({
 
 // Action creators
 export const { clearError, logout } = authSlice.actions;
-export { logoutUser };
 
 // Reducer (default export)
 export default authSlice.reducer;
