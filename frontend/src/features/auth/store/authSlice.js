@@ -184,6 +184,9 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.error = null;
+        if (action.payload.token) {
+          localStorage.setItem('accessToken', action.payload.token);
+        }
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -233,6 +236,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.loading = false;
         state.error = null;
+        localStorage.removeItem('accessToken');
       });
   },
 });
