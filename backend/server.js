@@ -61,7 +61,7 @@ connectDB().then(() => {
   console.error('Database connection error:', err.message);
 });
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : 'https://clinic-appointment-management-sys.netlify.app';
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://clinic-appointment-management-sys.netlify.app';
 
 /**
  * CORS Middleware
@@ -71,7 +71,8 @@ app.use(cors({
   origin: FRONTEND_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['set-cookie']
 }));
 
 // Handle preflight requests
@@ -194,6 +195,17 @@ app.get('/api/seed', async (req, res) => {
  */
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Clinic Appointment API running' });
+});
+
+/**
+ * Debug endpoint - check if cookies are being received
+ */
+app.get('/api/debug/cookies', (req, res) => {
+  res.json({ 
+    cookies: req.cookies,
+    hasAccessToken: !!req.cookies.accessToken,
+    frontendOrigin: FRONTEND_ORIGIN
+  });
 });
 
 /**
