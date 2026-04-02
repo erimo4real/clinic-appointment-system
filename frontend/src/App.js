@@ -10,7 +10,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCurrentUser } from './features/auth/store/authSlice';
 
@@ -77,8 +77,12 @@ const AdminRoute = ({ children, sessionChecked }) => {
 
 const App = () => {
   const dispatch = useDispatch();
+  const location = useLocation();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
   const [sessionChecked, setSessionChecked] = useState(false);
+
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const showHeader = isAuthenticated && !isAdminRoute;
 
   useEffect(() => {
     const checkSession = async () => {
@@ -122,7 +126,7 @@ const App = () => {
   return (
     <ThemeProvider>
       <ToastProvider>
-        {isAuthenticated && <Header user={user} />}
+        {showHeader && <Header user={user} />}
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
