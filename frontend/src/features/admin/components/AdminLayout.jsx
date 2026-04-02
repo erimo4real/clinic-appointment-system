@@ -46,15 +46,15 @@ const AdminLayout = () => {
       >
         <div className="h-full flex flex-col bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700">
           {/* Logo */}
-          <div className="h-16 flex items-center px-4 border-b border-gray-100 dark:border-gray-700">
+          <div className="h-16 flex items-center px-4 border-b border-gray-100">
             <Link to="/" className="flex items-center gap-3">
-              <div className="w-9 h-9 flex items-center justify-center bg-blue-600 rounded-lg">
+              <div className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg shadow-sm">
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                 </svg>
               </div>
               {sidebarOpen && (
-                <span className="text-lg font-semibold text-gray-800 dark:text-white">MedBook Pro</span>
+                <span className="text-lg font-bold text-gray-900">MedBook Pro</span>
               )}
             </Link>
           </div>
@@ -67,8 +67,8 @@ const AdminLayout = () => {
                   to={item.path}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                     isActive(item.path)
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
+                      ? 'bg-teal-50 text-teal-600 font-semibold'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
                   <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
