@@ -22,9 +22,6 @@ const LoginPage = () => {
     e.preventDefault();
     const result = await dispatch(login(formData));
     if (login.fulfilled.match(result)) {
-      if (result.payload.token) {
-        localStorage.setItem('accessToken', result.payload.token);
-      }
       navigate('/dashboard');
     }
   };
