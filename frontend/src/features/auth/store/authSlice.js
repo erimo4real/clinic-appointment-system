@@ -36,17 +36,10 @@ import api from '../../../shared/services/api';
  * Login user
  * 
  * @asyncThunk login
- * @param {Object} credentials - { username, password }
+ * @param {Object} credentials - { email, password }
  * @returns {Promise} User data and tokens on success
  * 
  * @calls POST /api/auth/login
- * @sideEffects Sets accessToken and refreshToken in localStorage
- * 
- * @example
- * const result = await dispatch(login({ username: 'john', password: 'pass123' }));
- * if (login.fulfilled.match(result)) {
- *   console.log('Logged in:', result.payload.user);
- * }
  */
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
@@ -65,7 +58,6 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
  * @returns {Promise} User data and tokens on success
  * 
  * @calls POST /api/auth/register
- * @sideEffects Sets accessToken and refreshToken in localStorage
  */
 export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
@@ -248,29 +240,3 @@ export const { clearError, logout } = authSlice.actions;
 
 // Reducer (default export)
 export default authSlice.reducer;
-
-/**
- * =====================================================
- * DEBUGGING GUIDE
- * =====================================================
- * 
- * In browser console:
- * 
- * 1. Import store:
- *    import store from './store';
- * 
- * 2. Check current auth state:
- *    store.getState().auth
- * 
- * 3. Dispatch login:
- *    store.dispatch(login({ username: 'test', password: 'pass123' }))
- * 
- * 4. Subscribe to changes:
- *    store.subscribe(() => store.getState().auth)
- * 
- * 5. Check localStorage tokens:
- *    localStorage.getItem('accessToken')
- *    localStorage.getItem('refreshToken')
- * 
- * =====================================================
- */
