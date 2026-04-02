@@ -161,6 +161,10 @@ const adminSlice = createSlice({
       completedAppointments: 0,
     },
     loading: false,
+    usersLoading: false,
+    doctorsLoading: false,
+    appointmentsLoading: false,
+    servicesLoading: false,
     error: null,
   },
   reducers: {
@@ -181,18 +185,55 @@ const adminSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.message;
       })
+      
+      .addCase(fetchAllUsers.pending, (state) => {
+        state.usersLoading = true;
+      })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
+        state.usersLoading = false;
         state.users = action.payload;
       })
+      .addCase(fetchAllUsers.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.error = action.payload?.message;
+      })
+      
+      .addCase(fetchAllDoctors.pending, (state) => {
+        state.doctorsLoading = true;
+      })
       .addCase(fetchAllDoctors.fulfilled, (state, action) => {
+        state.doctorsLoading = false;
         state.doctors = action.payload;
       })
+      .addCase(fetchAllDoctors.rejected, (state, action) => {
+        state.doctorsLoading = false;
+        state.error = action.payload?.message;
+      })
+      
+      .addCase(fetchAllAppointments.pending, (state) => {
+        state.appointmentsLoading = true;
+      })
       .addCase(fetchAllAppointments.fulfilled, (state, action) => {
+        state.appointmentsLoading = false;
         state.appointments = action.payload;
       })
+      .addCase(fetchAllAppointments.rejected, (state, action) => {
+        state.appointmentsLoading = false;
+        state.error = action.payload?.message;
+      })
+      
+      .addCase(fetchAllServices.pending, (state) => {
+        state.servicesLoading = true;
+      })
       .addCase(fetchAllServices.fulfilled, (state, action) => {
+        state.servicesLoading = false;
         state.services = action.payload;
       })
+      .addCase(fetchAllServices.rejected, (state, action) => {
+        state.servicesLoading = false;
+        state.error = action.payload?.message;
+      })
+      
       .addCase(createUser.fulfilled, (state, action) => {
         state.users.push(action.payload);
       })

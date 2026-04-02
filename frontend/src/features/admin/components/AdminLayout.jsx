@@ -201,8 +201,8 @@ const AdminLayout = () => {
                       {user?.first_name} {user?.last_name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 mt-2 capitalize">
-                      {user?.role || 'Admin'}
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700 mt-2">
+                      Admin
                     </span>
                   </div>
                   <div className="py-1">
