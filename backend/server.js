@@ -68,7 +68,7 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.repl
  * Allows cross-origin requests from the frontend application.
  */
 app.use(cors({
-  origin: true,
+  origin: FRONTEND_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
