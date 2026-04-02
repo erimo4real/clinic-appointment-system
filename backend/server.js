@@ -61,14 +61,24 @@ connectDB().then(() => {
   console.error('Database connection error:', err.message);
 });
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://clinic-appointment-management-sys.netlify.app';
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.replace(/\/$/, '') 
+  : 'https://clinic-appointment-management-sys.netlify.app';
 
 /**
  * CORS Middleware
  * Allows cross-origin requests from the frontend application.
  */
 app.use(cors({
-  origin: FRONTEND_ORIGIN,
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/$/, '');
+    if (cleanOrigin === FRONTEND_ORIGIN) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
