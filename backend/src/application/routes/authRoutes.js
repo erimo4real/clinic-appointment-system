@@ -122,9 +122,10 @@ router.post('/login', validateLogin, async (req, res) => {
     res.cookie('accessToken', result.token, { ...cookieOptions, maxAge: 60 * 60 * 1000 }); // 1 hour
     res.cookie('refreshToken', result.refreshToken, cookieOptions);
     
-    // Return user data (no token in body - using cookies only)
+    // Return user data AND token for Authorization header fallback
     res.json({ 
       user: result.user,
+      token: result.token,
       message: 'Login successful'
     });
   } catch (error) {
