@@ -24,7 +24,7 @@
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../../shared/services/api';
+import api, { setAuthToken, clearAuthToken } from '../../../shared/services/api';
 
 /**
  * =====================================================
@@ -32,18 +32,12 @@ import api from '../../../shared/services/api';
  * =====================================================
  */
 
-/**
- * Login user
- * 
- * @asyncThunk login
- * @param {Object} credentials - { email, password }
- * @returns {Promise} User data and tokens on success
- * 
- * @calls POST /api/auth/login
- */
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/login', credentials, { withCredentials: true });
+    if (response.data.token) {
+      setAuthToken(response.data.token);
+    }
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Login failed' });
@@ -62,6 +56,9 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
 export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/register', userData, { withCredentials: true });
+    if (response.data.token) {
+      setAuthToken(response.data.token);
+    }
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Registration failed' });
@@ -104,9 +101,11 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (profi
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
     await api.post('/auth/logout');
+    clearAuthToken();
     return { success: true };
   } catch (error) {
-    return rejectWithValue(error.response?.data || { error: 'Logout failed' });
+    clearAuthToken();
+    return { success: true };
   }
 });
 
@@ -137,22 +136,15 @@ const authSlice = createSlice({
    * Synchronous reducers (state mutations)
    */
   reducers: {
-    /**
-     * Logout user
-     * 
-     * @action logout
-     */
+    setCredentials: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+    },
     logout: (state) => {
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
     },
-    
-    /**
-     * Clear authentication error
-     * 
-     * @action clearError
-     */
     clearError: (state) => {
       state.error = null;
     },
@@ -236,7 +228,7 @@ const authSlice = createSlice({
  */
 
 // Action creators
-export const { clearError, logout } = authSlice.actions;
+export const { clearError, logout, setCredentials } = authSlice.actions;
 
 // Reducer (default export)
 export default authSlice.reducer;

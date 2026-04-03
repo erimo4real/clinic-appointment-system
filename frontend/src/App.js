@@ -9,9 +9,10 @@
  * @component App
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchCurrentUser, setCredentials } from './features/auth/store/authSlice';
 
 import { ToastProvider } from './components/ui/Toast';
 import { ThemeProvider } from './components/ui/Theme';
@@ -64,11 +65,38 @@ const AdminRoute = ({ children }) => {
 };
 
 const App = () => {
+  const dispatch = useDispatch();
   const location = useLocation();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const [initializing, setInitializing] = useState(true);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const showHeader = isAuthenticated && !isAdminRoute;
+
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        await dispatch(fetchCurrentUser()).unwrap();
+      } catch (err) {
+        // No valid session
+      }
+      setInitializing(false);
+    };
+    initSession();
+  }, [dispatch]);
+
+  if (initializing) {
+    return (
+      <ThemeProvider>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
+            <div className="text-teal-600 font-medium">Loading...</div>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
   
   const getDashboardRoute = () => {
     if (!user) return '/login';

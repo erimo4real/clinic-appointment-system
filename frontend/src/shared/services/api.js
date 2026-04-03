@@ -12,8 +12,23 @@ const api = axios.create({
   withCredentials: true,
 });
 
+let authToken = null;
+
+export const setAuthToken = (token) => {
+  authToken = token;
+};
+
+export const clearAuthToken = () => {
+  authToken = null;
+};
+
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 
@@ -27,9 +42,12 @@ api.interceptors.response.use(
       
       try {
         const response = await axios.post(`${API_URL}/auth/refresh-token`, {}, { withCredentials: true });
-        originalRequest.headers.Authorization = `Bearer ${response.data.token}`;
+        const newToken = response.data.token;
+        authToken = newToken;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
+        authToken = null;
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
