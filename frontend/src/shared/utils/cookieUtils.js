@@ -1,15 +1,17 @@
 export const getCookie = (name) => {
   if (typeof document === 'undefined') return null;
   
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop().split(';').shift();
+  const cookies = document.cookie.split(';');
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i].trim();
+    if (cookie.startsWith(name + '=')) {
+      return cookie.substring(name.length + 1);
+    }
   }
   return null;
 };
 
-export const setCookie = (name, value, days = 1) => {
+export const setCookie = (name, value, days = 7) => {
   if (typeof document === 'undefined') return;
   
   const expires = new Date();

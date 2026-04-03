@@ -10,7 +10,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
 });
 
 api.interceptors.request.use(
@@ -33,7 +32,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        const response = await axios.post(`${API_URL}/auth/refresh-token`, {}, { withCredentials: true });
+        const response = await axios.post(`${API_URL}/auth/refresh-token`, {});
         const newToken = response.data.token;
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
