@@ -19,12 +19,14 @@ const { auth } = require('../../infrastructure/middleware/auth');
 
 // Cookie configuration for secure token storage
 // httpOnly cookies prevent XSS attacks
+// Cross-origin cookies require sameSite: 'none' and secure: true
 const cookieOptions = {
   httpOnly: true,
-  secure: false,
-  sameSite: 'lax',
+  secure: true,
+  sameSite: 'none',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   path: '/',
+  domain: undefined, // Let browser handle domain automatically
 };
 
 /**
@@ -267,7 +269,9 @@ router.post('/refresh-token', async (req, res) => {
     // Set new access token in httpOnly cookie
     res.cookie('accessToken', result.token, { 
       ...cookieOptions, 
-      maxAge: 60 * 60 * 1000 
+      maxAge: 60 * 60 * 1000,
+      secure: true,
+      sameSite: 'none'
     });
     
     // Return new token for API interceptors

@@ -68,11 +68,12 @@ const FRONTEND_ORIGIN = (process.env.FRONTEND_URL || 'https://clinic-appointment
  * Allows cross-origin requests from the frontend application.
  */
 app.use(cors({
-  origin: FRONTEND_ORIGIN,
+  origin: true, // Reflect the request origin for cross-origin cookies
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-  exposedHeaders: ['set-cookie']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+  exposedHeaders: ['set-cookie', 'Set-Cookie'],
+  Vary: 'Origin'
 }));
 
 // Handle preflight requests
