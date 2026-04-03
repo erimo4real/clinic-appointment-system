@@ -87,8 +87,8 @@ router.post('/register', validateRegister, async (req, res) => {
     // Also set a readable cookie for cross-origin auth (non-httpOnly)
     res.cookie('auth_token', result.token, {
       httpOnly: false,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 60 * 60 * 1000,
       path: '/'
     });
@@ -136,8 +136,8 @@ router.post('/login', validateLogin, async (req, res) => {
     // Also set a readable cookie for cross-origin auth (non-httpOnly)
     res.cookie('auth_token', result.token, {
       httpOnly: false,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 60 * 60 * 1000,
       path: '/'
     });
