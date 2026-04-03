@@ -72,7 +72,6 @@ const AboutPage = () => {
           specialties: specialties.length
         });
       } catch (err) {
-        console.error('Error fetching stats:', err);
       }
     };
 

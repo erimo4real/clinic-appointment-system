@@ -469,7 +469,6 @@ const LandingPage = () => {
           ]);
         }
       } catch (err) {
-        console.error('Error fetching landing page data:', err);
         setDoctors([]);
         setServices([]);
       } finally {

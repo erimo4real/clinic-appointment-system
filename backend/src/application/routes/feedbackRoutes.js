@@ -63,8 +63,7 @@ const sendAdminNotification = async (feedback, doctor, patient) => {
   try {
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    // Log error but don't fail the request
-    console.error('Failed to send admin notification:', error.message);
+    // Silent fail - don't expose email errors
   }
 };
 
@@ -101,7 +100,7 @@ const sendDoctorNotification = async (feedback, doctor, patient) => {
   try {
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('Failed to send doctor notification:', error.message);
+    // Silent fail - don't expose email errors
   }
 };
 

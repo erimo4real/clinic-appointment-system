@@ -49,16 +49,14 @@ const app = express();
 connectDB().then(() => {
   // Run seed if RUN_SEED is true
   if (process.env.RUN_SEED === 'true' || process.env.RUN_SEED === '1') {
-    console.log('Running database seed...');
     try {
       require('./seed/seed.js');
-      console.log('Database seeding complete');
     } catch (err) {
-      console.error('Seed error:', err.message);
+      // Silent fail for seed errors
     }
   }
-}).catch(err => {
-  console.error('Database connection error:', err.message);
+}).catch(() => {
+  // Silent fail - process.exit handled in db.js
 });
 
 const FRONTEND_ORIGIN = (process.env.FRONTEND_URL || 'https://clinic-appointment-management-sys.netlify.app').replace(/\/$/, '');
@@ -251,8 +249,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port: ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  // Server started silently
 });
 
 // Export app for testing purposes

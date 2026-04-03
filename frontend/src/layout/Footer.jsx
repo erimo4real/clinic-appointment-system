@@ -35,7 +35,6 @@ const Footer = () => {
           serviceCount: servicesData.length
         });
       } catch (err) {
-        console.error('Error fetching footer data:', err);
       }
     };
 

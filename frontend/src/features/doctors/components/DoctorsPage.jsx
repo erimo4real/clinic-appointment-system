@@ -65,7 +65,6 @@ const DoctorsPage = () => {
         const uniqueSpecialties = [...new Set(data.map(d => d.specialty).filter(Boolean))];
         setSpecialties(uniqueSpecialties);
       } catch (err) {
-        console.error('Error fetching doctors:', err);
         setError(err.message);
       } finally {
         setLoading(false);

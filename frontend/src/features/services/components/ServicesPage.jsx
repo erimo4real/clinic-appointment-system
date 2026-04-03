@@ -107,7 +107,6 @@ const ServicesPage = () => {
         const data = await response.json();
         setServices(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error('Error fetching services:', err);
         setError(err.message);
       } finally {
         setLoading(false);
