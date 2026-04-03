@@ -15,6 +15,8 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    console.log('Token available:', !!token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,8 +26,12 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
   (error) => {
+    console.error('API Error:', error.response?.status, error.config?.url, error.message);
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
     }
