@@ -41,9 +41,9 @@ import DoctorProfile from './features/profile/components/DoctorProfile';
 import Header from './layout/Header';
 
 const ProtectedRoute = ({ children, allowedRoles, sessionChecked }) => {
-  const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   
-  if (loading || !sessionChecked) {
+  if (!sessionChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
         <div className="animate-pulse flex flex-col items-center">
@@ -85,15 +85,24 @@ const App = () => {
   const showHeader = isAuthenticated && !isAdminRoute;
 
   useEffect(() => {
+    let mounted = true;
+    
     const checkSession = async () => {
       try {
         await dispatch(fetchCurrentUser()).unwrap();
       } catch (error) {
-        // Session not valid or no cookies - that's ok, user needs to login
+        // Session not valid - user needs to login
       }
-      setSessionChecked(true);
+      if (mounted) {
+        setSessionChecked(true);
+      }
     };
+    
     checkSession();
+    
+    return () => {
+      mounted = false;
+    };
   }, [dispatch]);
 
   if (!sessionChecked) {
@@ -133,8 +142,8 @@ const App = () => {
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/doctors" element={<DoctorsPage />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/login" element={isAuthenticated && !loading ? <Navigate to={getDashboardRoute()} replace /> : <LoginPage />} />
-          <Route path="/register" element={isAuthenticated && !loading ? <Navigate to={getDashboardRoute()} replace /> : <RegisterPage />} />
+          <Route path="/login" element={isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <LoginPage />} />
+          <Route path="/register" element={isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordConfirmPage />} />
           <Route path="/booking" element={<BookingPage />} />
