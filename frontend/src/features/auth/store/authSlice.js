@@ -24,41 +24,20 @@
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api, { setAuthToken, clearAuthToken } from '../../../shared/services/api';
-
-/**
- * =====================================================
- * ASYNC THUNKS - API CALLS
- * =====================================================
- */
+import api from '../../../shared/services/api';
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/login', credentials, { withCredentials: true });
-    if (response.data.token) {
-      setAuthToken(response.data.token);
-    }
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Login failed' });
   }
 });
 
-/**
- * Register new user
- * 
- * @asyncThunk register
- * @param {Object} userData - { username, email, password, firstName, lastName, role }
- * @returns {Promise} User data and tokens on success
- * 
- * @calls POST /api/auth/register
- */
 export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/register', userData, { withCredentials: true });
-    if (response.data.token) {
-      setAuthToken(response.data.token);
-    }
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Registration failed' });
@@ -98,15 +77,15 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (profi
 /**
  * Logout user
  */
+import { deleteCookie } from '../../../shared/utils/cookieUtils';
+
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
     await api.post('/auth/logout');
-    clearAuthToken();
-    return { success: true };
   } catch (error) {
-    clearAuthToken();
-    return { success: true };
   }
+  deleteCookie('auth_token');
+  return { success: true };
 });
 
 /**

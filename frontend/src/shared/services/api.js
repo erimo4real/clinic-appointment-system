@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCookie } from '../utils/cookieUtils';
 
 const API_URL = process.env.REACT_APP_API_URL 
   ? process.env.REACT_APP_API_URL.replace(/\/$/, '') + '/api'
@@ -12,20 +13,11 @@ const api = axios.create({
   withCredentials: true,
 });
 
-let authToken = null;
-
-export const setAuthToken = (token) => {
-  authToken = token;
-};
-
-export const clearAuthToken = () => {
-  authToken = null;
-};
-
 api.interceptors.request.use(
   (config) => {
-    if (authToken) {
-      config.headers.Authorization = `Bearer ${authToken}`;
+    const token = getCookie('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -43,11 +35,9 @@ api.interceptors.response.use(
       try {
         const response = await axios.post(`${API_URL}/auth/refresh-token`, {}, { withCredentials: true });
         const newToken = response.data.token;
-        authToken = newToken;
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        authToken = null;
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }

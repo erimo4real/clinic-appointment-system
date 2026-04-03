@@ -84,9 +84,19 @@ router.post('/register', validateRegister, async (req, res) => {
     res.cookie('accessToken', result.token, { ...cookieOptions, maxAge: 60 * 60 * 1000 }); // 1 hour
     res.cookie('refreshToken', result.refreshToken, cookieOptions);
     
-    // Return user data without exposing tokens in response body
+    // Also set a readable cookie for cross-origin auth (non-httpOnly)
+    res.cookie('auth_token', result.token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 1000,
+      path: '/'
+    });
+    
+    // Return user data and token
     res.status(201).json({ 
       user: result.user,
+      token: result.token,
       message: 'Registration successful'
     });
   } catch (error) {
@@ -119,11 +129,20 @@ router.post('/login', validateLogin, async (req, res) => {
     // Authenticate user via AuthService
     const result = await AuthService.login(email, password);
     
-    // Set tokens in httpOnly cookies
+    // Set httpOnly cookies for secure token storage
     res.cookie('accessToken', result.token, { ...cookieOptions, maxAge: 60 * 60 * 1000 }); // 1 hour
     res.cookie('refreshToken', result.refreshToken, cookieOptions);
     
-    // Return user data AND token for Authorization header fallback
+    // Also set a readable cookie for cross-origin auth (non-httpOnly)
+    res.cookie('auth_token', result.token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 1000,
+      path: '/'
+    });
+    
+    // Return user data AND token
     res.json({ 
       user: result.user,
       token: result.token,
