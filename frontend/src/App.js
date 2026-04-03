@@ -9,10 +9,9 @@
  * @component App
  */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchCurrentUser } from './features/auth/store/authSlice';
+import { useSelector } from 'react-redux';
 
 import { ToastProvider } from './components/ui/Toast';
 import { ThemeProvider } from './components/ui/Theme';
@@ -40,19 +39,8 @@ import DoctorProfile from './features/profile/components/DoctorProfile';
 
 import Header from './layout/Header';
 
-const ProtectedRoute = ({ children, allowedRoles, sessionChecked }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
-  
-  if (!sessionChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
-          <div className="text-teal-600 font-medium">Loading...</div>
-        </div>
-      </div>
-    );
-  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -65,9 +53,9 @@ const ProtectedRoute = ({ children, allowedRoles, sessionChecked }) => {
   return children;
 };
 
-const AdminRoute = ({ children, sessionChecked }) => {
+const AdminRoute = ({ children }) => {
   return (
-    <ProtectedRoute allowedRoles={['admin']} sessionChecked={sessionChecked}>
+    <ProtectedRoute allowedRoles={['admin']}>
       <AdminLayout>
         {children}
       </AdminLayout>
@@ -76,47 +64,11 @@ const AdminRoute = ({ children, sessionChecked }) => {
 };
 
 const App = () => {
-  const dispatch = useDispatch();
   const location = useLocation();
-  const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
-  const [sessionChecked, setSessionChecked] = useState(false);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const showHeader = isAuthenticated && !isAdminRoute;
-
-  useEffect(() => {
-    let mounted = true;
-    
-    const checkSession = async () => {
-      try {
-        await dispatch(fetchCurrentUser()).unwrap();
-      } catch (error) {
-        // Session not valid - user needs to login
-      }
-      if (mounted) {
-        setSessionChecked(true);
-      }
-    };
-    
-    checkSession();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [dispatch]);
-
-  if (!sessionChecked) {
-    return (
-      <ThemeProvider>
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
-            <div className="text-teal-600 font-medium">Loading...</div>
-          </div>
-        </div>
-      </ThemeProvider>
-    );
-  }
   
   const getDashboardRoute = () => {
     if (!user) return '/login';
@@ -150,7 +102,7 @@ const App = () => {
           
           {/* Patient Dashboard */}
           <Route path="/dashboard" element={
-            <ProtectedRoute sessionChecked={sessionChecked}>
+            <ProtectedRoute>
               {user?.role === 'admin' ? <Navigate to="/admin" replace /> :
                user?.role === 'doctor' ? <Navigate to="/profile" replace /> : 
                user?.role === 'receptionist' ? <Navigate to="/admin" replace /> :
@@ -159,35 +111,15 @@ const App = () => {
           } />
           
           {/* Admin Routes */}
-          <Route path="/admin" element={
-            <AdminRoute sessionChecked={sessionChecked}>
-              <AdminDashboard />
-            </AdminRoute>
-          } />
-          <Route path="/admin/users" element={
-            <AdminRoute sessionChecked={sessionChecked}>
-              <UserManagement />
-            </AdminRoute>
-          } />
-          <Route path="/admin/doctors" element={
-            <AdminRoute sessionChecked={sessionChecked}>
-              <DoctorManagement />
-            </AdminRoute>
-          } />
-          <Route path="/admin/appointments" element={
-            <AdminRoute sessionChecked={sessionChecked}>
-              <AppointmentManagement />
-            </AdminRoute>
-          } />
-          <Route path="/admin/services" element={
-            <AdminRoute sessionChecked={sessionChecked}>
-              <ServiceManagement />
-            </AdminRoute>
-          } />
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
+          <Route path="/admin/doctors" element={<AdminRoute><DoctorManagement /></AdminRoute>} />
+          <Route path="/admin/appointments" element={<AdminRoute><AppointmentManagement /></AdminRoute>} />
+          <Route path="/admin/services" element={<AdminRoute><ServiceManagement /></AdminRoute>} />
 
           {/* Profile Routes */}
           <Route path="/profile" element={
-            <ProtectedRoute sessionChecked={sessionChecked}>
+            <ProtectedRoute>
               {user?.role === 'doctor' ? <DoctorProfile /> : <PatientProfile />}
             </ProtectedRoute>
           } />
