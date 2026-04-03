@@ -44,10 +44,6 @@ import api from '../../../shared/services/api';
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/login', credentials, { withCredentials: true });
-    // Save token for Authorization header fallback
-    if (response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-    }
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Login failed' });
@@ -66,10 +62,6 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
 export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/register', userData, { withCredentials: true });
-    // Save token for Authorization header fallback
-    if (response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-    }
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Registration failed' });
@@ -154,7 +146,6 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
-      localStorage.removeItem('authToken');
     },
     
     /**
@@ -234,7 +225,6 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.loading = false;
         state.error = null;
-        localStorage.removeItem('authToken');
       });
   },
 });

@@ -89,17 +89,6 @@ const App = () => {
       try {
         await dispatch(fetchCurrentUser()).unwrap();
       } catch (error) {
-        // Check if we have a localStorage token as fallback
-        const token = localStorage.getItem('authToken');
-        if (token) {
-          // Token exists, try to validate it
-          try {
-            await dispatch(fetchCurrentUser()).unwrap();
-          } catch (innerError) {
-            // Token invalid, clear it
-            localStorage.removeItem('authToken');
-          }
-        }
         // Session not valid or no cookies - that's ok, user needs to login
       }
       setSessionChecked(true);
