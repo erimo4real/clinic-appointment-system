@@ -3,60 +3,45 @@ import api from '../../../shared/services/api';
 
 export const fetchAllUsers = createAsyncThunk('admin/fetchUsers', async (_, { rejectWithValue }) => {
   try {
-    console.log('Fetching users...');
     const response = await api.get('/admin/users');
-    console.log('Users fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch users:', error);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch users' });
   }
 });
 
 export const fetchAllDoctors = createAsyncThunk('admin/fetchDoctors', async (_, { rejectWithValue }) => {
   try {
-    console.log('Fetching doctors...');
     const response = await api.get('/admin/doctors');
-    console.log('Doctors fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch doctors:', error);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch doctors' });
   }
 });
 
 export const fetchAllAppointments = createAsyncThunk('admin/fetchAppointments', async (_, { rejectWithValue }) => {
   try {
-    console.log('Fetching appointments...');
     const response = await api.get('/admin/appointments');
-    console.log('Appointments fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch appointments:', error);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch appointments' });
   }
 });
 
 export const fetchAllServices = createAsyncThunk('admin/fetchServices', async (_, { rejectWithValue }) => {
   try {
-    console.log('Fetching services...');
     const response = await api.get('/admin/services');
-    console.log('Services fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch services:', error);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch services' });
   }
 });
 
 export const fetchDashboardStats = createAsyncThunk('admin/fetchStats', async (_, { rejectWithValue }) => {
   try {
-    console.log('Fetching stats...');
     const response = await api.get('/admin/stats');
-    console.log('Stats fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch stats:', error);
     return rejectWithValue(error.response?.data || { error: 'Failed to fetch stats' });
   }
 });

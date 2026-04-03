@@ -68,13 +68,7 @@ const FRONTEND_ORIGIN = (process.env.FRONTEND_URL || 'https://clinic-appointment
  * Allows cross-origin requests from the frontend application.
  */
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || origin.replace(/\/$/, '') === FRONTEND_ORIGIN) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: FRONTEND_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
