@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../../auth/store/authSlice';
+import { logoutUser } from '../../auth/store/authSlice';
 import Breadcrumbs from '../../../components/ui/Breadcrumbs';
 import { DarkModeToggle } from '../../../components/ui/Theme';
 
@@ -15,8 +15,9 @@ const AdminLayout = () => {
   const { user } = useSelector((state) => state.auth);
 
   const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
+    dispatch(logoutUser()).then(() => {
+      navigate('/login');
+    });
     setProfileOpen(false);
   };
 
