@@ -136,10 +136,17 @@ router.post('/login', validateLogin, async (req, res) => {
     // Also set a readable cookie for cross-origin auth (non-httpOnly)
     res.cookie('auth_token', result.token, {
       httpOnly: false,
-      secure: true,
+      secure: false,
       sameSite: 'none',
       maxAge: 60 * 60 * 1000,
       path: '/'
+    });
+    
+    // Return user data and token
+    res.status(201).json({ 
+      user: result.user,
+      token: result.token,
+      message: 'Registration successful'
     });
     
     // Return user data AND token
