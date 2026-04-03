@@ -84,8 +84,6 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (profi
 /**
  * Logout user
  */
-import { deleteCookie } from '../../../shared/utils/cookieUtils';
-
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
     await api.post('/auth/logout');
