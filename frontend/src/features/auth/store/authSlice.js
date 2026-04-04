@@ -25,14 +25,11 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../../shared/services/api';
-import { setCookie, getCookie, deleteCookie } from '../../../shared/utils/cookieUtils';
+import { deleteCookie } from '../../../shared/utils/cookieUtils';
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/login', credentials);
-    if (response.data.token) {
-      setCookie('auth_token', response.data.token, 7);
-    }
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Login failed' });
@@ -42,9 +39,6 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
 export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/register', userData);
-    if (response.data.token) {
-      setCookie('auth_token', response.data.token, 7);
-    }
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data || { error: 'Registration failed' });

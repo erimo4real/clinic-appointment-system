@@ -38,10 +38,15 @@ const User = require('../../domain/entities/User');
  */
 const auth = async (req, res, next) => {
   try {
-    // First check for token in cookie (from httpOnly cookie)
-    let token = req.cookies.accessToken;
+    // Check for token in cookie first (auth_token is httpOnly cookie set by backend)
+    let token = req.cookies.auth_token;
     
-    // If no cookie token, check Authorization header
+    // Fall back to accessToken cookie if auth_token not found
+    if (!token) {
+      token = req.cookies.accessToken;
+    }
+    
+    // If no cookie token, check Authorization header (for non-cookie requests)
     if (!token) {
       const authHeader = req.header('Authorization');
       if (authHeader) {

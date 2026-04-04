@@ -13,7 +13,6 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCurrentUser } from './features/auth/store/authSlice';
-import { getCookie } from './shared/utils/cookieUtils';
 
 import { ToastProvider } from './components/ui/Toast';
 import { ThemeProvider } from './components/ui/Theme';
@@ -78,15 +77,10 @@ const App = () => {
     let mounted = true;
     
     const checkSession = async () => {
-      // Check if cookie exists
-      const hasToken = getCookie('auth_token');
-      
-      if (hasToken) {
-        try {
-          await dispatch(fetchCurrentUser()).unwrap();
-        } catch (err) {
-          // Token invalid or expired - will stay logged out
-        }
+      try {
+        await dispatch(fetchCurrentUser()).unwrap();
+      } catch (err) {
+        // No valid session - user needs to login
       }
       
       if (mounted) {

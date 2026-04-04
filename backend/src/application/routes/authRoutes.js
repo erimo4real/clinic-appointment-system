@@ -68,10 +68,18 @@ router.post('/register', validateRegister, async (req, res) => {
       username, email, password, firstName, lastName, role 
     });
     
-    // Return user data and token
+    // Set httpOnly cookie for auth
+    res.cookie('auth_token', result.token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/'
+    });
+    
+    // Return user data
     res.status(201).json({ 
       user: result.user,
-      token: result.token,
       message: 'Registration successful'
     });
   } catch (error) {
@@ -83,7 +91,7 @@ router.post('/register', validateRegister, async (req, res) => {
  * POST /api/auth/login
  * 
  * Authenticates a user with email and password.
- * Returns JWT tokens.
+ * Returns JWT tokens and sets httpOnly cookie.
  * 
  * @route POST /api/auth/login
  * @body {string} email - User's email address
@@ -104,10 +112,18 @@ router.post('/login', validateLogin, async (req, res) => {
     // Authenticate user via AuthService
     const result = await AuthService.login(email, password);
     
+    // Set httpOnly cookie for auth (like portfolio)
+    res.cookie('auth_token', result.token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/'
+    });
+    
     // Return user data and token
     res.json({ 
       user: result.user,
-      token: result.token,
       message: 'Login successful'
     });
   } catch (error) {
@@ -273,7 +289,8 @@ router.post('/refresh-token', async (req, res) => {
  */
 router.post('/logout', auth, async (req, res) => {
   try {
-    // Clear authentication cookies
+    // Clear authentication cookie
+    res.clearCookie('auth_token');
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
     res.json({ message: 'Logout successful' });
