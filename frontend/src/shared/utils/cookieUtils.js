@@ -5,7 +5,7 @@ export const getCookie = (name) => {
   for (let i = 0; i < cookies.length; i++) {
     const cookie = cookies[i].trim();
     if (cookie.startsWith(name + '=')) {
-      return cookie.substring(name.length + 1);
+      return decodeURIComponent(cookie.substring(name.length + 1));
     }
   }
   return null;
@@ -16,7 +16,8 @@ export const setCookie = (name, value, days = 7) => {
   
   const expires = new Date();
   expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+  const cookieString = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+  document.cookie = cookieString;
 };
 
 export const deleteCookie = (name) => {

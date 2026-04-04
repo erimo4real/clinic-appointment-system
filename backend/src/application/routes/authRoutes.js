@@ -17,18 +17,6 @@ const { body, validationResult } = require('express-validator');
 const AuthService = require('../../application/services/AuthService');
 const { auth } = require('../../infrastructure/middleware/auth');
 
-// Cookie configuration for secure token storage
-// httpOnly cookies prevent XSS attacks
-// Cross-origin cookies require sameSite: 'none' and secure: true
-const cookieOptions = {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'none',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  path: '/',
-  domain: undefined, // Let browser handle domain automatically
-};
-
 /**
  * Validation middleware for registration
  * Ensures required fields are provided and properly formatted
@@ -80,19 +68,6 @@ router.post('/register', validateRegister, async (req, res) => {
       username, email, password, firstName, lastName, role 
     });
     
-    // Set tokens in httpOnly cookies for security
-    res.cookie('accessToken', result.token, { ...cookieOptions, maxAge: 60 * 60 * 1000 }); // 1 hour
-    res.cookie('refreshToken', result.refreshToken, cookieOptions);
-    
-    // Also set a readable cookie for cross-origin auth (non-httpOnly)
-    res.cookie('auth_token', result.token, {
-      httpOnly: false,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 60 * 60 * 1000,
-      path: '/'
-    });
-    
     // Return user data and token
     res.status(201).json({ 
       user: result.user,
@@ -108,7 +83,7 @@ router.post('/register', validateRegister, async (req, res) => {
  * POST /api/auth/login
  * 
  * Authenticates a user with email and password.
- * Returns JWT tokens and sets them as cookies.
+ * Returns JWT tokens.
  * 
  * @route POST /api/auth/login
  * @body {string} email - User's email address
@@ -129,27 +104,7 @@ router.post('/login', validateLogin, async (req, res) => {
     // Authenticate user via AuthService
     const result = await AuthService.login(email, password);
     
-    // Set httpOnly cookies for secure token storage
-    res.cookie('accessToken', result.token, { ...cookieOptions, maxAge: 60 * 60 * 1000 }); // 1 hour
-    res.cookie('refreshToken', result.refreshToken, cookieOptions);
-    
-    // Also set a readable cookie for cross-origin auth (non-httpOnly)
-    res.cookie('auth_token', result.token, {
-      httpOnly: false,
-      secure: false,
-      sameSite: 'none',
-      maxAge: 60 * 60 * 1000,
-      path: '/'
-    });
-    
     // Return user data and token
-    res.status(201).json({ 
-      user: result.user,
-      token: result.token,
-      message: 'Registration successful'
-    });
-    
-    // Return user data AND token
     res.json({ 
       user: result.user,
       token: result.token,
