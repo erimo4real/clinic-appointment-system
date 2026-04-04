@@ -124,16 +124,29 @@ const AdminDashboard = () => {
           <p className="text-red-600 text-sm mb-4">{error}</p>
           <button 
             onClick={() => {
-              dispatch(fetchDashboardStats());
-              dispatch(fetchAllAppointments());
-              dispatch(fetchAllUsers());
-              dispatch(fetchAllDoctors());
-              dispatch(fetchAllServices());
+              if (isAuthenticated) {
+                dispatch(fetchDashboardStats());
+                dispatch(fetchAllAppointments());
+                dispatch(fetchAllUsers());
+                dispatch(fetchAllDoctors());
+                dispatch(fetchAllServices());
+              }
             }} 
             className="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
           >
             Try Again
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 text-center">
+          <h3 className="text-lg font-bold text-yellow-800 mb-2">Session Required</h3>
+          <p className="text-yellow-600 text-sm">Please log in to view the dashboard.</p>
         </div>
       </div>
     );
