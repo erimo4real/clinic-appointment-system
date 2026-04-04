@@ -41,14 +41,17 @@ const StatusBadge = ({ status }) => {
 const AdminDashboard = () => {
   const dispatch = useDispatch();
   const { stats, appointments, users, doctors, services, loading, error } = useSelector((state) => state.admin);
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(fetchDashboardStats());
-    dispatch(fetchAllAppointments());
-    dispatch(fetchAllUsers());
-    dispatch(fetchAllDoctors());
-    dispatch(fetchAllServices());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchDashboardStats());
+      dispatch(fetchAllAppointments());
+      dispatch(fetchAllUsers());
+      dispatch(fetchAllDoctors());
+      dispatch(fetchAllServices());
+    }
+  }, [dispatch, isAuthenticated]);
 
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
   const completedCount = appointments.filter(a => a.status === 'completed').length;
