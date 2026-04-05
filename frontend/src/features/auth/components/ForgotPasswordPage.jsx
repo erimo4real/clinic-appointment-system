@@ -15,10 +15,10 @@ const ForgotPasswordPage = () => {
     setMessage('');
     
     try {
-      const response = await api.post('/api/auth/password-reset/', { email });
+      const response = await api.post('/auth/forgot-password', { email });
       setMessage(response.data.message);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send reset email');
+      setError(err.response?.data?.message || 'Failed to send reset email');
     }
     setLoading(false);
   };

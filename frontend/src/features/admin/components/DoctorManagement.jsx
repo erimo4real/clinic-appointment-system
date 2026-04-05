@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllDoctors, createDoctor, updateDoctor, deleteDoctor } from '../store/adminSlice';
 
+const ITEMS_PER_PAGE = 10;
+
 const specialties = [
   'General Medicine', 'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics',
   'Dermatology', 'Ophthalmology', 'ENT', 'Gynecology', 'Psychiatry',
@@ -13,6 +15,9 @@ const DoctorManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [specialtyFilter, setSpecialtyFilter] = useState('all');
+  const [availabilityFilter, setAvailabilityFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', specialty: '', qualification: '',
     experience: '', consultation_fee: '', bio: '', is_available: true,
@@ -54,11 +59,25 @@ const DoctorManagement = () => {
     }
   };
 
-  const filteredDoctors = doctors.filter(doctor =>
-    doctor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.specialty?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDoctors = doctors.filter(doctor => {
+    const matchesSearch = doctor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.specialty?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSpecialty = specialtyFilter === 'all' || doctor.specialty === specialtyFilter;
+    const matchesAvailability = availabilityFilter === 'all' || 
+      (availabilityFilter === 'available' && doctor.is_available) ||
+      (availabilityFilter === 'unavailable' && !doctor.is_available);
+    return matchesSearch && matchesSpecialty && matchesAvailability;
+  });
+
+  const totalPages = Math.ceil(filteredDoctors.length / ITEMS_PER_PAGE);
+  const paginatedDoctors = filteredDoctors.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -77,7 +96,27 @@ const DoctorManagement = () => {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-4 border-b border-gray-100">
-          <input type="text" placeholder="Search doctors by name, specialty or email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="text" placeholder="Search doctors by name, specialty or email..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <select value={specialtyFilter} onChange={(e) => { setSpecialtyFilter(e.target.value); setCurrentPage(1); }} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+                <option value="all">All Specialties</option>
+                {specialties.map((spec) => <option key={spec} value={spec}>{spec}</option>)}
+              </select>
+              <select value={availabilityFilter} onChange={(e) => { setAvailabilityFilter(e.target.value); setCurrentPage(1); }} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+                <option value="all">All Status</option>
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -106,7 +145,7 @@ const DoctorManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredDoctors.map((doctor) => (
+                {paginatedDoctors.map((doctor) => (
                   <tr key={doctor.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -148,6 +187,26 @@ const DoctorManagement = () => {
             </table>
           )}
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+            <p className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredDoctors.length)} of {filteredDoctors.length} doctors
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button key={page} onClick={() => handlePageChange(page)} className={`px-3 py-1 rounded-lg border text-sm font-medium ${currentPage === page ? 'bg-teal-600 text-white border-teal-600' : 'border-gray-300 hover:bg-gray-50'}`}>
+                  {page}
+                </button>
+              ))}
+              <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (

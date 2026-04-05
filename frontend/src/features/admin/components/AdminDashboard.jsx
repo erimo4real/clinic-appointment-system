@@ -67,15 +67,34 @@ const AdminDashboard = () => {
     { name: 'Cancelled', value: cancelledCount, color: '#ef4444' },
   ].filter(d => d.value > 0);
 
-  // Chart Data - Monthly Appointments (mock data for demo)
-  const monthlyData = [
-    { month: 'Jan', appointments: 12, revenue: 240000 },
-    { month: 'Feb', appointments: 19, revenue: 380000 },
-    { month: 'Mar', appointments: 25, revenue: 500000 },
-    { month: 'Apr', appointments: 22, revenue: 440000 },
-    { month: 'May', appointments: 30, revenue: 600000 },
-    { month: 'Jun', appointments: 28, revenue: 560000 },
-  ];
+  // Chart Data - Monthly Appointments (computed from real data)
+  const getMonthlyData = () => {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
+    const monthlyStats = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthCount = appointments.filter(a => a.date?.startsWith(monthStr)).length;
+      const monthRevenue = services.reduce((total, service) => {
+        return total + appointments.filter(a => 
+          a.date?.startsWith(monthStr) && 
+          a.service_id === service.id && 
+          a.status === 'completed'
+        ).length * (service.price || 0);
+      }, 0);
+      
+      monthlyStats.push({
+        month: monthNames[date.getMonth()],
+        appointments: monthCount,
+        revenue: monthRevenue,
+      });
+    }
+    return monthlyStats;
+  };
+
+  const monthlyData = getMonthlyData();
 
   // Chart Data - Doctors by Specialty
   const specialtyData = doctors.reduce((acc, doctor) => {
@@ -94,6 +113,37 @@ const AdminDashboard = () => {
     month: item.month,
     revenue: item.revenue
   }));
+
+  // Chart Data - Services Distribution
+  const serviceData = services.reduce((acc, service) => {
+    const count = appointments.filter(a => a.service_id === service.id).length;
+    if (count > 0) {
+      acc.push({ name: service.name, value: count, price: service.price });
+    }
+    return acc;
+  }, []);
+
+  // Chart Data - Weekly Appointments
+  const getWeeklyData = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date();
+    const weekData = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const count = appointments.filter(a => a.date === dateStr).length;
+      weekData.push({
+        day: days[date.getDay()],
+        appointments: count,
+        date: dateStr,
+      });
+    }
+    return weekData;
+  };
+
+  const weeklyData = getWeeklyData();
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -192,7 +242,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         {/* Appointments by Status - Pie Chart */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h3 className="font-bold text-gray-900 mb-4">Appointments by Status</h3>
@@ -223,6 +273,56 @@ const AdminDashboard = () => {
           )}
         </div>
 
+        {/* Weekly Appointments - Line Chart */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="font-bold text-gray-900 mb-4">This Week's Appointments</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={weeklyData}>
+              <defs>
+                <linearGradient id="colorWeek" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="appointments" stroke="#14b8a6" fillOpacity={1} fill="url(#colorWeek)" name="Appointments" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Services Distribution - Donut Chart */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="font-bold text-gray-900 mb-4">Services Popularity</h3>
+          {serviceData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={serviceData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={90}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {serviceData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              <p>No service data available</p>
+            </div>
+          )}
+        </div>
+
         {/* Monthly Appointments - Bar Chart */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h3 className="font-bold text-gray-900 mb-4">Monthly Appointments</h3>
@@ -239,7 +339,7 @@ const AdminDashboard = () => {
 
         {/* Revenue Trend - Area Chart */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-bold text-gray-900 mb-4">Revenue Trend</h3>
+          <h3 className="font-bold text-gray-900 mb-4">Revenue Trend (₦)</h3>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={revenueData}>
               <defs>

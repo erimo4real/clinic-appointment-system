@@ -234,19 +234,29 @@ router.get('/doctors', async (req, res) => {
       .populate('user', 'firstName lastName email phone')
       .sort({ createdAt: -1 });
 
-    const formatted = doctors.map(d => ({
-      id: d._id,
-      name: d.user ? `${d.user.firstName} ${d.user.lastName}` : 'Unknown',
-      email: d.user?.email,
-      phone: d.user?.phone,
-      specialty: d.specialty,
-      qualification: d.qualification,
-      experience: d.experience || 0,
-      consultation_fee: d.consultationFee,
-      bio: d.bio,
-      is_available: d.isAvailable,
-      createdAt: d.createdAt,
-    }));
+    const formatted = doctors.map(d => {
+      const scheduleObj = {};
+      if (d.schedule && typeof d.schedule === 'object') {
+        const scheduleMap = d.schedule instanceof Map ? d.schedule : new Map(Object.entries(d.schedule));
+        scheduleMap.forEach((value, key) => {
+          scheduleObj[key] = value;
+        });
+      }
+      return {
+        id: d._id,
+        name: d.user ? `${d.user.firstName} ${d.user.lastName}` : 'Unknown',
+        email: d.user?.email,
+        phone: d.user?.phone,
+        specialty: d.specialty,
+        qualification: d.qualification,
+        experience: d.experience || 0,
+        consultation_fee: d.consultationFee,
+        bio: d.bio,
+        is_available: d.isAvailable,
+        schedule: scheduleObj,
+        createdAt: d.createdAt,
+      };
+    });
 
     res.json(formatted);
   } catch (error) {
@@ -273,7 +283,7 @@ router.get('/doctors', async (req, res) => {
  */
 router.post('/doctors', async (req, res) => {
   try {
-    const { name, email, phone, specialty, qualification, experience, consultation_fee, bio, is_available } = req.body;
+    const { name, email, phone, specialty, qualification, experience, consultation_fee, bio, is_available, schedule } = req.body;
     
     // Split name into first and last parts
     const nameParts = name.split(' ');
@@ -305,6 +315,7 @@ router.post('/doctors', async (req, res) => {
       consultationFee: consultation_fee,
       bio,
       isAvailable: is_available ?? true,
+      schedule: schedule || undefined,
     });
 
     await doctor.save();
@@ -339,7 +350,7 @@ router.post('/doctors', async (req, res) => {
  */
 router.put('/doctors/:id', async (req, res) => {
   try {
-    const { name, specialty, qualification, experience, consultation_fee, bio, is_available } = req.body;
+    const { name, specialty, qualification, experience, consultation_fee, bio, is_available, schedule } = req.body;
     
     const doctor = await Doctor.findById(req.params.id).populate('user');
     if (!doctor) {
@@ -360,6 +371,7 @@ router.put('/doctors/:id', async (req, res) => {
     if (consultation_fee) doctor.consultationFee = consultation_fee;
     if (bio !== undefined) doctor.bio = bio;
     if (is_available !== undefined) doctor.isAvailable = is_available;
+    if (schedule) doctor.schedule = schedule;
 
     await doctor.save();
     res.json({ message: 'Doctor updated successfully' });

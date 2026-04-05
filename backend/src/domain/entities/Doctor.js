@@ -112,6 +112,25 @@ const doctorSchema = new mongoose.Schema({
     default: true 
   },
   
+  /** Doctor's weekly schedule/availability by day */
+  schedule: {
+    type: Map,
+    of: {
+      available: { type: Boolean, default: false },
+      start: { type: String, default: '09:00' },
+      end: { type: String, default: '17:00' }
+    },
+    default: {
+      Monday: { available: true, start: '09:00', end: '17:00' },
+      Tuesday: { available: true, start: '09:00', end: '17:00' },
+      Wednesday: { available: true, start: '09:00', end: '17:00' },
+      Thursday: { available: true, start: '09:00', end: '17:00' },
+      Friday: { available: true, start: '09:00', end: '17:00' },
+      Saturday: { available: true, start: '09:00', end: '13:00' },
+      Sunday: { available: false, start: '09:00', end: '17:00' }
+    }
+  },
+  
   // ==========================================
   // TIMESTAMPS
   // ==========================================

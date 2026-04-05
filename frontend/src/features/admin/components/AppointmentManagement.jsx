@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllAppointments, updateAppointment, deleteAppointment } from '../store/adminSlice';
 
+const ITEMS_PER_PAGE = 10;
+
 const AppointmentManagement = () => {
   const dispatch = useDispatch();
   const { appointments, appointmentsLoading } = useSelector((state) => state.admin);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [formData, setFormData] = useState({ status: 'pending', notes: '' });
@@ -41,9 +46,21 @@ const AppointmentManagement = () => {
     const matchesSearch = 
       appointment.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       appointment.doctor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.service_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       appointment.date?.includes(searchTerm);
-    return matchesFilter && matchesSearch;
+    const matchesDateFrom = !dateFrom || appointment.date >= dateFrom;
+    const matchesDateTo = !dateTo || appointment.date <= dateTo;
+    return matchesFilter && matchesSearch && matchesDateFrom && matchesDateTo;
   });
+
+  const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE);
+  const paginatedAppointments = filteredAppointments.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const variants = {
@@ -81,7 +98,25 @@ const AppointmentManagement = () => {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-4 border-b border-gray-100">
-          <input type="text" placeholder="Search by patient, doctor or date..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="text" placeholder="Search by patient, doctor, service or date..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+              </div>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" placeholder="From" />
+              <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" placeholder="To" />
+              {(dateFrom || dateTo) && (
+                <button onClick={() => { setDateFrom(''); setDateTo(''); setCurrentPage(1); }} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  Clear Dates
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -110,7 +145,7 @@ const AppointmentManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredAppointments.map((apt) => (
+                {paginatedAppointments.map((apt) => (
                   <tr key={apt.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
@@ -143,6 +178,26 @@ const AppointmentManagement = () => {
             </table>
           )}
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+            <p className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAppointments.length)} of {filteredAppointments.length} appointments
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button key={page} onClick={() => handlePageChange(page)} className={`px-3 py-1 rounded-lg border text-sm font-medium ${currentPage === page ? 'bg-teal-600 text-white border-teal-600' : 'border-gray-300 hover:bg-gray-50'}`}>
+                  {page}
+                </button>
+              ))}
+              <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (

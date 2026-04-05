@@ -34,6 +34,9 @@ import UserManagement from './features/admin/components/UserManagement';
 import DoctorManagement from './features/admin/components/DoctorManagement';
 import AppointmentManagement from './features/admin/components/AppointmentManagement';
 import ServiceManagement from './features/admin/components/ServiceManagement';
+import CalendarView from './features/admin/components/CalendarView';
+import DoctorSchedule from './features/admin/components/DoctorSchedule';
+import ReceptionistDashboard from './features/admin/components/ReceptionistDashboard';
 
 import PatientProfile from './features/profile/components/PatientProfile';
 import DoctorProfile from './features/profile/components/DoctorProfile';
@@ -57,6 +60,16 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 const AdminRoute = ({ children }) => {
   return (
     <ProtectedRoute allowedRoles={['admin']}>
+      <AdminLayout>
+        {children}
+      </AdminLayout>
+    </ProtectedRoute>
+  );
+};
+
+const ReceptionistRoute = ({ children }) => {
+  return (
+    <ProtectedRoute allowedRoles={['receptionist', 'admin']}>
       <AdminLayout>
         {children}
       </AdminLayout>
@@ -155,8 +168,11 @@ const App = () => {
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
           <Route path="/admin/doctors" element={<AdminRoute><DoctorManagement /></AdminRoute>} />
+          <Route path="/admin/doctor-schedule" element={<AdminRoute><DoctorSchedule /></AdminRoute>} />
           <Route path="/admin/appointments" element={<AdminRoute><AppointmentManagement /></AdminRoute>} />
+          <Route path="/admin/calendar" element={<AdminRoute><CalendarView /></AdminRoute>} />
           <Route path="/admin/services" element={<AdminRoute><ServiceManagement /></AdminRoute>} />
+          <Route path="/admin/receptionist" element={<ReceptionistRoute><ReceptionistDashboard /></ReceptionistRoute>} />
 
           {/* Profile Routes */}
           <Route path="/profile" element={

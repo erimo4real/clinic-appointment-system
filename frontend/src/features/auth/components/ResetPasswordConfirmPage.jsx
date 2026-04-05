@@ -23,13 +23,12 @@ const ResetPasswordConfirmPage = () => {
     setMessage('');
     
     try {
-      const response = await api.post('/api/auth/password-reset/confirm/', {
-        token,
-        new_password: newPassword
+      const response = await api.post(`/auth/reset-password/${token}`, {
+        password: newPassword
       });
       setMessage(response.data.message);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to reset password');
+      setError(err.response?.data?.message || 'Failed to reset password');
     }
     setLoading(false);
   };
