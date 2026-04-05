@@ -83,6 +83,11 @@ const App = () => {
       return;
     }
     
+    if (isAuthenticated) {
+      setSessionChecked(true);
+      return;
+    }
+    
     let mounted = true;
     
     const checkSession = async () => {
@@ -101,7 +106,7 @@ const App = () => {
     return () => {
       mounted = false;
     };
-  }, [dispatch, location.pathname]);
+  }, [dispatch, location.pathname, isAuthenticated]);
 
   if (!sessionChecked) {
     return (
