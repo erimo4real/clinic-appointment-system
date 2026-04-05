@@ -112,18 +112,19 @@ router.post('/login', validateLogin, async (req, res) => {
     // Authenticate user via AuthService
     const result = await AuthService.login(email, password);
     
-    // Set httpOnly cookie for auth (like portfolio)
+    // Set httpOnly cookie for auth
     res.cookie('auth_token', result.token, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/'
     });
     
-    // Return user data and token
+    // Return user data AND token (for frontend to store)
     res.json({ 
       user: result.user,
+      token: result.token,
       message: 'Login successful'
     });
   } catch (error) {

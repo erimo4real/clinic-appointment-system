@@ -17,7 +17,7 @@ api.interceptors.request.use(
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split('=');
-      if (name === 'auth_token') {
+      if (name === 'token') {
         config.headers.Authorization = `Bearer ${decodeURIComponent(value)}`;
         break;
       }
