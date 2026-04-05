@@ -11,9 +11,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
 
-  const handleLogout = (e) => {
-    if (e) e.preventDefault();
-    setProfileOpen(false);
+  const handleLogout = () => {
     window.location.href = '/login';
   };
 
