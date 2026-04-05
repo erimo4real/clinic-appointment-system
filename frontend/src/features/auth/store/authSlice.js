@@ -86,6 +86,11 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWith
   return { success: true };
 });
 
+// Immediate logout without API call
+export const immediateLogout = () => {
+  return { type: 'auth/immediateLogout' };
+};
+
 /**
  * =====================================================
  * SLICE DEFINITION
@@ -123,6 +128,12 @@ const authSlice = createSlice({
       state.error = null;
     },
     clearError: (state) => {
+      state.error = null;
+    },
+    immediateLogout: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.loading = false;
       state.error = null;
     },
   },
@@ -205,7 +216,7 @@ const authSlice = createSlice({
  */
 
 // Action creators
-export const { clearError, logout, setCredentials } = authSlice.actions;
+export const { clearError, logout, setCredentials, immediateLogout } = authSlice.actions;
 
 // Reducer (default export)
 export default authSlice.reducer;

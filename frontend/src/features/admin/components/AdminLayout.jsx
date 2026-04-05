@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { logoutUser } from '../../auth/store/authSlice';
+import { logoutUser, immediateLogout } from '../../auth/store/authSlice';
 import Breadcrumbs from '../../../components/ui/Breadcrumbs';
 import { DarkModeToggle } from '../../../components/ui/Theme';
 
@@ -15,9 +15,11 @@ const AdminLayout = () => {
   const { user } = useSelector((state) => state.auth);
 
   const handleLogout = () => {
-    dispatch(logoutUser()).then(() => {
-      navigate('/login');
-    });
+    // Immediate logout - clear state and navigate right away
+    dispatch(immediateLogout());
+    // Also call API to clear cookie in background
+    dispatch(logoutUser());
+    navigate('/login');
     setProfileOpen(false);
   };
 
