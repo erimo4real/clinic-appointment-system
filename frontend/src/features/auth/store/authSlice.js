@@ -83,7 +83,6 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWith
     await api.post('/auth/logout');
   } catch (error) {
   }
-  deleteCookie('auth_token');
   return { success: true };
 });
 
