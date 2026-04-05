@@ -74,13 +74,20 @@ const App = () => {
   const showHeader = isAuthenticated && !isAdminRoute;
 
   useEffect(() => {
+    const isLoginPage = location.pathname === '/login';
+    const isRegisterPage = location.pathname === '/register';
+    
+    if (isLoginPage || isRegisterPage) {
+      setSessionChecked(true);
+      return;
+    }
+    
     let mounted = true;
     
     const checkSession = async () => {
       try {
         await dispatch(fetchCurrentUser()).unwrap();
       } catch (err) {
-        // No valid session - user needs to login
       }
       
       if (mounted) {
@@ -93,7 +100,7 @@ const App = () => {
     return () => {
       mounted = false;
     };
-  }, [dispatch]);
+  }, [dispatch, location.pathname]);
 
   if (!sessionChecked) {
     return (

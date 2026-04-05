@@ -11,15 +11,8 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setProfileOpen(false);
-    try {
-      await fetch('https://clinic-appointment-system-88np.onrender.com/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-    } catch (e) {
-    }
     window.location.href = '/login';
   };
 
