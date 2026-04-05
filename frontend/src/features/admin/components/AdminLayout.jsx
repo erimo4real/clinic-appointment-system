@@ -84,15 +84,22 @@ const AdminLayout = () => {
             </Link>
             
             {/* Logout Button */}
-            <a
-              href="/login"
+            <button
+              onClick={() => {
+                fetch('https://clinic-appointment-system-88np.onrender.com/api/auth/logout', { 
+                  method: 'POST',
+                  credentials: 'include'
+                }).finally(() => {
+                  window.location.href = '/login';
+                });
+              }}
               className="flex items-center gap-3 px-3 py-2.5 w-full text-gray-600 dark:text-gray-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               {sidebarOpen && <span className="text-sm">Logout</span>}
-            </a>
+            </button>
           </div>
         </div>
       </aside>
@@ -231,15 +238,22 @@ const AdminLayout = () => {
                     </Link>
                   </div>
                   <div className="border-t border-gray-100 dark:border-gray-700 py-1">
-                    <a
-                      href="/login"
+                    <button
+                      onClick={() => {
+                        fetch('https://clinic-appointment-system-88np.onrender.com/api/auth/logout', { 
+                          method: 'POST',
+                          credentials: 'include'
+                        }).finally(() => {
+                          window.location.href = '/login';
+                        });
+                      }}
                       className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                       Logout
-                    </a>
+                    </button>
                   </div>
                 </div>
               )}

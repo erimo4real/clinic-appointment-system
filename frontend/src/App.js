@@ -103,6 +103,12 @@ const App = () => {
     };
   }, [dispatch, location.pathname]);
 
+  const clearAuthAndLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = '/login';
+  };
+
   if (!sessionChecked) {
     return (
       <ThemeProvider>
