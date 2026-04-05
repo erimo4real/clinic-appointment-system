@@ -25,7 +25,6 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../../shared/services/api';
-import { deleteCookie } from '../../../shared/utils/cookieUtils';
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
