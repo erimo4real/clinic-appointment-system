@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllUsers, createUser, updateUser, deleteUser } from '../store/adminSlice';
+import { TableSkeleton } from '../../../components/ui/Skeleton';
+import { useToast } from '../../../components/ui/Toast';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const ITEMS_PER_PAGE = 10;
 
 const UserManagement = () => {
   const dispatch = useDispatch();
-  const { users, usersLoading, error } = useSelector((state) => state.admin);
+  const toast = useToast();
+  const { users, usersLoading } = useSelector((state) => state.admin);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -29,15 +35,21 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingUser) {
-      dispatch(updateUser({ id: editingUser.id, data: formData }));
-    } else {
-      dispatch(createUser(formData));
+    try {
+      if (editingUser) {
+        await dispatch(updateUser({ id: editingUser.id, data: formData })).unwrap();
+        toast.success('User updated successfully!');
+      } else {
+        await dispatch(createUser(formData)).unwrap();
+        toast.success('User created successfully!');
+      }
+      setShowModal(false);
+      setEditingUser(null);
+      setFormData({ username: '', email: '', password: '', first_name: '', last_name: '', phone: '', role: 'patient' });
+      dispatch(fetchAllUsers());
+    } catch (error) {
+      toast.error(error?.message || 'Failed to save user');
     }
-    setShowModal(false);
-    setEditingUser(null);
-    setFormData({ username: '', email: '', password: '', first_name: '', last_name: '', phone: '', role: 'patient' });
-    dispatch(fetchAllUsers());
   };
 
   const handleEdit = (user) => {
@@ -54,11 +66,15 @@ const UserManagement = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      dispatch(deleteUser(id));
+  const handleDelete = async () => {
+    try {
+      await dispatch(deleteUser(deleteId)).unwrap();
+      toast.success('User deleted successfully!');
       dispatch(fetchAllUsers());
+    } catch (error) {
+      toast.error(error?.message || 'Failed to delete user');
     }
+    setDeleteId(null);
   };
 
   const filteredUsers = users.filter(user => {
@@ -151,16 +167,15 @@ const UserManagement = () => {
 
         <div className="overflow-x-auto">
           {usersLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600"></div>
-            </div>
+            <TableSkeleton rows={5} cols={6} />
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-20">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              <p className="text-gray-500">No users found</p>
-            </div>
+            <EmptyState
+              icon="users"
+              title={searchTerm || roleFilter !== 'all' || statusFilter !== 'all' ? 'No users found' : 'No users yet'}
+              description={searchTerm || roleFilter !== 'all' || statusFilter !== 'all' ? 'Try adjusting your search or filters' : 'Start by adding your first user'}
+              actionLabel={!searchTerm && roleFilter === 'all' && statusFilter === 'all' ? 'Add User' : undefined}
+              onAction={() => setShowModal(true)}
+            />
           ) : (
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -197,12 +212,12 @@ const UserManagement = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => handleEdit(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button onClick={() => handleEdit(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
-                        <button onClick={() => handleDelete(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <button onClick={() => setDeleteId(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
@@ -285,6 +300,16 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        confirmText="Delete"
+        type="danger"
+      />
     </div>
   );
 };

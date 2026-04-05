@@ -37,6 +37,9 @@ import ServiceManagement from './features/admin/components/ServiceManagement';
 import CalendarView from './features/admin/components/CalendarView';
 import DoctorSchedule from './features/admin/components/DoctorSchedule';
 import ReceptionistDashboard from './features/admin/components/ReceptionistDashboard';
+import ReportsPage from './features/admin/components/ReportsPage';
+import ActivityLog from './features/admin/components/ActivityLog';
+import SettingsPage from './features/admin/components/SettingsPage';
 
 import PatientProfile from './features/profile/components/PatientProfile';
 import DoctorProfile from './features/profile/components/DoctorProfile';
@@ -173,6 +176,9 @@ const App = () => {
           <Route path="/admin/calendar" element={<AdminRoute><CalendarView /></AdminRoute>} />
           <Route path="/admin/services" element={<AdminRoute><ServiceManagement /></AdminRoute>} />
           <Route path="/admin/receptionist" element={<ReceptionistRoute><ReceptionistDashboard /></ReceptionistRoute>} />
+          <Route path="/admin/reports" element={<AdminRoute><ReportsPage /></AdminRoute>} />
+          <Route path="/admin/activity" element={<AdminRoute><ActivityLog /></AdminRoute>} />
+          <Route path="/admin/settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
 
           {/* Profile Routes */}
           <Route path="/profile" element={

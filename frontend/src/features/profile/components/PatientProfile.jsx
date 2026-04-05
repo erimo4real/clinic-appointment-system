@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchPatientFeedback, submitFeedback, clearSubmitSuccess } from '../../feedback/store/feedbackSlice';
 import { fetchMyAppointments } from '../../appointments/store/appointmentSlice';
 import { updateProfile } from '../../auth/store/authSlice';
+import MedicalHistory from './MedicalHistory';
+import PrescriptionPage from './PrescriptionPage';
 
 const StarRating = ({ rating, onChange, readonly = false }) => (
   <div className="flex space-x-1">
@@ -111,9 +113,9 @@ const PatientProfile = () => {
           </div>
         </div>
 
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl">
-          {['profile', 'appointments', 'feedback'].map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === tab ? 'bg-white text-teal-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+          {['profile', 'appointments', 'feedback', 'history', 'prescriptions'].map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab ? 'bg-white text-teal-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
@@ -218,6 +220,14 @@ const PatientProfile = () => {
               ))
             )}
           </div>
+        )}
+
+        {activeTab === 'history' && (
+          <MedicalHistory />
+        )}
+
+        {activeTab === 'prescriptions' && (
+          <PrescriptionPage />
         )}
       </div>
 
