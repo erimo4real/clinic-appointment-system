@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { logoutUser, immediateLogout } from '../../auth/store/authSlice';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import Breadcrumbs from '../../../components/ui/Breadcrumbs';
 import { DarkModeToggle } from '../../../components/ui/Theme';
 
@@ -10,16 +9,18 @@ const AdminLayout = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
-  const handleLogout = () => {
-    // Immediate logout - clear state and navigate right away
-    dispatch(immediateLogout());
-    dispatch(logoutUser());
-    navigate('/login');
+  const handleLogout = async () => {
     setProfileOpen(false);
+    try {
+      await fetch('https://clinic-appointment-system-88np.onrender.com/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {
+    }
+    window.location.href = '/login';
   };
 
   const menuItems = [
