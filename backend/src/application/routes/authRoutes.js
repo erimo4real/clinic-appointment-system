@@ -284,15 +284,19 @@ router.post('/refresh-token', async (req, res) => {
  * Logs out the current user by clearing authentication cookies.
  * 
  * @route POST /api/auth/logout
- * @requires Authentication
  * @returns {200} Logout successful
  */
-router.post('/logout', auth, async (req, res) => {
+router.post('/logout', async (req, res) => {
   try {
-    // Clear authentication cookie
-    res.clearCookie('auth_token');
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    // Clear authentication cookie (match the original cookie settings)
+    res.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/'
+    });
+    res.clearCookie('accessToken', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/' });
     res.json({ message: 'Logout successful' });
   } catch (error) {
     res.status(500).json({ message: error.message });
