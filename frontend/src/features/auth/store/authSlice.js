@@ -85,11 +85,6 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWith
   return { success: true };
 });
 
-// Immediate logout without API call
-export const immediateLogout = () => {
-  return { type: 'auth/immediateLogout' };
-};
-
 /**
  * =====================================================
  * SLICE DEFINITION
