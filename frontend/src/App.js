@@ -71,7 +71,8 @@ const App = () => {
   const [sessionChecked, setSessionChecked] = useState(false);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const showHeader = isAuthenticated && !isAdminRoute;
+  const isPublicRoute = ['/', '/services', '/doctors', '/about', '/booking'].includes(location.pathname);
+  const showHeader = isAuthenticated && !isAdminRoute && !isPublicRoute;
 
   useEffect(() => {
     const isLoginPage = location.pathname === '/login';
