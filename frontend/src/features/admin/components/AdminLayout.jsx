@@ -91,7 +91,7 @@ const AdminLayout = () => {
             
             {/* Logout Button */}
             <button
-              onClick={handleLogoutTest}
+              onClick={handleLogout}
               className="flex items-center gap-3 px-3 py-2.5 w-full text-gray-600 dark:text-gray-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
