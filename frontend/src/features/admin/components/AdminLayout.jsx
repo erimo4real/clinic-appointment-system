@@ -11,7 +11,8 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
 
-  const handleLogout = () => {
+  const handleLogout = (e) => {
+    if (e) e.preventDefault();
     setProfileOpen(false);
     window.location.href = '/login';
   };
@@ -90,7 +91,7 @@ const AdminLayout = () => {
             
             {/* Logout Button */}
             <button
-              onClick={handleLogout}
+              onClick={handleLogoutTest}
               className="flex items-center gap-3 px-3 py-2.5 w-full text-gray-600 dark:text-gray-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,13 +261,16 @@ const AdminLayout = () => {
       </div>
 
       {/* Click outside to close dropdowns */}
-      {(profileOpen || notificationOpen) && (
+      {profileOpen && (
         <div 
-          className="fixed inset-0 z-30" 
-          onClick={() => {
-            setProfileOpen(false);
-            setNotificationOpen(false);
-          }}
+          className="fixed inset-0 z-40" 
+          onClick={() => setProfileOpen(false)}
+        />
+      )}
+      {notificationOpen && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setNotificationOpen(false)}
         />
       )}
     </div>
