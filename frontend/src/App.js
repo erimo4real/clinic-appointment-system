@@ -40,8 +40,10 @@ import ReceptionistDashboard from './features/admin/components/ReceptionistDashb
 import ReportsPage from './features/admin/components/ReportsPage';
 import ActivityLog from './features/admin/components/ActivityLog';
 import SettingsPage from './features/admin/components/SettingsPage';
+import WaitingRoom from './features/admin/components/WaitingRoom';
 
 import PatientProfile from './features/profile/components/PatientProfile';
+import ProfileSettings from './features/profile/components/ProfileSettings';
 import DoctorProfile from './features/profile/components/DoctorProfile';
 
 import Header from './layout/Header';
@@ -179,6 +181,7 @@ const App = () => {
           <Route path="/admin/reports" element={<AdminRoute><ReportsPage /></AdminRoute>} />
           <Route path="/admin/activity" element={<AdminRoute><ActivityLog /></AdminRoute>} />
           <Route path="/admin/settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
+          <Route path="/admin/waiting-room" element={<AdminRoute><WaitingRoom /></AdminRoute>} />
 
           {/* Profile Routes */}
           <Route path="/profile" element={
@@ -186,6 +189,7 @@ const App = () => {
               {user?.role === 'doctor' ? <DoctorProfile /> : <PatientProfile />}
             </ProtectedRoute>
           } />
+          <Route path="/profile/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
 
           {/* 404 Page */}
           <Route path="*" element={<NotFoundPage />} />
