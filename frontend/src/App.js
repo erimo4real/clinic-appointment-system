@@ -112,6 +112,15 @@ const ReceptionistRoute = ({ children }) => {
       return;
     }
     
+    // Check if token exists first - if not, don't call API
+    const tokenExists = document.cookie.split(';').some(cookie => cookie.trim().startsWith('token='));
+    
+    if (!tokenExists) {
+      setSessionChecked(true);
+      hasCheckedSession.current = true;
+      return;
+    }
+    
     const checkSession = async () => {
       try {
         await dispatch(fetchCurrentUser()).unwrap();
