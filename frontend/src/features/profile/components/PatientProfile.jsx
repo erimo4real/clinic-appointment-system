@@ -16,6 +16,65 @@ const StarRating = ({ rating, onChange, readonly = false }) => (
   </div>
 );
 
+const PrintAppointment = ({ appointment, onClose }) => {
+  if (!appointment) return null;
+  
+  const handlePrint = () => {
+    window.print();
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md print:shadow-none print:p-0" id="print-appointment">
+        <div className="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4 print:border-black">
+          <h2 className="text-2xl font-bold text-teal-600 print:text-black">MedBook Pro</h2>
+          <p className="text-gray-500 text-sm">Appointment Confirmation</p>
+        </div>
+        
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-gray-500">Patient:</span>
+            <span className="font-medium">{appointment.patient_name || 'Patient'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Doctor:</span>
+            <span className="font-medium">Dr. {appointment.doctor_name}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Service:</span>
+            <span className="font-medium">{appointment.service_name}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Date:</span>
+            <span className="font-medium">{appointment.date}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Time:</span>
+            <span className="font-medium">{appointment.start_time}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Status:</span>
+            <span className="font-medium capitalize">{appointment.status}</span>
+          </div>
+        </div>
+        
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg print:bg-white">
+          <p className="text-sm text-gray-500 text-center">
+            Please arrive 15 minutes before your appointment time.
+            <br />
+            For cancellations, please contact the clinic at least 24 hours in advance.
+          </p>
+        </div>
+        
+        <div className="mt-6 flex gap-3 print:hidden">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Close</button>
+          <button onClick={handlePrint} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">Print</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PatientProfile = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -40,6 +99,7 @@ const PatientProfile = () => {
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   useEffect(() => {
     dispatch(fetchPatientFeedback());
@@ -116,9 +176,21 @@ const PatientProfile = () => {
     setActionLoading(false);
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const myAppointments = appointments || [];
   const upcomingAppointments = myAppointments.filter(a => a.status === 'pending' || a.status === 'confirmed');
-  const pastAppointments = myAppointments.filter(a => a.status === 'completed' || a.status === 'cancelled');
+  const pastAppointments = myAppointments
+    .filter(a => a.status === 'completed' || a.status === 'cancelled')
+    .filter(a => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        (a.doctor_name || '').toLowerCase().includes(query) ||
+        (a.service_name || '').toLowerCase().includes(query) ||
+        (a.date || '').toLowerCase().includes(query)
+      );
+    });
 
   const getStatusBadge = (status) => {
     const variants = { pending: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-blue-100 text-blue-800', completed: 'bg-green-100 text-green-800', cancelled: 'bg-red-100 text-red-800' };
@@ -216,6 +288,9 @@ const PatientProfile = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(apt.status)}
+                        <button onClick={() => { setSelectedAppointment(apt); setShowPrintModal(true); }} className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        </button>
                         <button onClick={() => openRescheduleModal(apt)} className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
                           Reschedule
                         </button>
@@ -229,9 +304,23 @@ const PatientProfile = () => {
               </div>
             )}
             <div>
-              <h2 className="text-lg font-semibold mb-4">Past Appointments</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Past Appointments</h2>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search appointments..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none w-64"
+                  />
+                  <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
               {pastAppointments.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">No past appointments</div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">{searchQuery ? 'No appointments found' : 'No past appointments'}</div>
               ) : (
                 <div className="grid gap-4">
                   {pastAppointments.map((apt) => (
@@ -384,6 +473,10 @@ const PatientProfile = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showPrintModal && (
+        <PrintAppointment appointment={selectedAppointment} onClose={() => setShowPrintModal(false)} />
       )}
     </div>
   );

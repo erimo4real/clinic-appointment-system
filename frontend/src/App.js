@@ -26,6 +26,7 @@ import ForgotPasswordPage from './features/auth/components/ForgotPasswordPage';
 import ResetPasswordConfirmPage from './features/auth/components/ResetPasswordConfirmPage';
 import BookingPage from './features/appointments/components/BookingPage';
 import DoctorsPage from './features/doctors/components/DoctorsPage';
+import DoctorProfilePage from './features/doctors/components/DoctorProfilePage';
 import ServicesPage from './features/services/components/ServicesPage';
 
 import AdminLayout from './features/admin/components/AdminLayout';
@@ -157,6 +158,7 @@ const App = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/doctors" element={<DoctorsPage />} />
+          <Route path="/doctors/:id" element={<DoctorProfilePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <LoginPage />} />
           <Route path="/register" element={isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <RegisterPage />} />

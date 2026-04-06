@@ -9,9 +9,9 @@ const MedicalHistory = () => {
   const toast = useToast();
   const { user } = useSelector((state) => state.auth);
   const [records, setRecords] = useState([
-    { id: 1, date: '2024-01-15', type: 'diagnosis', title: 'General Checkup', description: 'Routine annual checkup. All vitals normal.', doctor: 'Dr. Smith' },
-    { id: 2, date: '2024-01-20', type: 'prescription', title: 'Blood Pressure Medication', description: 'Lisinopril 10mg daily', doctor: 'Dr. Johnson' },
-    { id: 3, date: '2024-02-05', type: 'lab', title: 'Blood Test Results', description: 'Cholesterol levels normal. Blood sugar within range.', doctor: 'Dr. Smith' },
+    { id: 1, date: '2024-01-15', type: 'diagnosis', title: 'General Checkup', description: 'Routine annual checkup. All vitals normal.', doctor: 'Dr. Smith', attachments: [] },
+    { id: 2, date: '2024-01-20', type: 'prescription', title: 'Blood Pressure Medication', description: 'Lisinopril 10mg daily', doctor: 'Dr. Johnson', attachments: [] },
+    { id: 3, date: '2024-02-05', type: 'lab', title: 'Blood Test Results', description: 'Cholesterol levels normal. Blood sugar within range.', doctor: 'Dr. Smith', attachments: [] },
   ]);
   const [showModal, setShowModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
@@ -21,18 +21,60 @@ const MedicalHistory = () => {
     title: '',
     description: '',
     doctor: '',
+    attachments: [],
   });
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    setUploading(true);
+    const uploadedUrls = [];
+    
+    for (const file of files) {
+      const formDataUpload = new FormData();
+      formDataUpload.append('image', file);
+      
+      try {
+        const token = document.cookie.split(';').find(c => c.trim().startsWith('token='))?.split('=')[1];
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api'}/upload/medical`, {
+          method: 'POST',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+          body: formDataUpload,
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (data.secure_url) {
+          uploadedUrls.push({ name: file.name, url: data.secure_url });
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+      }
+    }
+    
+    setFormData({ ...formData, attachments: [...formData.attachments, ...uploadedUrls] });
+    setUploading(false);
+    if (uploadedUrls.length > 0) {
+      toast.success(`${uploadedUrls.length} file(s) uploaded!`);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newRecord = {
       id: Date.now(),
-      ...formData,
+      date: formData.date,
+      type: formData.type,
+      title: formData.title,
+      description: formData.description,
+      doctor: formData.doctor,
+      attachments: formData.attachments,
     };
     setRecords([newRecord, ...records]);
     toast.success('Medical record added successfully!');
     setShowModal(false);
-    setFormData({ date: new Date().toISOString().split('T')[0], type: 'diagnosis', title: '', description: '', doctor: '' });
+    setFormData({ date: new Date().toISOString().split('T')[0], type: 'diagnosis', title: '', description: '', doctor: '', attachments: [] });
   };
 
   const handleDelete = () => {
@@ -157,6 +199,39 @@ const MedicalHistory = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none h-24" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Documents (Lab results, prescriptions, etc.)</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-500 transition-colors">
+                  <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={handleFileUpload} className="hidden" id="file-upload" />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    {uploading ? (
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
+                    ) : (
+                      <div className="text-gray-500">
+                        <svg className="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="text-sm">Click to upload or drag files here</p>
+                        <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG, DOC up to 10MB</p>
+                      </div>
+                    )}
+                  </label>
+                </div>
+                {formData.attachments.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {formData.attachments.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+                        <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                        <button type="button" onClick={() => setFormData({ ...formData, attachments: formData.attachments.filter((_, i) => i !== index) })} className="text-red-500 hover:text-red-700">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Cancel</button>

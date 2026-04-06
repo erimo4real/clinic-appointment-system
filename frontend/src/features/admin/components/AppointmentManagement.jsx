@@ -15,6 +15,8 @@ const AppointmentManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [formData, setFormData] = useState({ status: 'pending', notes: '' });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkAction, setBulkAction] = useState('');
 
   useEffect(() => {
     dispatch(fetchAllAppointments());
@@ -39,6 +41,41 @@ const AppointmentManagement = () => {
       dispatch(deleteAppointment(id));
       dispatch(fetchAllAppointments());
     }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === paginatedAppointments.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedAppointments.map(apt => apt.id));
+    }
+  };
+
+  const handleSelectOne = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedIds.length === 0) return;
+    
+    if (bulkAction === 'delete') {
+      if (window.confirm(`Delete ${selectedIds.length} appointments?`)) {
+        for (const id of selectedIds) {
+          await dispatch(deleteAppointment(id));
+        }
+        dispatch(fetchAllAppointments());
+        setSelectedIds([]);
+      }
+    } else {
+      for (const id of selectedIds) {
+        await dispatch(updateAppointment({ id, data: { status: bulkAction } }));
+      }
+      dispatch(fetchAllAppointments());
+      setSelectedIds([]);
+    }
+    setBulkAction('');
   };
 
   const filteredAppointments = appointments.filter(appointment => {
@@ -119,6 +156,27 @@ const AppointmentManagement = () => {
           </div>
         </div>
 
+        {selectedIds.length > 0 && (
+          <div className="p-3 bg-teal-50 border-b border-teal-100 flex items-center justify-between">
+            <span className="text-sm font-medium text-teal-800">{selectedIds.length} selected</span>
+            <div className="flex gap-2">
+              <select value={bulkAction} onChange={(e) => setBulkAction(e.target.value)} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
+                <option value="">Bulk Action</option>
+                <option value="confirmed">Mark Confirmed</option>
+                <option value="completed">Mark Completed</option>
+                <option value="cancelled">Mark Cancelled</option>
+                <option value="delete">Delete Selected</option>
+              </select>
+              <button onClick={handleBulkAction} disabled={!bulkAction} className="px-4 py-1.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 disabled:opacity-50">
+                Apply
+              </button>
+              <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg text-sm">
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           {appointmentsLoading ? (
             <div className="flex justify-center items-center py-20">
@@ -135,6 +193,9 @@ const AppointmentManagement = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-4 py-3">
+                    <input type="checkbox" checked={selectedIds.length === paginatedAppointments.length && paginatedAppointments.length > 0} onChange={handleSelectAll} className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Patient</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
@@ -146,7 +207,10 @@ const AppointmentManagement = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {paginatedAppointments.map((apt) => (
-                  <tr key={apt.id} className="hover:bg-gray-50">
+                  <tr key={apt.id} className={`hover:bg-gray-50 ${selectedIds.includes(apt.id) ? 'bg-teal-50' : ''}`}>
+                    <td className="px-4 py-4">
+                      <input type="checkbox" checked={selectedIds.includes(apt.id)} onChange={() => handleSelectOne(apt.id)} className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
+                    </td>
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-medium text-gray-900">{apt.patient_name || 'Patient'}</p>
