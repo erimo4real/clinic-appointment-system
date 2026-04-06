@@ -69,9 +69,18 @@ router.post('/register', validateRegister, async (req, res) => {
       username, email, password, firstName, lastName, role 
     });
     
-    // Set httpOnly cookie for auth
+    // Set httpOnly cookie for auth (server-side validation)
     res.cookie('auth_token', result.token, {
       httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/'
+    });
+    
+    // Set readable cookie for frontend API calls
+    res.cookie('token', result.token, {
+      httpOnly: false,
       secure: true,
       sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -85,6 +94,7 @@ router.post('/register', validateRegister, async (req, res) => {
     // Return user data
     res.status(201).json({ 
       user: result.user,
+      token: result.token,
       message: 'Registration successful'
     });
   } catch (error) {
@@ -117,9 +127,18 @@ router.post('/login', validateLogin, async (req, res) => {
     // Authenticate user via AuthService
     const result = await AuthService.login(email, password);
     
-    // Set httpOnly cookie for auth
+    // Set httpOnly cookie for auth (server-side validation)
     res.cookie('auth_token', result.token, {
       httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/'
+    });
+    
+    // Set readable cookie for frontend API calls
+    res.cookie('token', result.token, {
+      httpOnly: false,
       secure: true,
       sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000,
