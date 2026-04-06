@@ -101,6 +101,27 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  appointmentCancelled: (appointment) => ({
+    subject: 'Appointment Cancelled - MedBook Pro',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #ef4444;">Appointment Cancelled</h2>
+        <p>Your appointment has been cancelled. Here were the details:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr><td style="padding: 10px; border: 1px solid #ddd;"><strong>Date:</strong></td><td style="padding: 10px; border: 1px solid #ddd;">${appointment.date}</td></tr>
+          <tr><td style="padding: 10px; border: 1px solid #ddd;"><strong>Time:</strong></td><td style="padding: 10px; border: 1px solid #ddd;">${appointment.start_time}</td></tr>
+          <tr><td style="padding: 10px; border: 1px solid #ddd;"><strong>Doctor:</strong></td><td style="padding: 10px; border: 1px solid #ddd;">Dr. ${appointment.doctor_name}</td></tr>
+        </table>
+        <p>We're sorry for any inconvenience. Please book a new appointment at your convenience.</p>
+        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/booking" 
+           style="display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
+          Book New Appointment
+        </a>
+        <p style="color: #666; font-size: 12px;">MedBook Pro Clinic</p>
+      </div>
+    `,
+  }),
 };
 
 module.exports = { sendEmail, emailTemplates };

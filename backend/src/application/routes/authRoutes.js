@@ -16,6 +16,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const AuthService = require('../../application/services/AuthService');
 const { auth } = require('../../infrastructure/middleware/auth');
+const { sendEmail, emailTemplates } = require('../../infrastructure/services/emailService');
 
 /**
  * Validation middleware for registration
@@ -76,6 +77,10 @@ router.post('/register', validateRegister, async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/'
     });
+    
+    // Send welcome email
+    const { subject, html } = emailTemplates.welcomeEmail(result.user);
+    sendEmail(result.user.email, subject, html).catch(err => console.log('Email send failed:', err.message));
     
     // Return user data
     res.status(201).json({ 

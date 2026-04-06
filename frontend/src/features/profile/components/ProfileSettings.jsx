@@ -34,17 +34,20 @@ const ProfileSettings = () => {
     setUploading(true);
 
     const formDataUpload = new FormData();
-    formDataUpload.append('file', file);
-    formDataUpload.append('upload_preset', 'medbook-pro');
+    formDataUpload.append('image', file);
 
     try {
-      const response = await fetch('https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload', {
+      const token = document.cookie.split(';').find(c => c.trim().startsWith('token='))?.split('=')[1];
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api'}/upload/profile`, {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: formDataUpload,
+        credentials: 'include',
       });
       const data = await response.json();
       
       if (data.secure_url) {
+        dispatch(updateProfile({ profile_image: data.secure_url }));
         toast.success('Profile image uploaded!');
       }
     } catch (error) {

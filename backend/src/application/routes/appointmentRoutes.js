@@ -15,6 +15,10 @@ const express = require('express');
 const router = express.Router();
 const AppointmentService = require('../../application/services/AppointmentService');
 const { auth, authorize } = require('../../infrastructure/middleware/auth');
+const { sendEmail, emailTemplates } = require('../../infrastructure/services/emailService');
+const Doctor = require('../../domain/entities/Doctor');
+const Service = require('../../domain/entities/Service');
+const User = require('../../domain/entities/User');
 
 /**
  * POST /api/appointments/check-conflict
@@ -137,6 +141,22 @@ router.get('/:id', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     const appointment = await AppointmentService.createAppointment(req.body, req.user._id);
+    
+    // Send confirmation email
+    const doctor = await Doctor.findById(req.body.doctor).populate('user');
+    const service = await Service.findById(req.body.service);
+    
+    if (doctor && service) {
+      const emailData = {
+        date: new Date(req.body.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+        start_time: req.body.startTime,
+        doctor_name: doctor.user ? `${doctor.user.firstName} ${doctor.user.lastName}` : doctor.specialty,
+        service_name: service.name,
+      };
+      const { subject, html } = emailTemplates.appointmentConfirmation(emailData);
+      sendEmail(req.user.email, subject, html).catch(err => console.log('Email send failed:', err.message));
+    }
+    
     res.status(201).json(appointment);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -187,7 +207,24 @@ router.put('/:id', auth, async (req, res) => {
  */
 router.delete('/:id', auth, async (req, res) => {
   try {
-    await AppointmentService.cancelAppointment(req.params.id, req.user._id, req.user.role);
+    const appointment = await AppointmentService.cancelAppointment(req.params.id, req.user._id, req.user.role);
+    
+    // Send cancellation email
+    if (appointment) {
+      const doctor = await Doctor.findById(appointment.doctor).populate('user');
+      const user = await User.findById(appointment.patient);
+      
+      if (doctor && user) {
+        const emailData = {
+          date: new Date(appointment.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          start_time: appointment.startTime,
+          doctor_name: doctor.user ? `${doctor.user.firstName} ${doctor.user.lastName}` : doctor.specialty,
+        };
+        const { subject, html } = emailTemplates.appointmentCancelled(emailData);
+        sendEmail(user.email, subject, html).catch(err => console.log('Email send failed:', err.message));
+      }
+    }
+    
     res.json({ message: 'Appointment cancelled' });
   } catch (error) {
     res.status(400).json({ message: error.message });

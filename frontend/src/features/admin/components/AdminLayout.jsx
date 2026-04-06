@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setCredentials } from '../../auth/store/authSlice';
 import Breadcrumbs from '../../../components/ui/Breadcrumbs';
 import { DarkModeToggle } from '../../../components/ui/Theme';
 
 const AdminLayout = () => {
+  const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -18,11 +20,20 @@ const AdminLayout = () => {
     
     setUploadingImage(true);
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('image', file);
     
     try {
-      // Simulated upload - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const token = document.cookie.split(';').find(c => c.trim().startsWith('token='))?.split('=')[1];
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api'}/upload/profile`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: formData,
+        credentials: 'include',
+      });
+      const data = await response.json();
+      if (data.secure_url) {
+        dispatch(setCredentials({ ...user, profileImage: data.secure_url }));
+      }
     } catch (error) {
       console.error('Upload error:', error);
     }
