@@ -53,6 +53,49 @@ const DoctorsPage = () => {
   const [error, setError] = useState(null);
   const [specialties, setSpecialties] = useState([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem('favoriteDoctors');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [doctorRatings, setDoctorRatings] = useState({});
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const response = await fetch(API_URL + '/feedback');
+        const data = await response.json();
+        const ratings = {};
+        if (Array.isArray(data)) {
+          data.forEach(fb => {
+            if (fb.doctor_id) {
+              if (!ratings[fb.doctor_id]) {
+                ratings[fb.doctor_id] = { sum: 0, count: 0 };
+              }
+              ratings[fb.doctor_id].sum += fb.rating || 0;
+              ratings[fb.doctor_id].count += 1;
+            }
+          });
+          Object.keys(ratings).forEach(id => {
+            ratings[id].avg = ratings[id].sum / ratings[id].count;
+          });
+        }
+        setDoctorRatings(ratings);
+      } catch (err) {
+        console.log('Could not fetch ratings');
+      }
+    };
+    fetchRatings();
+  }, []);
+
+  const toggleFavorite = (doctorId) => {
+    const newFavorites = favorites.includes(doctorId)
+      ? favorites.filter(id => id !== doctorId)
+      : [...favorites, doctorId];
+    setFavorites(newFavorites);
+    localStorage.setItem('favoriteDoctors', JSON.stringify(newFavorites));
+  };
+
+  const isFavorite = (doctorId) => favorites.includes(doctorId);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -152,51 +195,82 @@ const DoctorsPage = () => {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredDoctors.map((doctor) => (
-              <div key={doctor._id || doctor.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                <div className="bg-gradient-to-br from-medical-100 to-primary-100 p-8 flex items-center justify-center">
-                  {doctor.profileImage ? (
-                    <img 
-                      src={doctor.profileImage} 
-                      alt={getDoctorName(doctor)} 
-                      className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                    />
-                  ) : (
-                    <span className="text-7xl">👨‍⚕️</span>
-                  )}
-                </div>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{getDoctorName(doctor)}</h3>
-                  <p className="text-medical-600 font-medium mb-1">{doctor.specialty}</p>
-                  <p className="text-gray-500 text-sm mb-3">{doctor.qualification}</p>
-                  {doctor.bio && (
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">{doctor.bio}</p>
-                  )}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <span className="text-sm text-gray-500">
-                      {doctor.experience ? `${doctor.experience} years experience` : 'Experience available'}
-                    </span>
-                    <Link 
-                      to="/booking" 
-                      state={{ doctorId: doctor._id || doctor.id }}
-                      className="text-medical-600 font-medium hover:underline"
-                    >
-                      Book Appointment →
-                    </Link>
+            {filteredDoctors.map((doctor) => {
+              const doctorId = doctor._id || doctor.id;
+              const rating = doctorRatings[doctorId];
+              const avgRating = rating?.avg || 0;
+              const ratingCount = rating?.count || 0;
+              
+              return (
+                <div key={doctorId} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow relative">
+                  <button
+                    onClick={() => toggleFavorite(doctorId)}
+                    className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                      isFavorite(doctorId) 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-white/80 text-gray-400 hover:text-red-500'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill={isFavorite(doctorId) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </button>
+                  <div className="bg-gradient-to-br from-medical-100 to-primary-100 p-8 flex items-center justify-center">
+                    {doctor.profileImage ? (
+                      <img 
+                        src={doctor.profileImage} 
+                        alt={getDoctorName(doctor)} 
+                        className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                    ) : (
+                      <span className="text-7xl">👨‍⚕️</span>
+                    )}
                   </div>
-                  {doctor.consultationFee && (
-                    <div className="mt-3 text-medical-600 font-semibold">
-                      Consultation: ₦{doctor.consultationFee?.toLocaleString()}
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{getDoctorName(doctor)}</h3>
+                    <p className="text-medical-600 font-medium mb-1">{doctor.specialty}</p>
+                    <p className="text-gray-500 text-sm mb-3">{doctor.qualification}</p>
+                    
+                    {avgRating > 0 && (
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span key={star} className={star <= Math.round(avgRating) ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                          ))}
+                        </div>
+                        <span className="text-sm text-gray-500">({ratingCount} reviews)</span>
+                      </div>
+                    )}
+                    
+                    {doctor.bio && (
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">{doctor.bio}</p>
+                    )}
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <span className="text-sm text-gray-500">
+                        {doctor.experience ? `${doctor.experience} years experience` : 'Experience available'}
+                      </span>
+                      <Link 
+                        to="/booking" 
+                        state={{ doctorId }}
+                        className="text-medical-600 font-medium hover:underline"
+                      >
+                        Book Appointment →
+                      </Link>
                     </div>
-                  )}
-                  {doctor.user?.phone && (
-                    <div className="mt-2 text-gray-500 text-sm">
-                      {doctor.user.phone}
-                    </div>
-                  )}
+                    {doctor.consultationFee && (
+                      <div className="mt-3 text-medical-600 font-semibold">
+                        Consultation: ₦{doctor.consultationFee?.toLocaleString()}
+                      </div>
+                    )}
+                    {doctor.user?.phone && (
+                      <div className="mt-2 text-gray-500 text-sm">
+                        {doctor.user.phone}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

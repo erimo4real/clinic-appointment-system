@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchPatientFeedback, submitFeedback, clearSubmitSuccess } from '../../feedback/store/feedbackSlice';
-import { fetchMyAppointments } from '../../appointments/store/appointmentSlice';
+import { fetchMyAppointments, cancelAppointment, updateAppointment } from '../../appointments/store/appointmentSlice';
 import { updateProfile } from '../../auth/store/authSlice';
 import MedicalHistory from './MedicalHistory';
 import PrescriptionPage from './PrescriptionPage';
@@ -34,6 +34,12 @@ const PatientProfile = () => {
   const [feedbackForm, setFeedbackForm] = useState({
     doctor_id: '', doctor_name: '', rating: 5, type: 'like', reason: '',
   });
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [newDate, setNewDate] = useState('');
+  const [newTime, setNewTime] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     dispatch(fetchPatientFeedback());
@@ -66,6 +72,49 @@ const PatientProfile = () => {
   };
 
   const handleSubmitFeedback = () => dispatch(submitFeedback(feedbackForm));
+
+  const openCancelModal = (apt) => {
+    setSelectedAppointment(apt);
+    setShowCancelModal(true);
+  };
+
+  const openRescheduleModal = (apt) => {
+    setSelectedAppointment(apt);
+    setNewDate(apt.date);
+    setNewTime(apt.start_time);
+    setShowRescheduleModal(true);
+  };
+
+  const handleCancelAppointment = async () => {
+    if (!selectedAppointment) return;
+    setActionLoading(true);
+    try {
+      await dispatch(cancelAppointment(selectedAppointment.id)).unwrap();
+      dispatch(fetchMyAppointments());
+      setShowCancelModal(false);
+    } catch (error) {
+      console.error('Cancel failed:', error);
+    }
+    setActionLoading(false);
+  };
+
+  const handleRescheduleAppointment = async () => {
+    if (!selectedAppointment || !newDate || !newTime) return;
+    setActionLoading(true);
+    try {
+      await dispatch(updateAppointment({
+        id: selectedAppointment.id,
+        date: newDate,
+        startTime: newTime,
+        endTime: newTime.split(':')[0] + ':30',
+      })).unwrap();
+      dispatch(fetchMyAppointments());
+      setShowRescheduleModal(false);
+    } catch (error) {
+      console.error('Reschedule failed:', error);
+    }
+    setActionLoading(false);
+  };
 
   const myAppointments = appointments || [];
   const upcomingAppointments = myAppointments.filter(a => a.status === 'pending' || a.status === 'confirmed');
@@ -154,14 +203,26 @@ const PatientProfile = () => {
                 <h2 className="text-lg font-semibold mb-4">Upcoming Appointments</h2>
                 <div className="grid gap-4">
                   {upcomingAppointments.map((apt) => (
-                    <div key={apt.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
+                    <div key={apt.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                           <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         </div>
-                        <div><p className="font-medium text-gray-900">Dr. {apt.doctor_name}</p><p className="text-sm text-gray-500">{apt.service_name}</p><p className="text-sm text-gray-500">{apt.date} at {apt.start_time}</p></div>
+                        <div>
+                          <p className="font-medium text-gray-900">Dr. {apt.doctor_name}</p>
+                          <p className="text-sm text-gray-500">{apt.service_name}</p>
+                          <p className="text-sm text-gray-500">{apt.date} at {apt.start_time}</p>
+                        </div>
                       </div>
-                      <div>{getStatusBadge(apt.status)}</div>
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(apt.status)}
+                        <button onClick={() => openRescheduleModal(apt)} className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+                          Reschedule
+                        </button>
+                        <button onClick={() => openCancelModal(apt)} className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -248,6 +309,77 @@ const PatientProfile = () => {
               <div className="flex justify-end space-x-3 pt-4">
                 <button onClick={() => setShowFeedbackModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
                 <button onClick={handleSubmitFeedback} disabled={feedbackLoading || !feedbackForm.reason} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">{feedbackLoading ? 'Submitting...' : 'Submit Feedback'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelModal && selectedAppointment && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Cancel Appointment?</h2>
+              <p className="text-gray-600">Are you sure you want to cancel your appointment with <strong>Dr. {selectedAppointment.doctor_name}</strong> on <strong>{selectedAppointment.date}</strong> at <strong>{selectedAppointment.start_time}</strong>?</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowCancelModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Keep Appointment</button>
+              <button onClick={handleCancelAppointment} disabled={actionLoading} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50">
+                {actionLoading ? 'Cancelling...' : 'Yes, Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRescheduleModal && selectedAppointment && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Reschedule Appointment</h2>
+            <p className="text-gray-600 mb-4">with <strong>Dr. {selectedAppointment.doctor_name}</strong></p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Current: {selectedAppointment.date} at {selectedAppointment.start_time}</label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Date</label>
+                <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Time</label>
+                <select value={newTime} onChange={(e) => setNewTime(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                  <option value="">Select time</option>
+                  <option value="08:00">08:00 AM</option>
+                  <option value="08:30">08:30 AM</option>
+                  <option value="09:00">09:00 AM</option>
+                  <option value="09:30">09:30 AM</option>
+                  <option value="10:00">10:00 AM</option>
+                  <option value="10:30">10:30 AM</option>
+                  <option value="11:00">11:00 AM</option>
+                  <option value="11:30">11:30 AM</option>
+                  <option value="12:00">12:00 PM</option>
+                  <option value="12:30">12:30 PM</option>
+                  <option value="13:00">01:00 PM</option>
+                  <option value="13:30">01:30 PM</option>
+                  <option value="14:00">02:00 PM</option>
+                  <option value="14:30">02:30 PM</option>
+                  <option value="15:00">03:00 PM</option>
+                  <option value="15:30">03:30 PM</option>
+                  <option value="16:00">04:00 PM</option>
+                  <option value="16:30">04:30 PM</option>
+                  <option value="17:00">05:00 PM</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button onClick={() => setShowRescheduleModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Cancel</button>
+                <button onClick={handleRescheduleAppointment} disabled={actionLoading || !newDate || !newTime} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50">
+                  {actionLoading ? 'Rescheduling...' : 'Confirm Reschedule'}
+                </button>
               </div>
             </div>
           </div>
