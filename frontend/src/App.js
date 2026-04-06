@@ -9,7 +9,7 @@
  * @component App
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCurrentUser } from './features/auth/store/authSlice';
@@ -83,31 +83,34 @@ const ReceptionistRoute = ({ children }) => {
   );
 };
 
-const App = () => {
+  const App = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const hasCheckedSession = useRef(false);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isPublicRoute = ['/', '/services', '/doctors', '/about', '/booking'].includes(location.pathname);
   const showHeader = isAuthenticated && !isAdminRoute && !isPublicRoute;
 
   useEffect(() => {
+    // Only run on mount
+    if (hasCheckedSession.current) return;
+    
     const isLoginPage = location.pathname === '/login' || location.pathname === '/register';
     
     if (isLoginPage) {
       setSessionChecked(true);
+      hasCheckedSession.current = true;
       return;
     }
     
     if (isAuthenticated) {
       setSessionChecked(true);
+      hasCheckedSession.current = true;
       return;
     }
-    
-    // Only check session on mount, not on every navigation
-    if (sessionChecked) return;
     
     const checkSession = async () => {
       try {
@@ -117,10 +120,11 @@ const App = () => {
         document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       }
       setSessionChecked(true);
+      hasCheckedSession.current = true;
     };
     
     checkSession();
-  }, [dispatch, location.pathname, isAuthenticated, sessionChecked]);
+  }, [dispatch, isAuthenticated]);
 
   if (!sessionChecked) {
     return (

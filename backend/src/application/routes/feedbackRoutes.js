@@ -19,6 +19,39 @@ const Feedback = require('../../domain/entities/Feedback');
 const Doctor = require('../../domain/entities/Doctor');
 const User = require('../../domain/entities/User');
 
+/**
+ * GET /api/feedback
+ * 
+ * Retrieves all feedback for displaying doctor ratings.
+ * Public endpoint - no authentication required.
+ * 
+ * @route GET /api/feedback
+ * @returns {200} Array of all feedback
+ */
+router.get('/', async (req, res) => {
+  try {
+    const feedback = await Feedback.find()
+      .populate('patient', 'firstName lastName')
+      .populate('doctor')
+      .sort({ createdAt: -1 });
+
+    const formatted = feedback.map(f => ({
+      id: f._id,
+      doctor_id: f.doctor?._id,
+      patient_name: f.patient ? f.patient.firstName : 'Anonymous',
+      rating: f.rating,
+      type: f.type,
+      reason: f.reason,
+      status: f.status,
+      createdAt: f.createdAt
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Configure email transporter for notifications
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || 'gmail',
