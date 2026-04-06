@@ -105,16 +105,21 @@ const App = () => {
       return;
     }
     
+    // Only check session on mount, not on every navigation
+    if (sessionChecked) return;
+    
     const checkSession = async () => {
       try {
         await dispatch(fetchCurrentUser()).unwrap();
       } catch (err) {
+        // User not logged in or token expired - clear cookie
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       }
       setSessionChecked(true);
     };
     
     checkSession();
-  }, [dispatch, location.pathname, isAuthenticated]);
+  }, [dispatch, location.pathname, isAuthenticated, sessionChecked]);
 
   if (!sessionChecked) {
     return (
