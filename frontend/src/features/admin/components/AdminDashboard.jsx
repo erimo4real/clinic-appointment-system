@@ -39,6 +39,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const AdminDashboard = () => {
+  console.log('AdminDashboard rendered');
   const dispatch = useDispatch();
   const { stats, appointments, users, doctors, services, loading, usersLoading, doctorsLoading, appointmentsLoading, servicesLoading, error } = useSelector((state) => state.admin);
   const { isAuthenticated, user } = useSelector((state) => state.auth);

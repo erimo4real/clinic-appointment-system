@@ -6,6 +6,7 @@ import Breadcrumbs from '../../../components/ui/Breadcrumbs';
 import { DarkModeToggle } from '../../../components/ui/Theme';
 
 const AdminLayout = () => {
+  console.log('AdminLayout rendered');
   const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);

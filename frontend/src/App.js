@@ -52,14 +52,19 @@ import Header from './layout/Header';
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   
+  console.log('ProtectedRoute check:', { isAuthenticated, userRole: user?.role, allowedRoles });
+  
   if (!isAuthenticated) {
+    console.log('ProtectedRoute: Not authenticated, redirecting to /login');
     return <Navigate to="/login" replace />;
   }
   
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    console.log('ProtectedRoute: Role not allowed, redirecting to /');
     return <Navigate to="/" replace />;
   }
   
+  console.log('ProtectedRoute: Access granted');
   return children;
 };
 
