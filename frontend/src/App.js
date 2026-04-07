@@ -83,63 +83,50 @@ const ReceptionistRoute = ({ children }) => {
   );
 };
 
-  const App = () => {
+const App = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [sessionChecked, setSessionChecked] = useState(false);
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isPublicRoute = ['/', '/services', '/doctors', '/about', '/booking'].includes(location.pathname);
   const showHeader = isAuthenticated && !isAdminRoute && !isPublicRoute;
 
   useEffect(() => {
-    const isLoginPage = location.pathname === '/login' || location.pathname === '/register';
-    
-    if (isLoginPage) {
-      setSessionChecked(true);
-      setInitialCheckDone(true);
-      return;
-    }
-    
-    if (isAuthenticated && initialCheckDone) {
+    // Skip session check on login/register pages
+    if (location.pathname === '/login' || location.pathname === '/register') {
       setSessionChecked(true);
       return;
     }
     
-    // Check if token exists first - if not, don't call API
-    const tokenExists = document.cookie.split(';').some(cookie => cookie.trim().startsWith('token='));
-    
-    if (!tokenExists) {
+    // Already authenticated
+    if (isAuthenticated) {
       setSessionChecked(true);
-      setInitialCheckDone(true);
       return;
     }
     
-    const checkSession = async () => {
-      try {
-        await dispatch(fetchCurrentUser()).unwrap();
-      } catch (err) {
-        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      }
-      setSessionChecked(true);
-      setInitialCheckDone(true);
-    };
+    // Check for token
+    const token = document.cookie.split(';').find(c => c.trim().startsWith('token='));
     
-    checkSession();
-  }, [dispatch, isAuthenticated, location.pathname]);
+    if (!token) {
+      setSessionChecked(true);
+      return;
+    }
+    
+    // Verify token with server
+    dispatch(fetchCurrentUser())
+      .finally(() => setSessionChecked(true));
+  }, [dispatch, location.pathname, isAuthenticated]);
 
   if (!sessionChecked) {
     return (
-      <ThemeProvider>
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
-            <div className="text-teal-600 font-medium">Loading...</div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
+          <div className="text-teal-600 font-medium">Loading...</div>
         </div>
-      </ThemeProvider>
+      </div>
     );
   }
   
