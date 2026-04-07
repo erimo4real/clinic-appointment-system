@@ -46,15 +46,34 @@ const AdminDashboard = () => {
   useEffect(() => {
     console.log('AdminDashboard mounted, isAuthenticated:', isAuthenticated, 'user role:', user?.role);
     if (isAuthenticated) {
-      dispatch(fetchDashboardStats());
-      dispatch(fetchAllAppointments());
-      dispatch(fetchAllUsers());
-      dispatch(fetchAllDoctors());
-      dispatch(fetchAllServices());
+      console.log('Fetching admin data...');
+      dispatch(fetchDashboardStats())
+        .unwrap()
+        .then(data => console.log('Stats fetched:', data))
+        .catch(err => console.error('Stats error:', err));
+      dispatch(fetchAllAppointments())
+        .unwrap()
+        .then(data => console.log('Appointments fetched:', data?.length))
+        .catch(err => console.error('Appointments error:', err));
+      dispatch(fetchAllUsers())
+        .unwrap()
+        .then(data => console.log('Users fetched:', data?.length))
+        .catch(err => console.error('Users error:', err));
+      dispatch(fetchAllDoctors())
+        .unwrap()
+        .then(data => console.log('Doctors fetched:', data?.length))
+        .catch(err => console.error('Doctors error:', err));
+      dispatch(fetchAllServices())
+        .unwrap()
+        .then(data => console.log('Services fetched:', data?.length))
+        .catch(err => console.error('Services error:', err));
     }
   }, [dispatch, isAuthenticated, user]);
   
   const isLoading = loading || usersLoading || doctorsLoading || appointmentsLoading || servicesLoading;
+  
+  // Show debug info
+  console.log('Redux state - users:', users.length, 'doctors:', doctors.length, 'appointments:', appointments.length, 'services:', services.length, 'error:', error);
 
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
   const completedCount = appointments.filter(a => a.status === 'completed').length;
