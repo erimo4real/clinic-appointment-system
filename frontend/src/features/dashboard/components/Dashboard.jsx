@@ -5,7 +5,119 @@ import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDocto
 import { fetchMyAppointments } from '../../appointments/store/appointmentSlice';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend } from 'recharts';
 
+const HeartIcon = () => (
+  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+  </svg>
+);
+
 const COLORS = ['#14b8a6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
+
+const DashboardHeader = ({ user, onLogout }) => {
+  const navigate = useNavigate();
+  
+  return (
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="p-2 bg-teal-600 rounded-lg">
+              <HeartIcon />
+            </div>
+            <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
+          </Link>
+
+          <div className="flex items-center gap-4">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              user?.role === 'admin' ? 'bg-red-100 text-red-700' :
+              user?.role === 'doctor' ? 'bg-blue-100 text-blue-700' :
+              user?.role === 'receptionist' ? 'bg-purple-100 text-purple-700' :
+              'bg-green-100 text-green-700'
+            }`}>
+              {user?.role?.toUpperCase()}
+            </span>
+            <span className="text-sm font-medium text-gray-700">
+              {user?.firstName || user?.first_name || ''} {user?.lastName || user?.last_name || ''}
+            </span>
+            <button
+              onClick={onLogout}
+              className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+const Sidebar = ({ user }) => {
+  const location = window.location.pathname;
+  
+  const menuItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+    { path: '/dashboard/users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+    { path: '/dashboard/doctors', label: 'Doctors', icon: 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z' },
+    { path: '/dashboard/appointments', label: 'Appointments', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+    { path: '/dashboard/services', label: 'Services', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+    { path: '/dashboard/calendar', label: 'Calendar', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+    { path: '/dashboard/reports', label: 'Reports', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+    { path: '/profile', label: 'My Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+  ];
+
+  const handleLogout = () => {
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    window.location.href = '/login';
+  };
+
+  return (
+    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-16 overflow-y-auto">
+      <nav className="p-4">
+        <ul className="space-y-1">
+          {menuItems.map((item) => (
+            <li key={item.path}>
+              <Link
+                to={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  location === item.path
+                    ? 'bg-teal-50 text-teal-600 font-semibold'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                </svg>
+                {item.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        
+        <div className="mt-8 pt-4 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
+        </div>
+      </nav>
+    </aside>
+  );
+};
+
+const Footer = () => (
+  <footer className="bg-white border-t border-gray-200 py-6 mt-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+      <p>&copy; 2026 MedBook Pro. All rights reserved.</p>
+    </div>
+  </footer>
+);
 
 const StatCard = ({ title, value, subtitle, gradient, icon }) => (
   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300">
@@ -51,8 +163,6 @@ const Dashboard = () => {
   const isPatient = user?.role === 'patient';
 
   useEffect(() => {
-    console.log('Dashboard loaded, role:', user?.role);
-    
     // Admin and Receptionist: Fetch all data
     if (isAdmin || isReceptionist) {
       dispatch(fetchDashboardStats());
@@ -70,22 +180,32 @@ const Dashboard = () => {
     }
   }, [dispatch, user?.role]);
 
+  const handleLogout = () => {
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    window.location.href = '/login';
+  };
+
   const isLoading = loading;
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Loading...</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-2xl shadow-sm border p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-              <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          ))}
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader user={user} onLogout={handleLogout} />
+        <Sidebar user={user} />
+        <div className="ml-64 p-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-500 mt-1">Loading...</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-2xl shadow-sm border p-6 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -106,13 +226,16 @@ const Dashboard = () => {
     const recentAppointments = appointments.slice(0, 5);
 
     return (
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isAdmin ? 'Admin Dashboard' : 'Receptionist Dashboard'}
-          </h1>
-          <p className="text-gray-500 mt-1">Welcome back! Here's what's happening with your clinic.</p>
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader user={user} onLogout={handleLogout} />
+        <Sidebar user={user} />
+        <div className="ml-64 p-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isAdmin ? 'Admin Dashboard' : 'Receptionist Dashboard'}
+            </h1>
+            <p className="text-gray-500 mt-1">Welcome back! Here's what's happening with your clinic.</p>
+          </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -235,6 +358,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -246,14 +370,17 @@ const Dashboard = () => {
     const pastAppointments = myAppointments.filter(a => a.status === 'completed' || a.status === 'cancelled');
 
     return (
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Dashboard</h1>
-          <p className="text-gray-500 mt-1">Welcome back, {user?.firstName || user?.first_name || 'Patient'}!</p>
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader user={user} onLogout={handleLogout} />
+        <Sidebar user={user} />
+        <div className="ml-64 p-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">My Dashboard</h1>
+            <p className="text-gray-500 mt-1">Welcome back, {user?.firstName || user?.first_name || 'Patient'}!</p>
+          </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard
             title="Upcoming Appointments"
             value={upcomingAppointments.length}
@@ -330,19 +457,26 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+        <Footer />
+        </div>
       </div>
     );
   }
 
   // ==================== DEFAULT / FALLBACK ====================
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Welcome!</p>
-      </div>
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
-        <p className="text-gray-500">Select an option from the menu to get started.</p>
+    <div className="min-h-screen bg-gray-50">
+      <DashboardHeader user={user} onLogout={handleLogout} />
+      <Sidebar user={user} />
+      <div className="ml-64 p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 mt-1">Welcome!</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+          <p className="text-gray-500">Select an option from the menu to get started.</p>
+        </div>
+        <Footer />
       </div>
     </div>
   );
