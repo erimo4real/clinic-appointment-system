@@ -201,21 +201,23 @@ const Header = ({ user: propUser, onLogout }) => {
                         {user?.role === 'admin' && (
                           <Link 
                             to="/admin" 
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            className="flex items-center px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 font-medium"
                             onClick={() => setIsProfileOpen(false)}
                           >
                             <DashboardIcon />
                             <span className="ml-2">Admin Panel</span>
                           </Link>
                         )}
-                        <Link 
-                          to="/profile" 
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <UserIcon />
-                          <span className="ml-2">My Profile</span>
-                        </Link>
+                        {user?.role !== 'admin' && (
+                          <Link 
+                            to="/profile" 
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <UserIcon />
+                            <span className="ml-2">My Profile</span>
+                          </Link>
+                        )}
                         <button 
                           onClick={handleLogout}
                           className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -243,6 +245,15 @@ const Header = ({ user: propUser, onLogout }) => {
                   Book Now
                 </Link>
               </>
+            )}
+            
+            {isAuthenticated && (user?.role === 'admin' || user?.role === 'doctor') && (
+              <Link 
+                to={user?.role === 'admin' ? '/admin' : '/profile'} 
+                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                {user?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
+              </Link>
             )}
           </div>
 
