@@ -52,7 +52,48 @@ import Header from './layout/Header';
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   
-  console.log('ProtectedRoute check:', { isAuthenticated, userRole: user?.role, allowedRoles });
+  // Don't check auth until App has finished initial check
+  const [initialCheck, setInitialCheck] = useState(false);
+  const dispatch = useDispatch();
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Check for token cookie
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(c => c.trim().startsWith('token='));
+      const token = tokenCookie ? tokenCookie.split('=')[1] : null;
+      
+      if (!token) {
+        setInitialCheck(true);
+        return;
+      }
+      
+      if (!isAuthenticated) {
+        try {
+          await dispatch(fetchCurrentUser()).unwrap();
+        } catch {
+          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        }
+      }
+      setInitialCheck(true);
+    };
+    
+    checkAuth();
+  }, [dispatch, isAuthenticated]);
+  
+  console.log('ProtectedRoute check:', { isAuthenticated, userRole: user?.role, allowedRoles, initialCheck });
+  
+  if (!initialCheck) {
+    console.log('ProtectedRoute: Waiting for session check...');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
+          <div className="text-teal-600 font-medium">Loading...</div>
+        </div>
+      </div>
+    );
+  }
   
   if (!isAuthenticated) {
     console.log('ProtectedRoute: Not authenticated, redirecting to /login');
