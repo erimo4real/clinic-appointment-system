@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { setCredentials } from '../../auth/store/authSlice';
@@ -13,6 +13,23 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const profileRef = useRef(null);
+  const notificationRef = useRef(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setNotificationOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -163,7 +180,7 @@ const AdminLayout = () => {
       {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'} ml-0`}>
         {/* Header */}
-        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-30 flex items-center justify-between px-6">
+        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50 flex items-center justify-between px-6 overflow-visible">
           {/* Toggle & Search */}
           <div className="flex items-center gap-4">
             {/* Mobile Menu Button */}
@@ -203,7 +220,7 @@ const AdminLayout = () => {
             <DarkModeToggle />
             
             {/* Notification Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={notificationRef}>
               <button
                 onClick={() => {
                   setNotificationOpen(!notificationOpen);
@@ -248,7 +265,7 @@ const AdminLayout = () => {
             </div>
 
             {/* Profile Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={profileRef}>
               <button
                 onClick={() => {
                   setProfileOpen(!profileOpen);
