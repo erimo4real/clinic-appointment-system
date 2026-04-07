@@ -14,33 +14,18 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    // Get all cookies
-    const allCookies = document.cookie;
-    console.log('All cookies:', allCookies);
-    
-    const cookies = allCookies.split(';');
+    const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
       const parts = cookie.trim().split('=');
       const name = parts[0];
-      const value = parts.slice(1).join('='); // Handle values with = in them
+      const value = parts.slice(1).join('=');
       
       if (name === 'token') {
-        const tokenValue = decodeURIComponent(value);
-        console.log('Found token:', tokenValue ? 'Yes' : 'No');
-        config.headers.Authorization = `Bearer ${tokenValue}`;
+        config.headers.Authorization = `Bearer ${decodeURIComponent(value)}`;
         break;
       }
     }
     return config;
-  }
-);
-
-// Response interceptor for debugging
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.status, error.response?.data);
-    return Promise.reject(error);
   }
 );
 

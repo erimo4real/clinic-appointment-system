@@ -28,6 +28,7 @@ import BookingPage from './features/appointments/components/BookingPage';
 import DoctorsPage from './features/doctors/components/DoctorsPage';
 import DoctorProfilePage from './features/doctors/components/DoctorProfilePage';
 import ServicesPage from './features/services/components/ServicesPage';
+import Dashboard from './features/dashboard/components/Dashboard';
 
 import AdminLayout from './features/admin/components/AdminLayout';
 import AdminDashboard from './features/admin/components/AdminDashboard';
@@ -52,60 +53,14 @@ import Header from './layout/Header';
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   
-  // Don't check auth until App has finished initial check
-  const [initialCheck, setInitialCheck] = useState(false);
-  const dispatch = useDispatch();
-  
-  useEffect(() => {
-    const checkAuth = async () => {
-      // Check for token cookie
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(c => c.trim().startsWith('token='));
-      const token = tokenCookie ? tokenCookie.split('=')[1] : null;
-      
-      if (!token) {
-        setInitialCheck(true);
-        return;
-      }
-      
-      if (!isAuthenticated) {
-        try {
-          await dispatch(fetchCurrentUser()).unwrap();
-        } catch {
-          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        }
-      }
-      setInitialCheck(true);
-    };
-    
-    checkAuth();
-  }, [dispatch, isAuthenticated]);
-  
-  console.log('ProtectedRoute check:', { isAuthenticated, userRole: user?.role, allowedRoles, initialCheck });
-  
-  if (!initialCheck) {
-    console.log('ProtectedRoute: Waiting for session check...');
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
-          <div className="text-teal-600 font-medium">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-  
   if (!isAuthenticated) {
-    console.log('ProtectedRoute: Not authenticated, redirecting to /login');
     return <Navigate to="/login" replace />;
   }
   
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    console.log('ProtectedRoute: Role not allowed, redirecting to /');
     return <Navigate to="/" replace />;
   }
   
-  console.log('ProtectedRoute: Access granted');
   return children;
 };
 
@@ -203,18 +158,19 @@ const App = () => {
           <Route path="/reset-password/:token" element={<ResetPasswordConfirmPage />} />
           <Route path="/booking" element={<BookingPage />} />
           
-          {/* Patient Dashboard */}
+          {/* Unified Dashboard - All roles */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              {user?.role === 'admin' ? <Navigate to="/admin" replace /> :
-               user?.role === 'doctor' ? <Navigate to="/profile" replace /> : 
-               user?.role === 'receptionist' ? <Navigate to="/admin" replace /> :
-               <PatientProfile />}
+              <Dashboard />
             </ProtectedRoute>
           } />
           
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
           <Route path="/admin/doctors" element={<AdminRoute><DoctorManagement /></AdminRoute>} />
           <Route path="/admin/doctor-schedule" element={<AdminRoute><DoctorSchedule /></AdminRoute>} />
