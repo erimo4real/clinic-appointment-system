@@ -1,484 +1,360 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDoctors, fetchAllServices } from '../../admin/store/adminSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCurrentUser, logoutUser } from '../../auth/store/authSlice';
 import { fetchMyAppointments } from '../../appointments/store/appointmentSlice';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend } from 'recharts';
-
-const HeartIcon = () => (
-  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-  </svg>
-);
-
-const COLORS = ['#14b8a6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
-
-const DashboardHeader = ({ user, onLogout }) => {
-  const navigate = useNavigate();
-  
-  return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="p-2 bg-teal-600 rounded-lg">
-              <HeartIcon />
-            </div>
-            <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
-          </Link>
-
-          <div className="flex items-center gap-4">
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              user?.role === 'admin' ? 'bg-red-100 text-red-700' :
-              user?.role === 'doctor' ? 'bg-blue-100 text-blue-700' :
-              user?.role === 'receptionist' ? 'bg-purple-100 text-purple-700' :
-              'bg-green-100 text-green-700'
-            }`}>
-              {user?.role?.toUpperCase()}
-            </span>
-            <span className="text-sm font-medium text-gray-700">
-              {user?.firstName || user?.first_name || ''} {user?.lastName || user?.last_name || ''}
-            </span>
-            <button
-              onClick={onLogout}
-              className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-};
-
-const Sidebar = ({ user }) => {
-  const location = window.location.pathname;
-  
-  const menuItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-    { path: '/dashboard/users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-    { path: '/dashboard/doctors', label: 'Doctors', icon: 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z' },
-    { path: '/dashboard/appointments', label: 'Appointments', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-    { path: '/dashboard/services', label: 'Services', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-    { path: '/dashboard/calendar', label: 'Calendar', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-    { path: '/dashboard/reports', label: 'Reports', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-    { path: '/profile', label: 'My Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-  ];
-
-  const handleLogout = () => {
-    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/login';
-  };
-
-  return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-16 overflow-y-auto">
-      <nav className="p-4">
-        <ul className="space-y-1">
-          {menuItems.map((item) => (
-            <li key={item.path}>
-              <Link
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  location === item.path
-                    ? 'bg-teal-50 text-teal-600 font-semibold'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                </svg>
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        
-        <div className="mt-8 pt-4 border-t border-gray-200">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Logout
-          </button>
-        </div>
-      </nav>
-    </aside>
-  );
-};
-
-const Footer = () => (
-  <footer className="bg-white border-t border-gray-200 py-6 mt-8">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
-      <p>&copy; 2026 MedBook Pro. All rights reserved.</p>
-    </div>
-  </footer>
-);
-
-const StatCard = ({ title, value, subtitle, gradient, icon }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300">
-    <div className={`h-1 ${gradient}`}></div>
-    <div className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-4xl font-bold text-gray-900 mt-2">{value}</p>
-          {subtitle && <p className="text-xs text-gray-400 mt-2">{subtitle}</p>}
-        </div>
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${gradient}`}>
-          {icon}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const StatusBadge = ({ status }) => {
-  const styles = {
-    pending: 'bg-amber-50 text-amber-700 border-amber-200',
-    confirmed: 'bg-blue-50 text-blue-700 border-blue-200',
-    completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    cancelled: 'bg-red-50 text-red-700 border-red-200',
-  };
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles[status] || 'bg-gray-50 text-gray-700 border-gray-200'}`}>
-      {status}
-    </span>
-  );
-};
+import { fetchAllAppointments, fetchAllUsers, fetchAllDoctors, fetchAllServices } from '../../admin/store/adminSlice';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { stats, appointments, users, doctors, services, loading, error } = useSelector((state) => state.admin);
+  const { appointments } = useSelector((state) => state.appointments);
+  const { stats, users, doctors, appointments: adminAppointments } = useSelector((state) => state.admin);
 
   const isAdmin = user?.role === 'admin';
-  const isReceptionist = user?.role === 'receptionist';
-  const isDoctor = user?.role === 'doctor';
   const isPatient = user?.role === 'patient';
+  const isDoctor = user?.role === 'doctor';
 
   useEffect(() => {
-    // Admin and Receptionist: Fetch all data
-    if (isAdmin || isReceptionist) {
-      dispatch(fetchDashboardStats());
-      dispatch(fetchAllAppointments());
-      if (isAdmin) {
-        dispatch(fetchAllUsers());
-        dispatch(fetchAllDoctors());
-        dispatch(fetchAllServices());
-      }
-    }
+    dispatch(fetchCurrentUser());
     
-    // Patient: Fetch their appointments
     if (isPatient) {
       dispatch(fetchMyAppointments());
+    } else if (isAdmin) {
+      dispatch(fetchAllAppointments());
+      dispatch(fetchAllUsers());
+      dispatch(fetchAllDoctors());
+      dispatch(fetchAllServices());
     }
-  }, [dispatch, user?.role]);
+  }, [dispatch, isPatient, isAdmin]);
 
-  const handleLogout = () => {
-    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    navigate('/login');
   };
 
-  const isLoading = loading;
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <DashboardHeader user={user} onLogout={handleLogout} />
-        <Sidebar user={user} />
-        <div className="ml-64 p-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-500 mt-1">Loading...</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white rounded-2xl shadow-sm border p-6 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const userName = user?.firstName || user?.first_name || user?.username || 'User';
 
-  // ==================== ADMIN / RECEPTIONIST DASHBOARD ====================
-  if (isAdmin || isReceptionist) {
-    const pendingCount = appointments.filter(a => a.status === 'pending').length;
-    const completedCount = appointments.filter(a => a.status === 'completed').length;
-    const confirmedCount = appointments.filter(a => a.status === 'confirmed').length;
-
-    const appointmentStatusData = [
-      { name: 'Pending', value: pendingCount, color: '#f59e0b' },
-      { name: 'Confirmed', value: confirmedCount, color: '#3b82f6' },
-      { name: 'Completed', value: completedCount, color: '#10b981' },
-    ].filter(d => d.value > 0);
-
-    const recentAppointments = appointments.slice(0, 5);
-
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <DashboardHeader user={user} onLogout={handleLogout} />
-        <Sidebar user={user} />
-        <div className="ml-64 p-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {isAdmin ? 'Admin Dashboard' : 'Receptionist Dashboard'}
-            </h1>
-            <p className="text-gray-500 mt-1">Welcome back! Here's what's happening with your clinic.</p>
-          </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Users"
-            value={isAdmin ? users.length : 'N/A'}
-            subtitle="Registered accounts"
-            gradient="bg-gradient-to-r from-teal-500 to-teal-600"
-            icon={<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
-          />
-          <StatCard
-            title="Total Doctors"
-            value={isAdmin ? doctors.length : 'N/A'}
-            subtitle="Active medical staff"
-            gradient="bg-gradient-to-r from-emerald-500 to-emerald-600"
-            icon={<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-          />
-          <StatCard
-            title="Total Appointments"
-            value={appointments.length}
-            subtitle={`${pendingCount} pending`}
-            gradient="bg-gradient-to-r from-violet-500 to-violet-600"
-            icon={<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-          />
-          <StatCard
-            title="Total Revenue"
-            value={`₦${(stats.totalRevenue || 0).toLocaleString()}`}
-            subtitle={`${completedCount} completed`}
-            gradient="bg-gradient-to-r from-amber-500 to-orange-500"
-            icon={<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-          />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {isAdmin && (
-              <>
-                <Link to="/admin/users" className="flex flex-col items-center p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition-colors">
-                  <svg className="w-8 h-8 text-teal-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                  <span className="text-sm font-medium text-teal-700">Users</span>
-                </Link>
-                <Link to="/admin/doctors" className="flex flex-col items-center p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors">
-                  <svg className="w-8 h-8 text-green-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  <span className="text-sm font-medium text-green-700">Doctors</span>
-                </Link>
-                <Link to="/admin/services" className="flex flex-col items-center p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition-colors">
-                  <svg className="w-8 h-8 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                  <span className="text-sm font-medium text-purple-700">Services</span>
-                </Link>
-              </>
-            )}
-            <Link to="/admin/appointments" className="flex flex-col items-center p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors">
-              <svg className="w-8 h-8 text-blue-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              <span className="text-sm font-medium text-blue-700">Appointments</span>
-            </Link>
-            <Link to="/admin/calendar" className="flex flex-col items-center p-4 rounded-xl bg-orange-50 hover:bg-orange-100 transition-colors">
-              <svg className="w-8 h-8 text-orange-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              <span className="text-sm font-medium text-orange-700">Calendar</span>
-            </Link>
-            <Link to="/admin/reports" className="flex flex-col items-center p-4 rounded-xl bg-red-50 hover:bg-red-100 transition-colors">
-              <svg className="w-8 h-8 text-red-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              <span className="text-sm font-medium text-red-700">Reports</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Charts and Recent Appointments */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Appointments Chart */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Appointments by Status</h2>
-            {appointmentStatusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={appointmentStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {appointmentStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-64 flex items-center justify-center text-gray-400">No appointment data</div>
-            )}
-          </div>
-
-          {/* Recent Appointments */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Appointments</h2>
-              <Link to="/admin/appointments" className="text-teal-600 text-sm hover:underline">View All</Link>
-            </div>
-            <div className="space-y-3">
-              {recentAppointments.length > 0 ? recentAppointments.map((apt) => (
-                <div key={apt.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                  <div>
-                    <p className="font-medium text-gray-900">{apt.patient_name || 'Patient'}</p>
-                    <p className="text-sm text-gray-500">Dr. {apt.doctor_name} - {apt.service_name}</p>
-                  </div>
-                  <div className="text-right">
-                    <StatusBadge status={apt.status} />
-                    <p className="text-xs text-gray-400 mt-1">{apt.date}</p>
-                  </div>
-                </div>
-              )) : (
-                <p className="text-gray-400 text-center py-8">No appointments yet</p>
-              )}
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-      </div>
-    );
-  }
-
-  // ==================== PATIENT DASHBOARD ====================
-  if (isPatient) {
-    const myAppointments = appointments || [];
-    const upcomingAppointments = myAppointments.filter(a => a.status === 'pending' || a.status === 'confirmed');
-    const pastAppointments = myAppointments.filter(a => a.status === 'completed' || a.status === 'cancelled');
-
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <DashboardHeader user={user} onLogout={handleLogout} />
-        <Sidebar user={user} />
-        <div className="ml-64 p-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">My Dashboard</h1>
-            <p className="text-gray-500 mt-1">Welcome back, {user?.firstName || user?.first_name || 'Patient'}!</p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard
-            title="Upcoming Appointments"
-            value={upcomingAppointments.length}
-            subtitle="Scheduled visits"
-            gradient="bg-gradient-to-r from-blue-500 to-blue-600"
-            icon={<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-          />
-          <StatCard
-            title="Past Appointments"
-            value={pastAppointments.length}
-            subtitle="Visit history"
-            gradient="bg-gradient-to-r from-emerald-500 to-emerald-600"
-            icon={<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-          />
-          <StatCard
-            title="Medical Records"
-            value="View"
-            subtitle="Your history"
-            gradient="bg-gradient-to-r from-purple-500 to-purple-600"
-            icon={<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-          />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link to="/booking" className="flex flex-col items-center p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition-colors">
-              <svg className="w-8 h-8 text-teal-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              <span className="text-sm font-medium text-teal-700">Book Appointment</span>
-            </Link>
-            <Link to="/doctors" className="flex flex-col items-center p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors">
-              <svg className="w-8 h-8 text-blue-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              <span className="text-sm font-medium text-blue-700">Find Doctors</span>
-            </Link>
-            <Link to="/profile" className="flex flex-col items-center p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition-colors">
-              <svg className="w-8 h-8 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              <span className="text-sm font-medium text-purple-700">My Profile</span>
-            </Link>
-            <Link to="/services" className="flex flex-col items-center p-4 rounded-xl bg-orange-50 hover:bg-orange-100 transition-colors">
-              <svg className="w-8 h-8 text-orange-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-              <span className="text-sm font-medium text-orange-700">Services</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Upcoming Appointments */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Appointments</h2>
-          {upcomingAppointments.length > 0 ? (
-            <div className="space-y-4">
-              {upcomingAppointments.map((apt) => (
-                <div key={apt.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Dr. {apt.doctor_name}</p>
-                      <p className="text-sm text-gray-500">{apt.service_name}</p>
-                      <p className="text-sm text-gray-500">{apt.date} at {apt.start_time}</p>
-                    </div>
-                  </div>
-                  <StatusBadge status={apt.status} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-400 mb-4">No upcoming appointments</p>
-              <Link to="/booking" className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-                Book an Appointment
-              </Link>
-            </div>
-          )}
-        </div>
-        <Footer />
-        </div>
-        </div>
-    );
-  }
-
-  // ==================== DEFAULT / FALLBACK ====================
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader user={user} onLogout={handleLogout} />
-      <Sidebar user={user} />
-      <div className="ml-64 p-6">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-gray-600">Welcome, {userName}</span>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Greeting */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Welcome!</p>
+          <h1 className="text-3xl font-bold text-gray-900">{getGreeting()}, {userName}</h1>
+          <p className="text-gray-500 mt-1">
+            {isAdmin && 'Admin Dashboard - Manage your clinic'}
+            {isPatient && 'Your Health Dashboard'}
+            {isDoctor && 'Doctor Dashboard'}
+          </p>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
-          <p className="text-gray-500">Select an option from the menu to get started.</p>
-        </div>
-        <Footer />
+
+        {/* Admin Dashboard */}
+        {isAdmin && (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{users?.length || 0}</p>
+                    <p className="text-sm text-gray-500">Total Users</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{doctors?.length || 0}</p>
+                    <p className="text-sm text-gray-500">Total Doctors</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{adminAppointments?.length || 0}</p>
+                    <p className="text-sm text-gray-500">Total Appointments</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{stats?.totalRevenue || 0}</p>
+                    <p className="text-sm text-gray-500">Revenue (₦)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Link to="/admin/users" className="flex flex-col items-center p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition-colors">
+                  <svg className="w-8 h-8 text-teal-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-teal-700">Manage Users</span>
+                </Link>
+                <Link to="/admin/doctors" className="flex flex-col items-center p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors">
+                  <svg className="w-8 h-8 text-green-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-green-700">Manage Doctors</span>
+                </Link>
+                <Link to="/admin/appointments" className="flex flex-col items-center p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors">
+                  <svg className="w-8 h-8 text-blue-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-700">Appointments</span>
+                </Link>
+                <Link to="/admin/services" className="flex flex-col items-center p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition-colors">
+                  <svg className="w-8 h-8 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <span className="text-sm font-medium text-purple-700">Services</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Recent Appointments */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Appointments</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-sm text-gray-500 border-b">
+                      <th className="pb-3 font-medium">Patient</th>
+                      <th className="pb-3 font-medium">Doctor</th>
+                      <th className="pb-3 font-medium">Service</th>
+                      <th className="pb-3 font-medium">Date</th>
+                      <th className="pb-3 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminAppointments?.slice(0, 5).map((apt) => (
+                      <tr key={apt.id} className="border-b border-gray-50 last:border-0">
+                        <td className="py-3">{apt.patient_name || 'N/A'}</td>
+                        <td className="py-3">Dr. {apt.doctor_name || 'N/A'}</td>
+                        <td className="py-3">{apt.service_name || 'N/A'}</td>
+                        <td className="py-3">{apt.date || 'N/A'}</td>
+                        <td className="py-3">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            apt.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            apt.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            apt.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {apt.status || 'unknown'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {!adminAppointments?.length && (
+                      <tr>
+                        <td colSpan="5" className="py-8 text-center text-gray-400">No appointments yet</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Patient Dashboard */}
+        {isPatient && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{appointments?.length || 0}</p>
+                    <p className="text-sm text-gray-500">Total Appointments</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {appointments?.filter(a => a.status === 'completed').length || 0}
+                    </p>
+                    <p className="text-sm text-gray-500">Completed</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {appointments?.filter(a => a.status === 'pending' || a.status === 'confirmed').length || 0}
+                    </p>
+                    <p className="text-sm text-gray-500">Upcoming</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Link to="/booking" className="flex flex-col items-center p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition-colors">
+                  <svg className="w-8 h-8 text-teal-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="text-sm font-medium text-teal-700">Book Appointment</span>
+                </Link>
+                <Link to="/doctors" className="flex flex-col items-center p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors">
+                  <svg className="w-8 h-8 text-blue-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-700">Find Doctors</span>
+                </Link>
+                <Link to="/services" className="flex flex-col items-center p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition-colors">
+                  <svg className="w-8 h-8 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <span className="text-sm font-medium text-purple-700">Services</span>
+                </Link>
+                <Link to="/profile" className="flex flex-col items-center p-4 rounded-xl bg-orange-50 hover:bg-orange-100 transition-colors">
+                  <svg className="w-8 h-8 text-orange-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span className="text-sm font-medium text-orange-700">My Profile</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">My Appointments</h2>
+              <div className="space-y-4">
+                {appointments?.slice(0, 5).map((apt) => (
+                  <div key={apt.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Dr. {apt.doctor_name || 'N/A'}</p>
+                        <p className="text-sm text-gray-500">{apt.service_name || 'N/A'}</p>
+                        <p className="text-sm text-gray-500">{apt.date || 'N/A'} at {apt.start_time || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 text-sm rounded-full ${
+                      apt.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      apt.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      apt.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {apt.status || 'unknown'}
+                    </span>
+                  </div>
+                ))}
+                {!appointments?.length && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-400 mb-4">No appointments yet</p>
+                    <Link to="/booking" className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                      Book an Appointment
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Doctor Dashboard */}
+        {isDoctor && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <p className="text-gray-600">Doctor dashboard coming soon. Visit your profile to manage your schedule.</p>
+            <Link to="/profile" className="inline-block mt-4 px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+              Go to Profile
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <p className="text-center text-gray-500 text-sm">MedBook Pro - Clinic Appointment Management System</p>
+        </div>
+      </footer>
     </div>
   );
 };

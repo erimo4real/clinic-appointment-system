@@ -1,41 +1,15 @@
-/**
- * =====================================================
- * AUTH SLICE - Authentication State Management
- * =====================================================
- * 
- * Manages authentication state including:
- * - User login/logout
- * - User registration
- * - Current user profile
- * - JWT token management
- * 
- * @feature Auth
- * @state { user, isAuthenticated, loading, error }
- * 
- * =====================================================
- * STATE STRUCTURE:
- * {
- *   user: { id, username, email, role, firstName, lastName } | null,
- *   isAuthenticated: boolean,
- *   loading: boolean,
- *   error: string | null
- * }
- * =====================================================
- */
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../../shared/services/api';
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
     const response = await api.post('/auth/login', credentials);
-    // Store token in cookie for persistence
     if (response.data.token) {
       document.cookie = `token=${response.data.token};max-age=${7 * 24 * 60 * 60};path=/;SameSite=Lax`;
     }
     return response.data;
   } catch (error) {
-    return rejectWithValue(error.response?.data || { error: 'Login failed' });
+    return rejectWithValue(error.response?.data?.message || 'Login failed');
   }
 });
 
@@ -47,107 +21,45 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
     }
     return response.data;
   } catch (error) {
-    return rejectWithValue(error.response?.data || { error: 'Registration failed' });
+    return rejectWithValue(error.response?.data?.message || 'Registration failed');
   }
 });
 
-/**
- * Fetch current user profile
- * 
- * @asyncThunk fetchCurrentUser
- * @returns {Promise} User profile data
- * 
- * @calls GET /api/auth/me
- * @requires Valid JWT token in Authorization header
- */
 export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, { rejectWithValue }) => {
   try {
     const response = await api.get('/auth/me');
     return response.data;
   } catch (error) {
-    return rejectWithValue(error.response?.data || { error: 'Failed to fetch user' });
+    document.cookie = 'token=;max-age=0;path=/';
+    return rejectWithValue(error.response?.data?.message || 'Session expired');
   }
 });
 
-/**
- * Update user profile
- */
-export const updateProfile = createAsyncThunk('auth/updateProfile', async (profileData, { rejectWithValue }) => {
-  try {
-    const response = await api.put('/auth/profile', profileData);
-    return response.data;
-  } catch (error) {
-    return rejectWithValue(error.response?.data || { error: 'Failed to update profile' });
-  }
-});
-
-/**
- * Logout user
- */
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
     await api.post('/auth/logout');
   } catch (error) {
   }
+  document.cookie = 'token=;max-age=0;path=/';
+  document.cookie = 'auth_token=;max-age=0;path=/';
   return { success: true };
 });
 
-/**
- * =====================================================
- * SLICE DEFINITION
- * =====================================================
- */
-
 const authSlice = createSlice({
-  name: 'auth', // Must match reducer key in store
-  
-  /**
-   * Initial state
-   * - user: null (not logged in)
-   * - isAuthenticated: false
-   * - loading: false
-   * - error: null
-   */
+  name: 'auth',
   initialState: {
     user: null,
     isAuthenticated: false,
-    loading: false,
+    loading: true,
     error: null,
   },
-  
-  /**
-   * Synchronous reducers (state mutations)
-   */
   reducers: {
-    setCredentials: (state, action) => {
-      state.user = action.payload;
-      state.isAuthenticated = true;
-    },
-    logout: (state) => {
-      state.user = null;
-      state.isAuthenticated = false;
-      state.error = null;
-    },
     clearError: (state) => {
       state.error = null;
     },
-    immediateLogout: (state) => {
-      state.user = null;
-      state.isAuthenticated = false;
-      state.loading = false;
-      state.error = null;
-    },
   },
-  
-  /**
-   * Async reducers (handle async thunk results)
-   * Maps thunk results to state updates
-   */
   extraReducers: (builder) => {
     builder
-      // ==================
-      // LOGIN HANDLERS
-      // ==================
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -160,12 +72,9 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Login failed';
+        state.error = action.payload;
       })
       
-      // ==================
-      // REGISTER HANDLERS
-      // ==================
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -178,12 +87,9 @@ const authSlice = createSlice({
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Registration failed';
+        state.error = action.payload;
       })
       
-      // ==================
-      // FETCH USER HANDLERS
-      // ==================
       .addCase(fetchCurrentUser.pending, (state) => {
         state.loading = true;
       })
@@ -192,15 +98,12 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.isAuthenticated = true;
       })
-      .addCase(fetchCurrentUser.rejected, (state, action) => {
+      .addCase(fetchCurrentUser.rejected, (state) => {
         state.loading = false;
-        state.isAuthenticated = false;
         state.user = null;
+        state.isAuthenticated = false;
       })
       
-      // ==================
-      // LOGOUT HANDLER
-      // ==================
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
@@ -210,14 +113,5 @@ const authSlice = createSlice({
   },
 });
 
-/**
- * =====================================================
- * EXPORTS
- * =====================================================
- */
-
-// Action creators
-export const { clearError, logout, setCredentials, immediateLogout } = authSlice.actions;
-
-// Reducer (default export)
+export const { clearError } = authSlice.actions;
 export default authSlice.reducer;
