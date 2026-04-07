@@ -60,6 +60,10 @@ const Header = ({ user: propUser, onLogout }) => {
   const isActive = (path) => location.pathname === path;
 
   const handleLogout = async () => {
+    // Clear all cookies
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    
     if (onLogout) {
       onLogout();
     } else {

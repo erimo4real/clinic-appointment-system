@@ -159,6 +159,10 @@ const AdminLayout = () => {
             {/* Logout Button */}
             <button
               onClick={() => {
+                // Clear all cookies
+                document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                // Call backend logout
                 fetch('https://clinic-appointment-system-88np.onrender.com/api/auth/logout', { 
                   method: 'POST',
                   credentials: 'include'
@@ -348,6 +352,10 @@ const AdminLayout = () => {
                   <div className="border-t border-gray-100 dark:border-gray-700 py-2">
                     <button
                       onClick={() => {
+                        // Clear all cookies
+                        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        // Call backend logout
                         fetch('https://clinic-appointment-system-88np.onrender.com/api/auth/logout', { 
                           method: 'POST',
                           credentials: 'include'
