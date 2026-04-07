@@ -100,24 +100,34 @@ const App = () => {
       return;
     }
     
-    // Already authenticated
-    if (isAuthenticated) {
-      setSessionChecked(true);
-      return;
-    }
-    
-    // Check for token
-    const token = document.cookie.split(';').find(c => c.trim().startsWith('token='));
+    // Check for token cookie
+    const cookies = document.cookie.split(';');
+    const tokenCookie = cookies.find(c => c.trim().startsWith('token='));
+    const token = tokenCookie ? tokenCookie.split('=')[1] : null;
     
     if (!token) {
       setSessionChecked(true);
       return;
     }
     
+    // If already authenticated, no need to check
+    if (isAuthenticated) {
+      setSessionChecked(true);
+      return;
+    }
+    
     // Verify token with server
     dispatch(fetchCurrentUser())
-      .finally(() => setSessionChecked(true));
-  }, [dispatch, location.pathname, isAuthenticated]);
+      .unwrap()
+      .then(() => {
+        setSessionChecked(true);
+      })
+      .catch(() => {
+        // Token invalid - clear it
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        setSessionChecked(true);
+      });
+  }, [dispatch, location.pathname]);
 
   if (!sessionChecked) {
     return (
