@@ -87,16 +87,19 @@ const App = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
-  const [sessionChecked, setSessionChecked] = useState(false);
+  const [initialCheck, setInitialCheck] = useState(false);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isPublicRoute = ['/', '/services', '/doctors', '/about', '/booking'].includes(location.pathname);
   const showHeader = isAuthenticated && !isAdminRoute && !isPublicRoute;
 
   useEffect(() => {
+    // Only run once on mount
+    if (initialCheck) return;
+    
     // Skip session check on login/register pages
     if (location.pathname === '/login' || location.pathname === '/register') {
-      setSessionChecked(true);
+      setInitialCheck(true);
       return;
     }
     
@@ -106,39 +109,22 @@ const App = () => {
     const token = tokenCookie ? tokenCookie.split('=')[1] : null;
     
     if (!token) {
-      setSessionChecked(true);
+      setInitialCheck(true);
       return;
     }
     
-    // If already authenticated, no need to check
-    if (isAuthenticated) {
-      setSessionChecked(true);
-      return;
+    // Verify token with server if not already authenticated
+    if (!isAuthenticated) {
+      dispatch(fetchCurrentUser())
+        .unwrap()
+        .catch(() => {
+          // Token invalid - clear it
+          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        });
     }
     
-    // Verify token with server
-    dispatch(fetchCurrentUser())
-      .unwrap()
-      .then(() => {
-        setSessionChecked(true);
-      })
-      .catch(() => {
-        // Token invalid - clear it
-        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        setSessionChecked(true);
-      });
-  }, [dispatch, location.pathname]);
-
-  if (!sessionChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 bg-teal-600 rounded-full mb-4"></div>
-          <div className="text-teal-600 font-medium">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+    setInitialCheck(true);
+  }, [dispatch, location.pathname, isAuthenticated, initialCheck]);
   
   const getDashboardRoute = () => {
     if (!user) return '/login';
