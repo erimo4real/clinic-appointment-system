@@ -8,18 +8,28 @@ import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Card, CardContent } from '../../../components/ui/Card';
 
+const NavIcon = ({ name, className }) => {
+  const icons = {
+    check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />,
+    arrowLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />,
+    calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+  };
+  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
+};
+
 const Header = () => (
   <header className="bg-white border-b border-gray-200">
     <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <Link to="/" className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+      <Link to="/" className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
           <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
           </svg>
         </div>
         <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
       </Link>
-      <Link to="/login" className="text-gray-600 hover:text-blue-600 font-medium">Sign In</Link>
+      <Link to="/login" className="px-4 py-2 text-teal-600 font-medium hover:text-teal-700">Sign In</Link>
     </div>
   </header>
 );
@@ -48,6 +58,13 @@ const BookingPage = () => {
       dispatch(fetchAvailableSlots({ doctorId: bookingData.doctor.id, date: bookingData.date }));
     }
   }, [dispatch, bookingData.doctor, bookingData.date]);
+
+  const getDoctorName = (doctor) => {
+    if (doctor.user) {
+      return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
+    }
+    return doctor.name || doctor.fullName || 'Doctor';
+  };
 
   const handleDoctorSelect = (doctor) => {
     setBookingData({ ...bookingData, doctor, timeSlot: null });
@@ -99,22 +116,18 @@ const BookingPage = () => {
           <Card className="p-12">
             <CardContent className="pt-6">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <NavIcon name="check" className="w-10 h-10 text-green-600" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Appointment Booked!</h2>
               <p className="text-gray-600 mb-6">
-                Your appointment with {bookingData.doctor?.name} has been scheduled for{' '}
+                Your appointment with {getDoctorName(bookingData.doctor)} has been scheduled for{' '}
                 {new Date(bookingData.date).toLocaleDateString()} at {bookingData.timeSlot?.start_time}.
               </p>
               <div className="space-y-3">
-                <Link to="/login" className="btn-primary inline-block">
+                <Link to="/login" className="inline-block px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700">
                   Sign In to View Appointments
                 </Link>
-                <Link to="/" className="block text-gray-600 hover:text-blue-600">
-                  Back to Home
-                </Link>
+                <Link to="/" className="block text-gray-600 hover:text-teal-600">Back to Home</Link>
               </div>
             </CardContent>
           </Card>
@@ -133,16 +146,16 @@ const BookingPage = () => {
             {['Doctor', 'Service', 'Date & Time', 'Confirm'].map((label, index) => (
               <div key={index} className="flex items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-medium ${
-                  step > index + 1 ? 'bg-blue-600 text-white' :
-                  step === index + 1 ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' :
+                  step > index + 1 ? 'bg-teal-600 text-white' :
+                  step === index + 1 ? 'bg-teal-100 text-teal-600 border-2 border-teal-600' :
                   'bg-gray-200 text-gray-500'
                 }`}>
-                  {step > index + 1 ? '✓' : index + 1}
+                  {step > index + 1 ? <NavIcon name="check" className="w-5 h-5" /> : index + 1}
                 </div>
                 <span className={`ml-2 hidden sm:inline ${step >= index + 1 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
                   {label}
                 </span>
-                {index < 3 && <div className={`w-12 sm:w-24 h-1 mx-2 ${step > index + 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />}
+                {index < 3 && <div className={`w-12 sm:w-24 h-1 mx-2 ${step > index + 1 ? 'bg-teal-600' : 'bg-gray-200'}`} />}
               </div>
             ))}
           </div>
@@ -154,25 +167,30 @@ const BookingPage = () => {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Select a Doctor</h2>
               {loading ? (
-                <div className="text-center py-8">Loading doctors...</div>
+                <div className="text-center py-8 text-gray-500">Loading doctors...</div>
+              ) : doctors.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">No doctors available</p>
+                  <Link to="/" className="text-teal-600 hover:underline">Return to Home</Link>
+                </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {doctors.map((doctor) => (
                     <button
                       key={doctor.id}
                       onClick={() => handleDoctorSelect(doctor)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all hover:border-blue-500 ${
-                        bookingData.doctor?.id === doctor.id ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+                      className={`p-4 rounded-xl border-2 text-left transition-all hover:border-teal-500 ${
+                        bookingData.doctor?.id === doctor.id ? 'border-teal-600 bg-teal-50' : 'border-gray-200'
                       }`}
                     >
-                      <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center text-2xl">
-                          👨‍⚕️
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <NavIcon name="user" className="w-8 h-8 text-teal-600" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900">{doctor.name}</h3>
-                          <p className="text-blue-600 text-sm">{doctor.specialty}</p>
-                          <p className="text-gray-500 text-sm">₦{doctor.consultation_fee?.toLocaleString()}</p>
+                          <h3 className="font-semibold text-gray-900">{getDoctorName(doctor)}</h3>
+                          <p className="text-teal-600 text-sm">{doctor.specialty || 'General'}</p>
+                          <p className="text-gray-500 text-sm">₦{(doctor.consultation_fee || 0).toLocaleString()}</p>
                         </div>
                       </div>
                     </button>
@@ -184,8 +202,8 @@ const BookingPage = () => {
 
           {step === 2 && (
             <div>
-              <button onClick={() => setStep(1)} className="text-gray-500 hover:text-gray-700 mb-4">
-                ← Back to Doctors
+              <button onClick={() => setStep(1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4">
+                <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Doctors
               </button>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Service</h2>
               <div className="space-y-3">
@@ -193,8 +211,8 @@ const BookingPage = () => {
                   <button
                     key={service.id}
                     onClick={() => handleServiceSelect(service)}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all hover:border-blue-500 ${
-                      bookingData.service?.id === service.id ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+                    className={`w-full p-4 rounded-xl border-2 text-left transition-all hover:border-teal-500 ${
+                      bookingData.service?.id === service.id ? 'border-teal-600 bg-teal-50' : 'border-gray-200'
                     }`}
                   >
                     <div className="flex justify-between items-center">
@@ -202,7 +220,7 @@ const BookingPage = () => {
                         <h3 className="font-semibold text-gray-900">{service.name}</h3>
                         <p className="text-gray-500 text-sm">{service.duration} minutes</p>
                       </div>
-                      <span className="text-blue-600 font-semibold">₦{service.price?.toLocaleString()}</span>
+                      <span className="text-teal-600 font-semibold">₦{(service.price || 0).toLocaleString()}</span>
                     </div>
                   </button>
                 ))}
@@ -212,8 +230,8 @@ const BookingPage = () => {
 
           {step === 3 && (
             <div>
-              <button onClick={() => setStep(2)} className="text-gray-500 hover:text-gray-700 mb-4">
-                ← Back to Services
+              <button onClick={() => setStep(2)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4">
+                <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Services
               </button>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Date & Time</h2>
               <div className="mb-6">
@@ -239,7 +257,7 @@ const BookingPage = () => {
                           disabled={!slot.available}
                           className={`p-2 rounded-lg text-sm font-medium transition-all ${
                             !slot.available ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
-                            bookingData.timeSlot?.start_time === slot.start_time ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
+                            bookingData.timeSlot?.start_time === slot.start_time ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-teal-100'
                           }`}
                         >
                           {slot.start_time}
@@ -259,15 +277,15 @@ const BookingPage = () => {
 
           {step === 4 && (
             <div>
-              <button onClick={() => setStep(3)} className="text-gray-500 hover:text-gray-700 mb-4">
-                ← Back to Date & Time
+              <button onClick={() => setStep(3)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4">
+                <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Date & Time
               </button>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Confirm Appointment</h2>
               <div className="bg-gray-50 rounded-xl p-6 mb-6">
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Doctor</span>
-                    <span className="font-medium text-gray-900">{bookingData.doctor?.name}</span>
+                    <span className="font-medium text-gray-900">{getDoctorName(bookingData.doctor)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Service</span>
@@ -283,7 +301,7 @@ const BookingPage = () => {
                   </div>
                   <div className="flex justify-between border-t pt-4">
                     <span className="text-gray-500">Total</span>
-                    <span className="font-bold text-blue-600 text-xl">₦{bookingData.service?.price?.toLocaleString()}</span>
+                    <span className="font-bold text-teal-600 text-xl">₦{(bookingData.service?.price || 0).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
