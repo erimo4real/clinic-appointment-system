@@ -1,44 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../../layout/Header';
-import Footer from '../../layout/Footer';
-import { Card, CardContent } from '../../components/ui/Card';
 
-/**
- * Loading screen shown while page initializes
- */
 const LoadingScreen = () => {
   const [dots, setDots] = useState('');
-  const [pulse, setPulse] = useState(false);
   
   useEffect(() => {
-    const dotsInterval = setInterval(() => {
+    const interval = setInterval(() => {
       setDots(d => d.length < 3 ? d + '.' : '');
     }, 400);
-    
-    const pulseInterval = setInterval(() => {
-      setPulse(p => !p);
-    }, 800);
-    
-    return () => {
-      clearInterval(dotsInterval);
-      clearInterval(pulseInterval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-gradient-to-br from-teal-50 via-white to-blue-50 flex items-center justify-center z-50">
       <div className="text-center">
-        <div className="relative mb-8">
-          <svg 
-            className={`w-24 h-24 text-red-500 mx-auto transition-transform duration-300 ${pulse ? 'scale-125' : 'scale-100'}`} 
-            fill="currentColor" 
-            viewBox="0 0 24 24"
-            style={{ filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6))' }}
-          >
+        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse">
+          <svg className="w-12 h-12 lg:w-14 lg:h-14 text-white" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
           </svg>
-          <div className={`absolute inset-0 bg-red-400 rounded-full blur-xl opacity-30 transition-opacity duration-300 ${pulse ? 'opacity-60' : 'opacity-30'}`} />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">MedBook Pro</h2>
         <p className="text-gray-500">Loading{dots}</p>
@@ -47,425 +26,48 @@ const LoadingScreen = () => {
   );
 };
 
-/**
- * Hero section with main call-to-action
- */
-const Hero = ({ doctorCount = 0 }) => {
-  return (
-    <section className="relative bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-20 lg:py-32">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6">
-              <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-              Trusted by {doctorCount > 0 ? `${doctorCount * 100}+` : '10,000+'} Patients
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              Your Health, <br />
-              <span className="text-blue-600">Our Priority</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-lg">
-              Book appointments with top-rated doctors in minutes. Experience modern healthcare that's convenient, reliable, and always available.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/booking" className="btn-primary inline-flex items-center justify-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Book Appointment
-              </Link>
-              <Link to="/#doctors" className="btn-secondary inline-flex items-center justify-center">
-                View Doctors
-              </Link>
-            </div>
-            <div className="flex items-center mt-8 space-x-8">
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{doctorCount > 0 ? doctorCount : '50+'}</div>
-                <div className="text-sm text-gray-500">Expert Doctors</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{doctorCount > 0 ? doctorCount * 200 : '10K+'}</div>
-                <div className="text-sm text-gray-500">Happy Patients</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{doctorCount > 0 ? Math.min(doctorCount, 15) : '15+'}</div>
-                <div className="text-sm text-gray-500">Specialties</div>
-              </div>
-            </div>
-          </div>
-          <div className="relative">
-            <div className="absolute -top-4 -left-4 w-72 h-72 bg-medical-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"></div>
-            <div className="absolute -bottom-4 -right-4 w-72 h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"></div>
-            <div className="relative bg-white rounded-2xl shadow-2xl p-8">
-              <div className="text-center mb-6">
-                <div className="w-20 h-20 bg-medical-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-10 h-10 text-medical-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900">Featured Doctor</h3>
-                <p className="text-medical-600 font-medium">Cardiology</p>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <span className="text-yellow-500">⭐</span>
-                  <span className="text-gray-700">15+ Years Experience</span>
-                </div>
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <span className="text-medical-500">✓</span>
-                  <span className="text-gray-700">Available Today</span>
-                </div>
-                <Link to="/booking" className="block w-full bg-medical-600 text-white text-center py-3 rounded-lg font-medium hover:bg-medical-700 transition-colors">
-                  Book Now
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-/**
- * Services section - fetches from API or uses fallback
- */
-const Services = ({ services }) => {
-  const [currentIndex, setCurrentIndex] = React.useState(0);
-  const visibleServices = 3;
-
-  // Auto-slide effect
-  React.useEffect(() => {
-    if (services.length <= visibleServices) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % services.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [services.length]);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % services.length);
+const NavIcon = ({ name, className }) => {
+  const icons = {
+    menu: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />,
+    calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+    users: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
+    shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+    clock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    location: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />,
+    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+    check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />,
+    arrow: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />,
+    arrowLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />,
+    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
   };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + services.length) % services.length);
-  };
-
-  if (!services || services.length === 0) {
-    return null;
-  }
-
-  const getVisibleServices = () => {
-    if (!services || services.length === 0) {
-      return [];
-    }
-    const result = [];
-    for (let i = 0; i < visibleServices; i++) {
-      result.push(services[(currentIndex + i) % services.length]);
-    }
-    return result;
-  };
-
-  const visible = getVisibleServices();
-
-  return (
-    <section id="services" className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="section-title">Our Services</h2>
-          <p className="section-subtitle">Comprehensive healthcare services for you and your family</p>
-        </div>
-        
-        <div className="relative">
-          <div className="grid md:grid-cols-3 gap-8">
-            {visible.map((service, index) => (
-              <Card key={index} className="hover:border-medical-200 hover:shadow-lg">
-                <CardContent className="pt-6">
-                  <div className="text-4xl mb-4">{service.icon || '🏥'}</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name || 'Service'}</h3>
-                  <p className="text-gray-600">{service.description || ''}</p>
-                  {service.formattedPrice && (
-                    <p className="text-medical-600 font-semibold mt-2">{service.formattedPrice}</p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          {services.length > visibleServices && (
-            <>
-              <button 
-                onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <button 
-                onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </>
-          )}
-        </div>
-        
-        {services.length > visibleServices && (
-          <div className="flex justify-center mt-8 space-x-2">
-            {services.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-};
-
-/**
- * Doctors section - fetches from API or uses fallback
- */
-const Doctors = ({ doctors }) => {
-  const [currentIndex, setCurrentIndex] = React.useState(0);
-  const visibleDoctors = 4;
-
-  // Auto-slide effect
-  React.useEffect(() => {
-    if (doctors.length <= visibleDoctors) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % doctors.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [doctors.length]);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % doctors.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + doctors.length) % doctors.length);
-  };
-
-  const getVisibleDoctors = () => {
-    if (doctors.length === 0) {
-      return [
-        { name: 'Dr. John Smith', specialty: 'Cardiology', qualification: 'MD, FACC', image: '👨‍⚕️' },
-        { name: 'Dr. Sarah Jones', specialty: 'General Medicine', qualification: 'MD, MBBS', image: '👩‍⚕️' },
-        { name: 'Dr. David Lee', specialty: 'Pediatrics', qualification: 'MD, FAAP', image: '👨‍⚕️' },
-        { name: 'Dr. Emily Brown', specialty: 'Dermatology', qualification: 'MD, FAAD', image: '👩‍⚕️' },
-      ];
-    }
-    const result = [];
-    for (let i = 0; i < visibleDoctors; i++) {
-      result.push(doctors[(currentIndex + i) % doctors.length]);
-    }
-    return result;
-  };
-
-  const visible = getVisibleDoctors();
-
-  const getDoctorName = (doctor) => {
-    if (doctor.user) {
-      return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
-    }
-    return doctor.fullName || doctor.name || 'Doctor';
-  };
-
-  return (
-    <section id="doctors" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="section-title">Our Expert Doctors</h2>
-          <p className="section-subtitle">Meet our team of experienced medical professionals</p>
-        </div>
-        
-        <div className="relative">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {visible.map((doctor, index) => (
-              <Card key={index} className="text-center hover:shadow-lg">
-                <CardContent className="pt-6">
-                  <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl">
-                    {doctor.profileImage ? (
-                      <img src={doctor.profileImage} alt={getDoctorName(doctor)} className="w-full h-full rounded-full object-cover" />
-                    ) : (
-                      doctor.image || '👨‍⚕️'
-                    )}
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{getDoctorName(doctor)}</h3>
-                  <p className="text-blue-600 font-medium">{doctor.specialty}</p>
-                  <p className="text-gray-500 text-sm">{doctor.qualification}</p>
-                  {doctor.experience && (
-                    <p className="text-gray-400 text-xs mt-1">{doctor.experience} years experience</p>
-                  )}
-                  <Link to="/booking" className="mt-4 inline-block text-blue-600 font-medium hover:text-blue-700">
-                    Book Appointment →
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          {doctors.length > visibleDoctors && (
-            <>
-              <button 
-                onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <button 
-                onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </>
-          )}
-        </div>
-        
-        {doctors.length > visibleDoctors && (
-          <div className="flex justify-center mt-8 space-x-2">
-            {doctors.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-};
-
-/**
- * About section with benefits
- */
-const About = ({ doctorCount = 0 }) => {
-  return (
-    <section id="about" className="py-20 bg-blue-600 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Why Choose MedBook Pro?</h2>
-            <div className="space-y-6">
-              <div className="flex space-x-4">
-                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Secure & Private</h3>
-                  <p className="text-white/80">Your medical information is protected with enterprise-grade security</p>
-                </div>
-              </div>
-              <div className="flex space-x-4">
-                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">24/7 Availability</h3>
-                  <p className="text-white/80">Book appointments anytime, anywhere</p>
-                </div>
-              </div>
-              <div className="flex space-x-4">
-                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Multiple Locations</h3>
-                  <p className="text-white/80">Visit any of our conveniently located clinics</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white/20 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold">98%</div>
-                <div className="text-white/80">Patient Satisfaction</div>
-              </div>
-              <div className="bg-white/20 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold">15+</div>
-                <div className="text-white/80">Years Experience</div>
-              </div>
-              <div className="bg-white/20 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold">{doctorCount > 0 ? doctorCount : '50+'}</div>
-                <div className="text-white/80">Medical Experts</div>
-              </div>
-              <div className="bg-white/20 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold">24/7</div>
-                <div className="text-white/80">Support</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-/**
- * Main Landing Page Component
- * Fetches doctors and services from API
- */
-const getApiUrl = () => {
-  const base = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
-  return base.replace(/\/$/, '') + '/api';
+  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
 
 const LandingPage = () => {
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [services, setServices] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const API_URL = getApiUrl();
-        
+        const API_URL = 'https://clinic-appointment-system-88np.onrender.com/api';
         const doctorsRes = await fetch(API_URL + '/doctors').then(r => r.json()).catch(() => []);
         const servicesRes = await fetch(API_URL + '/services').then(r => r.json()).catch(() => []);
-
         setDoctors(Array.isArray(doctorsRes) ? doctorsRes : []);
         setServices(Array.isArray(servicesRes) ? servicesRes : []);
         
-        if (doctorsRes.length === 0 && servicesRes.length === 0) {
+        if (!Array.isArray(doctorsRes) || doctorsRes.length === 0) {
           setServices([
-            { name: 'General Consultation', description: 'Comprehensive care for common health issues', formattedPrice: '₦8,000.00' },
-            { name: 'Cardiac Checkup', description: 'Expert heart care and cardiovascular prevention', formattedPrice: '₦25,000.00' },
-            { name: 'Pediatric Care', description: 'Quality healthcare for children', formattedPrice: '₦10,000.00' },
-            { name: 'Laboratory Tests', description: 'Comprehensive blood work and diagnostics', formattedPrice: '₦7,500.00' },
+            { name: 'General Consultation', description: 'Comprehensive care for common health issues', price: 8000 },
+            { name: 'Cardiac Checkup', description: 'Expert heart care and cardiovascular prevention', price: 25000 },
+            { name: 'Pediatric Care', description: 'Quality healthcare for children', price: 10000 },
           ]);
           setDoctors([
-            { fullName: 'Dr. John Smith', specialty: 'Cardiology', formattedFee: '₦15,000.00' },
-            { fullName: 'Dr. Sarah Jones', specialty: 'General Medicine', formattedFee: '₦8,000.00' },
-            { fullName: 'Dr. David Lee', specialty: 'Pediatrics', formattedFee: '₦10,000.00' },
+            { user: { firstName: 'John', lastName: 'Smith' }, specialty: 'Cardiology', experience: 15 },
+            { user: { firstName: 'Sarah', lastName: 'Jones' }, specialty: 'General Medicine', experience: 10 },
+            { user: { firstName: 'David', lastName: 'Lee' }, specialty: 'Pediatrics', experience: 8 },
           ]);
         }
       } catch (err) {
@@ -475,28 +77,250 @@ const LandingPage = () => {
         setLoading(false);
       }
     };
-
     fetchData();
-
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
-
+    const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  if (loading) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
-      <Hero doctorCount={doctors.length} />
-      <Services services={services} />
-      <Doctors doctors={doctors} />
-      <About doctorCount={doctors.length} />
-      <Footer />
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
+            </div>
+            
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-6">
+              <Link to="/services" className="text-gray-600 hover:text-teal-600 transition-colors">Services</Link>
+              <Link to="/doctors" className="text-gray-600 hover:text-teal-600 transition-colors">Doctors</Link>
+              <Link to="/login" className="px-4 py-2 text-teal-600 font-medium hover:text-teal-700">Sign In</Link>
+              <Link to="/register" className="px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-medium rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">Get Started</Link>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 hover:bg-gray-100 rounded-lg">
+              <NavIcon name={mobileMenuOpen ? 'arrowLeft' : 'menu'} className="w-6 h-6 text-gray-600" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
+            <Link to="/services" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-600">Services</Link>
+            <Link to="/doctors" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-600">Doctors</Link>
+            <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-teal-600 font-medium">Sign In</Link>
+            <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="block py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-center font-medium rounded-xl">Get Started</Link>
+          </div>
+        )}
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-24 lg:pt-32 pb-16 lg:pb-24 bg-gradient-to-br from-teal-50 via-white to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center px-4 py-2 bg-teal-100 text-teal-700 rounded-full text-sm font-medium mb-6">
+                <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
+                Trusted by 10,000+ Patients
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                Your Health, <br />
+                <span className="text-teal-600">Our Priority</span>
+              </h1>
+              <p className="text-lg lg:text-xl text-gray-600 mb-8 max-w-lg">
+                Book appointments with top-rated doctors in minutes. Experience modern healthcare that's convenient, reliable, and always available.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="/booking" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">
+                  <NavIcon name="calendar" className="w-5 h-5" />
+                  Book Appointment
+                </Link>
+                <Link to="/doctors" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">
+                  View Doctors
+                  <NavIcon name="arrow" className="w-5 h-5" />
+                </Link>
+              </div>
+              <div className="flex items-center gap-6 lg:gap-8 mt-10">
+                <div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{doctors.length || '50+'}</div>
+                  <div className="text-sm text-gray-500">Expert Doctors</div>
+                </div>
+                <div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">10K+</div>
+                  <div className="text-sm text-gray-500">Happy Patients</div>
+                </div>
+                <div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">15+</div>
+                  <div className="text-sm text-gray-500">Specialties</div>
+                </div>
+              </div>
+            </div>
+            <div className="relative hidden lg:block">
+              <div className="absolute -top-8 -left-8 w-72 h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+              <div className="absolute -bottom-8 -right-8 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+              <div className="relative bg-white rounded-3xl shadow-2xl p-8">
+                <div className="w-20 h-20 bg-gradient-to-br from-teal-100 to-teal-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <NavIcon name="user" className="w-10 h-10 text-teal-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 text-center mb-2">Featured Doctor</h3>
+                <p className="text-teal-600 font-medium text-center mb-6">Cardiology Specialist</p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <NavIcon name="star" className="w-5 h-5 text-amber-500" />
+                    <span className="text-gray-700">15+ Years Experience</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <NavIcon name="check" className="w-5 h-5 text-teal-500" />
+                    <span className="text-gray-700">Available Today</span>
+                  </div>
+                  <Link to="/booking" className="block w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-center font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">
+                    Book Now
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className="py-16 lg:py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Our Services</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">Comprehensive healthcare services for you and your family</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {services.map((service, i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 lg:p-8 hover:shadow-lg transition-shadow">
+                <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-4">
+                  <NavIcon name="calendar" className="w-7 h-7 text-teal-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name}</h3>
+                <p className="text-gray-600 mb-4">{service.description}</p>
+                <p className="text-teal-600 font-semibold">₦{(service.price || 0).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Doctors Section */}
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Our Expert Doctors</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">Meet our team of experienced medical professionals</p>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {doctors.slice(0, 4).map((doctor, i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 text-center border border-gray-100 hover:shadow-lg hover:border-teal-100 transition-all">
+                <div className="w-24 h-24 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <NavIcon name="user" className="w-12 h-12 text-teal-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Dr. {doctor.user?.firstName || ''} {doctor.user?.lastName || ''}
+                </h3>
+                <p className="text-teal-600 font-medium">{doctor.specialty}</p>
+                {doctor.experience && (
+                  <p className="text-gray-400 text-sm mt-1">{doctor.experience} years experience</p>
+                )}
+                <Link to="/booking" className="mt-4 inline-flex items-center gap-1 text-teal-600 font-medium hover:text-teal-700">
+                  Book <NavIcon name="arrow" className="w-4 h-4" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-16 lg:py-24 bg-gradient-to-r from-teal-600 to-teal-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl lg:text-4xl font-bold mb-6">Why Choose MedBook Pro?</h2>
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <NavIcon name="shield" className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">Secure & Private</h3>
+                    <p className="text-white/80">Your medical information is protected with enterprise-grade security</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <NavIcon name="clock" className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">24/7 Availability</h3>
+                    <p className="text-white/80">Book appointments anytime, anywhere</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <NavIcon name="location" className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">Multiple Locations</h3>
+                    <p className="text-white/80">Visit any of our conveniently located clinics</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
+                <div className="text-4xl font-bold mb-2">98%</div>
+                <div className="text-white/80">Patient Satisfaction</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
+                <div className="text-4xl font-bold mb-2">15+</div>
+                <div className="text-white/80">Years Experience</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
+                <div className="text-4xl font-bold mb-2">{doctors.length || '50+'}</div>
+                <div className="text-white/80">Medical Experts</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
+                <div className="text-4xl font-bold mb-2">24/7</div>
+                <div className="text-white/80">Support</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <span className="text-xl font-bold">MedBook Pro</span>
+            </div>
+            <p className="text-gray-400 text-sm">© 2024 MedBook Pro. Clinic Appointment Management System</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
