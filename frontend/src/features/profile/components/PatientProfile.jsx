@@ -3,13 +3,29 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchPatientFeedback, submitFeedback, clearSubmitSuccess } from '../../feedback/store/feedbackSlice';
 import { fetchMyAppointments, cancelAppointment, updateAppointment } from '../../appointments/store/appointmentSlice';
 import { updateProfile } from '../../auth/store/authSlice';
-import MedicalHistory from './MedicalHistory';
-import PrescriptionPage from './PrescriptionPage';
+
+const NavIcon = ({ name, className }) => {
+  const icons = {
+    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
+    calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+    check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    close: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />,
+    printer: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />,
+    search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+    thumbUp: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />,
+    thumbDown: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />,
+    arrowLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />,
+    edit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />,
+    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+    logout: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />,
+  };
+  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
+};
 
 const StarRating = ({ rating, onChange, readonly = false }) => (
-  <div className="flex space-x-1">
+  <div className="flex gap-1">
     {[1, 2, 3, 4, 5].map((star) => (
-      <button key={star} type="button" disabled={readonly} onClick={() => onChange && onChange(star)} className={`text-2xl ${readonly ? 'cursor-default' : 'cursor-pointer'} ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}>
+      <button key={star} type="button" disabled={readonly} onClick={() => onChange && onChange(star)} className={`text-xl ${readonly ? 'cursor-default' : 'cursor-pointer'} ${star <= rating ? 'text-amber-400' : 'text-gray-300'}`}>
         ★
       </button>
     ))}
@@ -61,8 +77,6 @@ const PrintAppointment = ({ appointment, onClose }) => {
         <div className="mt-6 p-4 bg-gray-50 rounded-lg print:bg-white">
           <p className="text-sm text-gray-500 text-center">
             Please arrive 15 minutes before your appointment time.
-            <br />
-            For cancellations, please contact the clinic at least 24 hours in advance.
           </p>
         </div>
         
@@ -193,49 +207,49 @@ const PatientProfile = () => {
     });
 
   const getStatusBadge = (status) => {
-    const variants = { pending: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-blue-100 text-blue-800', completed: 'bg-green-100 text-green-800', cancelled: 'bg-red-100 text-red-800' };
-    return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${variants[status] || 'bg-gray-100 text-gray-800'}`}>{status}</span>;
+    const variants = { pending: 'bg-amber-100 text-amber-800', confirmed: 'bg-blue-100 text-blue-800', completed: 'bg-emerald-100 text-emerald-800', cancelled: 'bg-rose-100 text-rose-800' };
+    return <span className={`px-3 py-1 rounded-full text-xs font-semibold ${variants[status] || 'bg-gray-100 text-gray-800'}`}>{status}</span>;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">My Profile</h1>
             <p className="text-sm text-gray-500 mt-1">Manage your personal information</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-5">
             <div className="flex items-center justify-between">
-              <div><p className="text-sm font-medium text-gray-500">Upcoming</p><p className="text-2xl font-bold text-gray-900 mt-1">{upcomingAppointments.length}</p></div>
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <div><p className="text-xs lg:text-sm font-medium text-gray-500">Upcoming</p><p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1">{upcomingAppointments.length}</p></div>
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <NavIcon name="calendar" className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-5">
             <div className="flex items-center justify-between">
-              <div><p className="text-sm font-medium text-gray-500">Completed</p><p className="text-2xl font-bold text-gray-900 mt-1">{pastAppointments.length}</p></div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <div><p className="text-xs lg:text-sm font-medium text-gray-500">Completed</p><p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1">{pastAppointments.length}</p></div>
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <NavIcon name="check" className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-5">
             <div className="flex items-center justify-between">
-              <div><p className="text-sm font-medium text-gray-500">Feedback Given</p><p className="text-2xl font-bold text-gray-900 mt-1">{patientFeedback.length}</p></div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+              <div><p className="text-xs lg:text-sm font-medium text-gray-500">Feedback</p><p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1">{patientFeedback.length}</p></div>
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <NavIcon name="thumbUp" className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
-          {['profile', 'appointments', 'feedback', 'history', 'prescriptions'].map((tab) => (
+        <div className="flex gap-2 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+          {['profile', 'appointments', 'feedback'].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab ? 'bg-white text-teal-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
@@ -244,11 +258,13 @@ const PatientProfile = () => {
 
         {activeTab === 'profile' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="px-4 lg:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold text-gray-900">Personal Information</h2>
-              <button onClick={() => setIsEditing(!isEditing)} className="text-teal-600 hover:text-teal-700 font-medium text-sm">{isEditing ? 'Cancel' : 'Edit Profile'}</button>
+              <button onClick={() => setIsEditing(!isEditing)} className="flex items-center gap-2 text-teal-600 hover:text-teal-700 font-medium text-sm">
+                <NavIcon name="edit" className="w-4 h-4" /> {isEditing ? 'Cancel' : 'Edit'}
+              </button>
             </div>
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 lg:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-500 mb-1">First Name</label>
                 {isEditing ? <input type="text" value={profileData.first_name} onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" /> : <p className="text-gray-900">{user?.firstName || '-'}</p>}
@@ -257,14 +273,20 @@ const PatientProfile = () => {
                 <label className="block text-sm font-medium text-gray-500 mb-1">Last Name</label>
                 {isEditing ? <input type="text" value={profileData.last_name} onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" /> : <p className="text-gray-900">{user?.lastName || '-'}</p>}
               </div>
-              <div><label className="block text-sm font-medium text-gray-500 mb-1">Email</label><p className="text-gray-900">{user?.email}</p></div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                <p className="text-gray-900">{user?.email || '-'}</p>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-500 mb-1">Phone</label>
                 {isEditing ? <input type="text" value={profileData.phone} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" /> : <p className="text-gray-900">{user?.phone || '-'}</p>}
               </div>
-              <div><label className="block text-sm font-medium text-gray-500 mb-1">Role</label><p className="text-gray-900 capitalize">{user?.role}</p></div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Role</label>
+                <p className="text-gray-900 capitalize">{user?.role || '-'}</p>
+              </div>
             </div>
-            {isEditing && <div className="px-6 pb-6"><button onClick={handleProfileUpdate} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium">Save Changes</button></div>}
+            {isEditing && <div className="px-4 lg:px-6 pb-4 lg:pb-6"><button onClick={handleProfileUpdate} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">Save Changes</button></div>}
           </div>
         )}
 
@@ -275,10 +297,10 @@ const PatientProfile = () => {
                 <h2 className="text-lg font-semibold mb-4">Upcoming Appointments</h2>
                 <div className="grid gap-4">
                   {upcomingAppointments.map((apt) => (
-                    <div key={apt.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <div key={apt.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                          <NavIcon name="calendar" className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">Dr. {apt.doctor_name}</p>
@@ -286,17 +308,13 @@ const PatientProfile = () => {
                           <p className="text-sm text-gray-500">{apt.date} at {apt.start_time}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {getStatusBadge(apt.status)}
-                        <button onClick={() => { setSelectedAppointment(apt); setShowPrintModal(true); }} className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        <button onClick={() => { setSelectedAppointment(apt); setShowPrintModal(true); }} className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                          <NavIcon name="printer" className="w-4 h-4" />
                         </button>
-                        <button onClick={() => openRescheduleModal(apt)} className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
-                          Reschedule
-                        </button>
-                        <button onClick={() => openCancelModal(apt)} className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
-                          Cancel
-                        </button>
+                        <button onClick={() => openRescheduleModal(apt)} className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">Reschedule</button>
+                        <button onClick={() => openCancelModal(apt)} className="px-3 py-1.5 text-sm bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition-colors">Cancel</button>
                       </div>
                     </div>
                   ))}
@@ -307,16 +325,8 @@ const PatientProfile = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Past Appointments</h2>
                 <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search appointments..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none w-64"
-                  />
-                  <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none w-48 lg:w-64 text-sm" />
+                  <NavIcon name="search" className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
               {pastAppointments.length === 0 ? (
@@ -325,9 +335,9 @@ const PatientProfile = () => {
                 <div className="grid gap-4">
                   {pastAppointments.map((apt) => (
                     <div key={apt.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                          <NavIcon name="check" className="w-5 h-5 lg:w-6 lg:h-6 text-gray-500" />
                         </div>
                         <div><p className="font-medium text-gray-900">Dr. {apt.doctor_name}</p><p className="text-sm text-gray-500">{apt.service_name}</p><p className="text-sm text-gray-500">{apt.date} at {apt.start_time}</p></div>
                       </div>
@@ -355,49 +365,36 @@ const PatientProfile = () => {
                     <div>
                       <p className="font-medium text-gray-900">Dr. {fb.doctor_name}</p>
                       <p className="text-sm text-gray-500">{fb.doctor_specialty}</p>
-                      <div className="flex items-center mt-2 space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fb.type === 'like' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{fb.type === 'like' ? '👍 Like' : '👎 Dislike'}</span>
+                      <div className="flex items-center gap-2 mt-2">
                         <StarRating rating={fb.rating} readonly />
                       </div>
-                      <p className="mt-2 text-gray-700">{fb.reason}</p>
+                      {fb.reason && <p className="mt-2 text-gray-700">{fb.reason}</p>}
                     </div>
-                    <div className="text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fb.status === 'reviewed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{fb.status}</span>
-                      {fb.response && <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"><p className="font-medium">Doctor's response:</p><p>{fb.response}</p></div>}
-                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fb.status === 'reviewed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{fb.status}</span>
                   </div>
                 </div>
               ))
             )}
           </div>
         )}
-
-        {activeTab === 'history' && (
-          <MedicalHistory />
-        )}
-
-        {activeTab === 'prescriptions' && (
-          <PrescriptionPage />
-        )}
       </div>
 
       {showFeedbackModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Give Feedback for Dr. {feedbackForm.doctor_name}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Feedback for Dr. {feedbackForm.doctor_name}</h2>
             <div className="space-y-4">
-              <div><label className="block text-sm font-medium text-gray-700 mb-2">Rating</label><StarRating rating={feedbackForm.rating} onChange={(rating) => setFeedbackForm({ ...feedbackForm, rating })} /></div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Feedback Type</label>
-                <div className="flex space-x-4">
-                  <button type="button" onClick={() => setFeedbackForm({ ...feedbackForm, type: 'like' })} className={`flex-1 py-2 rounded-lg border-2 ${feedbackForm.type === 'like' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200'}`}>👍 Like</button>
-                  <button type="button" onClick={() => setFeedbackForm({ ...feedbackForm, type: 'dislike' })} className={`flex-1 py-2 rounded-lg border-2 ${feedbackForm.type === 'dislike' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200'}`}>👎 Dislike</button>
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                <StarRating rating={feedbackForm.rating} onChange={(rating) => setFeedbackForm({ ...feedbackForm, rating })} />
               </div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-2">Reason</label><textarea value={feedbackForm.reason} onChange={(e) => setFeedbackForm({ ...feedbackForm, reason: e.target.value })} className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg" placeholder="Share your experience..." required /></div>
-              <div className="flex justify-end space-x-3 pt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
+                <textarea value={feedbackForm.reason} onChange={(e) => setFeedbackForm({ ...feedbackForm, reason: e.target.value })} className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg" placeholder="Share your experience..." required />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
                 <button onClick={() => setShowFeedbackModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                <button onClick={handleSubmitFeedback} disabled={feedbackLoading || !feedbackForm.reason} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">{feedbackLoading ? 'Submitting...' : 'Submit Feedback'}</button>
+                <button onClick={handleSubmitFeedback} disabled={feedbackLoading || !feedbackForm.reason} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">{feedbackLoading ? 'Submitting...' : 'Submit'}</button>
               </div>
             </div>
           </div>
@@ -408,19 +405,15 @@ const PatientProfile = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <NavIcon name="close" className="w-8 h-8 text-rose-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Cancel Appointment?</h2>
-              <p className="text-gray-600">Are you sure you want to cancel your appointment with <strong>Dr. {selectedAppointment.doctor_name}</strong> on <strong>{selectedAppointment.date}</strong> at <strong>{selectedAppointment.start_time}</strong>?</p>
+              <p className="text-gray-600">Are you sure you want to cancel your appointment with <strong>Dr. {selectedAppointment.doctor_name}</strong> on <strong>{selectedAppointment.date}</strong>?</p>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowCancelModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Keep Appointment</button>
-              <button onClick={handleCancelAppointment} disabled={actionLoading} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50">
-                {actionLoading ? 'Cancelling...' : 'Yes, Cancel'}
-              </button>
+              <button onClick={() => setShowCancelModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Keep</button>
+              <button onClick={handleCancelAppointment} disabled={actionLoading} className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 font-medium disabled:opacity-50">{actionLoading ? 'Cancelling...' : 'Yes, Cancel'}</button>
             </div>
           </div>
         </div>
@@ -430,54 +423,36 @@ const PatientProfile = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Reschedule Appointment</h2>
-            <p className="text-gray-600 mb-4">with <strong>Dr. {selectedAppointment.doctor_name}</strong></p>
+            <p className="text-gray-600 mb-4">Current: {selectedAppointment.date} at {selectedAppointment.start_time}</p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Current: {selectedAppointment.date} at {selectedAppointment.start_time}</label>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">New Date</label>
-                <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+                <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">New Time</label>
-                <select value={newTime} onChange={(e) => setNewTime(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                <select value={newTime} onChange={(e) => setNewTime(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
                   <option value="">Select time</option>
                   <option value="08:00">08:00 AM</option>
-                  <option value="08:30">08:30 AM</option>
                   <option value="09:00">09:00 AM</option>
-                  <option value="09:30">09:30 AM</option>
                   <option value="10:00">10:00 AM</option>
-                  <option value="10:30">10:30 AM</option>
                   <option value="11:00">11:00 AM</option>
-                  <option value="11:30">11:30 AM</option>
                   <option value="12:00">12:00 PM</option>
-                  <option value="12:30">12:30 PM</option>
-                  <option value="13:00">01:00 PM</option>
-                  <option value="13:30">01:30 PM</option>
                   <option value="14:00">02:00 PM</option>
-                  <option value="14:30">02:30 PM</option>
                   <option value="15:00">03:00 PM</option>
-                  <option value="15:30">03:30 PM</option>
                   <option value="16:00">04:00 PM</option>
-                  <option value="16:30">04:30 PM</option>
-                  <option value="17:00">05:00 PM</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-4">
                 <button onClick={() => setShowRescheduleModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Cancel</button>
-                <button onClick={handleRescheduleAppointment} disabled={actionLoading || !newDate || !newTime} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50">
-                  {actionLoading ? 'Rescheduling...' : 'Confirm Reschedule'}
-                </button>
+                <button onClick={handleRescheduleAppointment} disabled={actionLoading || !newDate || !newTime} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50">{actionLoading ? 'Rescheduling...' : 'Confirm'}</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {showPrintModal && (
-        <PrintAppointment appointment={selectedAppointment} onClose={() => setShowPrintModal(false)} />
-      )}
+      {showPrintModal && <PrintAppointment appointment={selectedAppointment} onClose={() => setShowPrintModal(false)} />}
     </div>
   );
 };
