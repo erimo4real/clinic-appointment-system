@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors, fetchAvailableSlots, fetchServices } from '../../doctors/store/doctorSlice';
 import { createAppointment } from '../store/appointmentSlice';
+import { register } from '../../auth/store/authSlice';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Card, CardContent } from '../../../components/ui/Card';
+import api from '../../../shared/services/api';
 
 const NavIcon = ({ name, className }) => {
   const icons = {
@@ -210,8 +212,147 @@ const DoctorCard = ({ doctor, isSelected, onSelect }) => {
   );
 };
 
+const BookingSuccessPage = ({ bookingData, onCreateAccount, onSignIn, onBackHome, isRegistering, registerForm, setRegisterForm, handleRegister, registerLoading, registerError }) => {
+  const getDoctorName = (doctor) => {
+    if (doctor.user) {
+      return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
+    }
+    return doctor.name || doctor.fullName || 'Doctor';
+  };
+
+  return (
+    <div className="max-w-md mx-auto">
+      <Card className="overflow-hidden">
+        <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-6 text-center text-white">
+          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+            <NavIcon name="check" className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold">Appointment Booked!</h2>
+          <p className="text-teal-100 mt-1">Your appointment has been scheduled</p>
+        </div>
+        
+        <CardContent className="p-6">
+          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <h3 className="font-semibold text-gray-900 mb-2">{getDoctorName(bookingData.doctor)}</h3>
+            <p className="text-sm text-gray-600">{bookingData.service?.name}</p>
+            <p className="text-sm text-gray-600">
+              {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
+            <p className="text-sm text-gray-600">at {typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time}</p>
+          </div>
+
+          {isRegistering ? (
+            <div>
+              <h3 className="font-bold text-gray-900 mb-4 text-center">Create Your Account</h3>
+              <p className="text-sm text-gray-500 mb-4 text-center">Save your booking and manage appointments</p>
+              
+              {registerError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{registerError}</p>
+                </div>
+              )}
+              
+              <form onSubmit={handleRegister} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    placeholder="First Name"
+                    value={registerForm.firstName}
+                    onChange={(e) => setRegisterForm({...registerForm, firstName: e.target.value})}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Last Name"
+                    value={registerForm.lastName}
+                    onChange={(e) => setRegisterForm({...registerForm, lastName: e.target.value})}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                  />
+                </div>
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  value={registerForm.email}
+                  onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                />
+                <input
+                  type="password"
+                  placeholder="Password (min 6 characters)"
+                  value={registerForm.password}
+                  onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={registerLoading}
+                  className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {registerLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    'Create Account & View Booking'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={onBackHome}
+                  className="w-full py-2 text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  Skip for now
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <button
+                onClick={onCreateAccount}
+                className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all"
+              >
+                Create Account to Save Booking
+              </button>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">Or</span>
+                </div>
+              </div>
+              
+              <button
+                onClick={onSignIn}
+                className="w-full py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
+              >
+                Sign In to Existing Account
+              </button>
+              
+              <button
+                onClick={onBackHome}
+                className="w-full py-2 text-gray-500 hover:text-gray-600 text-sm"
+              >
+                Back to Home
+              </button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const BookingPage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { doctors, availableSlots, services, loading } = useSelector((state) => state.doctors);
   
   const [step, setStep] = useState(1);
@@ -226,6 +367,15 @@ const BookingPage = () => {
   });
   const [success, setSuccess] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registerForm, setRegisterForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+  });
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState('');
 
   useEffect(() => {
     dispatch(fetchDoctors());
@@ -299,6 +449,32 @@ const BookingPage = () => {
     }
   };
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setRegisterError('');
+    setRegisterLoading(true);
+
+    try {
+      const result = await dispatch(register({
+        firstName: registerForm.firstName,
+        lastName: registerForm.lastName,
+        email: registerForm.email,
+        password: registerForm.password,
+        role: 'patient',
+      }));
+
+      if (register.fulfilled.match(result)) {
+        navigate('/dashboard');
+      } else {
+        setRegisterError(result.payload || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      setRegisterError(error.message || 'Registration failed. Please try again.');
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
+
   const getMinDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -308,33 +484,19 @@ const BookingPage = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-2xl mx-auto py-16 px-4 text-center">
-          <Card className="p-8">
-            <CardContent className="pt-6">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <NavIcon name="check" className="w-10 h-10 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Appointment Booked!</h2>
-              <p className="text-gray-600 mb-2">
-                Your appointment has been scheduled successfully.
-              </p>
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium text-gray-900">{getDoctorName(bookingData.doctor)}</span>
-                  <br />
-                  {bookingData.service?.name}
-                  <br />
-                  {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time}
-                </p>
-              </div>
-              <div className="space-y-3">
-                <Link to="/login" className="block w-full px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all text-center">
-                  Sign In to View Appointments
-                </Link>
-                <Link to="/" className="block text-gray-600 hover:text-teal-600">Back to Home</Link>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="max-w-4xl mx-auto py-12 px-4">
+          <BookingSuccessPage
+            bookingData={bookingData}
+            onCreateAccount={() => setIsRegistering(true)}
+            onSignIn={() => navigate('/login')}
+            onBackHome={() => navigate('/')}
+            isRegistering={isRegistering}
+            registerForm={registerForm}
+            setRegisterForm={setRegisterForm}
+            handleRegister={handleRegister}
+            registerLoading={registerLoading}
+            registerError={registerError}
+          />
         </div>
       </div>
     );
@@ -426,7 +588,7 @@ const BookingPage = () => {
                   </div>
                 </div>
 
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Select a Service</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-2"> Select a Service</h2>
                 <p className="text-gray-500 text-sm mb-6">Choose from {doctorServices.length} available service{doctorServices.length !== 1 ? 's' : ''}</p>
                 
                 <div className="space-y-3">
