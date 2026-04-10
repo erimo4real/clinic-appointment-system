@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors, fetchAvailableSlots, fetchServices } from '../../doctors/store/doctorSlice';
-import { createAppointment } from '../store/appointmentSlice';
 import { register } from '../../auth/store/authSlice';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Card, CardContent } from '../../../components/ui/Card';
 import api from '../../../shared/services/api';
+
+const BOOKING_STORAGE_KEY = 'pending_booking_data';
 
 const NavIcon = ({ name, className }) => {
   const icons = {
@@ -227,8 +228,8 @@ const BookingSuccessPage = ({ bookingData, onCreateAccount, onSignIn, onBackHome
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
             <NavIcon name="check" className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold">Appointment Booked!</h2>
-          <p className="text-teal-100 mt-1">Your appointment has been scheduled</p>
+          <h2 className="text-2xl font-bold">Almost Done!</h2>
+          <p className="text-teal-100 mt-1">Create an account to save your booking</p>
         </div>
         
         <CardContent className="p-6">
@@ -243,8 +244,8 @@ const BookingSuccessPage = ({ bookingData, onCreateAccount, onSignIn, onBackHome
 
           {isRegistering ? (
             <div>
-              <h3 className="font-bold text-gray-900 mb-4 text-center">Create Your Account</h3>
-              <p className="text-sm text-gray-500 mb-4 text-center">Save your booking and manage appointments</p>
+              <h3 className="font-bold text-gray-900 mb-2 text-center">Create Your Account</h3>
+              <p className="text-sm text-gray-500 mb-4 text-center">Your booking will be saved to your account</p>
               
               {registerError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -280,6 +281,14 @@ const BookingSuccessPage = ({ bookingData, onCreateAccount, onSignIn, onBackHome
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                 />
                 <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={registerForm.phone}
+                  onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                />
+                <input
                   type="password"
                   placeholder="Password (min 6 characters)"
                   value={registerForm.password}
@@ -299,7 +308,7 @@ const BookingSuccessPage = ({ bookingData, onCreateAccount, onSignIn, onBackHome
                       Creating Account...
                     </>
                   ) : (
-                    'Create Account & View Booking'
+                    'Create Account & Save Booking'
                   )}
                 </button>
                 <button
@@ -307,7 +316,7 @@ const BookingSuccessPage = ({ bookingData, onCreateAccount, onSignIn, onBackHome
                   onClick={onBackHome}
                   className="w-full py-2 text-gray-500 hover:text-gray-700 text-sm"
                 >
-                  Skip for now
+                  Continue as Guest (booking won't be saved)
                 </button>
               </form>
             </div>
@@ -340,7 +349,7 @@ const BookingSuccessPage = ({ bookingData, onCreateAccount, onSignIn, onBackHome
                 onClick={onBackHome}
                 className="w-full py-2 text-gray-500 hover:text-gray-600 text-sm"
               >
-                Back to Home
+                Continue as Guest
               </button>
             </div>
           )}
@@ -372,6 +381,7 @@ const BookingPage = () => {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     password: '',
   });
   const [registerLoading, setRegisterLoading] = useState(false);
@@ -431,20 +441,28 @@ const BookingPage = () => {
     setBookingData({ ...bookingData, timeSlot: slot });
   };
 
-  const handleBook = async () => {
+  const handleConfirmBooking = () => {
+    setStep(4);
+  };
+
+  const handleBookAndSave = async () => {
     setBooking(true);
-    const appointmentData = {
-      doctor: bookingData.doctor.id,
-      service: bookingData.service.id || bookingData.service._id,
-      date: bookingData.date,
-      start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
-      notes: bookingData.notes,
-    };
     
-    const result = await dispatch(createAppointment(appointmentData));
-    if (createAppointment.fulfilled.match(result)) {
+    try {
+      const appointmentData = {
+        doctor: bookingData.doctor.id,
+        service: bookingData.service.id || bookingData.service._id,
+        date: bookingData.date,
+        start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
+        notes: bookingData.notes,
+      };
+      
+      await api.post('/appointments', appointmentData);
       setSuccess(true);
-    } else {
+    } catch (error) {
+      console.error('Booking error:', error);
+      alert('Failed to book appointment. Please try again.');
+    } finally {
       setBooking(false);
     }
   };
@@ -459,11 +477,23 @@ const BookingPage = () => {
         firstName: registerForm.firstName,
         lastName: registerForm.lastName,
         email: registerForm.email,
+        phone: registerForm.phone,
         password: registerForm.password,
         role: 'patient',
       }));
 
       if (register.fulfilled.match(result)) {
+        const pendingBooking = JSON.parse(localStorage.getItem(BOOKING_STORAGE_KEY) || 'null');
+        
+        if (pendingBooking) {
+          try {
+            await api.post('/appointments', pendingBooking);
+            localStorage.removeItem(BOOKING_STORAGE_KEY);
+          } catch (bookingError) {
+            console.error('Failed to create booking:', bookingError);
+          }
+        }
+        
         navigate('/dashboard');
       } else {
         setRegisterError(result.payload || 'Registration failed. Please try again.');
@@ -487,9 +517,31 @@ const BookingPage = () => {
         <div className="max-w-4xl mx-auto py-12 px-4">
           <BookingSuccessPage
             bookingData={bookingData}
-            onCreateAccount={() => setIsRegistering(true)}
-            onSignIn={() => navigate('/login')}
-            onBackHome={() => navigate('/')}
+            onCreateAccount={() => {
+              const pendingBooking = {
+                doctor: bookingData.doctor.id,
+                service: bookingData.service.id || bookingData.service._id,
+                date: bookingData.date,
+                start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
+                notes: bookingData.notes,
+              };
+              localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(pendingBooking));
+              setIsRegistering(true);
+            }}
+            onSignIn={() => {
+              localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify({
+                doctor: bookingData.doctor.id,
+                service: bookingData.service.id || bookingData.service._id,
+                date: bookingData.date,
+                start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
+                notes: bookingData.notes,
+              }));
+              navigate('/login');
+            }}
+            onBackHome={() => {
+              localStorage.removeItem(BOOKING_STORAGE_KEY);
+              navigate('/');
+            }}
             isRegistering={isRegistering}
             registerForm={registerForm}
             setRegisterForm={setRegisterForm}
@@ -690,7 +742,7 @@ const BookingPage = () => {
                     <p className="text-sm text-teal-700">
                       <span className="font-semibold">Selected:</span> {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {bookingData.timeSlot}
                     </p>
-                    <Button onClick={() => setStep(4)} className="mt-4 w-full">
+                    <Button onClick={handleConfirmBooking} className="mt-4 w-full">
                       Continue to Confirm
                     </Button>
                   </div>
@@ -762,7 +814,7 @@ const BookingPage = () => {
                 </div>
                 
                 <Button 
-                  onClick={handleBook} 
+                  onClick={handleBookAndSave} 
                   className="w-full py-4 text-lg" 
                   disabled={booking}
                 >
