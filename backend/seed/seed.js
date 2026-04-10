@@ -746,10 +746,37 @@ async function seedAdmin() {
 }
 
 /**
+ * Service mapping for each doctor by specialty
+ */
+const doctorServicesMap = {
+  'Cardiology': ['Cardiac Checkup', 'ECG/EKG', 'Blood Test Panel', 'Annual Physical Exam'],
+  'General Medicine': ['General Consultation', 'Blood Test Panel', 'Annual Physical Exam', 'Vaccination', 'Wound Care'],
+  'Pediatrics': ['Pediatric Checkup', 'Vaccination', 'Blood Test Panel', 'Allergy Testing'],
+  'Dermatology': ['Dermatology Consultation', 'Allergy Testing', 'Annual Physical Exam'],
+  'Orthopedics': ['Orthopedic Evaluation', 'X-Ray Imaging', 'Blood Test Panel', 'Annual Physical Exam'],
+  'Neurology': ['Neurology Consultation', 'MRI Scan', 'Blood Test Panel', 'ECG/EKG'],
+  'Gastroenterology': ['Blood Test Panel', 'Ultrasound Scan', 'Allergy Testing', 'General Consultation'],
+  'Ophthalmology': ['Eye Examination', 'Blood Test Panel', 'Annual Physical Exam'],
+  'Psychiatry': ['Mental Health Consultation', 'Annual Physical Exam', 'Blood Test Panel'],
+  'Pulmonology': ['Blood Test Panel', 'X-Ray Imaging', 'CT Scan', 'Annual Physical Exam'],
+  'Endocrinology': ['Diabetes Management', 'Blood Test Panel', 'Annual Physical Exam', 'Allergy Testing'],
+  'Urology': ['Blood Test Panel', 'Ultrasound Scan', 'X-Ray Imaging', 'Annual Physical Exam'],
+  'Gynecology': ['Ultrasound Scan', 'Blood Test Panel', 'Vaccination', 'Annual Physical Exam'],
+  'Oncology': ['Blood Test Panel', 'CT Scan', 'MRI Scan', 'Annual Physical Exam'],
+  'Rheumatology': ['Blood Test Panel', 'Allergy Testing', 'X-Ray Imaging', 'Annual Physical Exam'],
+};
+
+/**
  * Creates doctors and their user accounts.
  */
-async function seedDoctors() {
+async function seedDoctors(services) {
   const doctors = [];
+  const serviceNameToId = {};
+  
+  // Create service name to ID mapping
+  services.forEach(s => {
+    serviceNameToId[s.name] = s._id;
+  });
 
   for (const doctorData of seedData.doctors) {
     const user = await User.create({
@@ -762,6 +789,12 @@ async function seedDoctors() {
       phone: doctorData.phone
     });
 
+    // Get services for this doctor's specialty
+    const serviceNames = doctorServicesMap[doctorData.specialty] || ['General Consultation'];
+    const doctorServiceIds = serviceNames
+      .map(name => serviceNameToId[name])
+      .filter(id => id); // Remove undefined
+
     const doctor = await Doctor.create({
       user: user._id,
       specialty: doctorData.specialty,
@@ -769,11 +802,12 @@ async function seedDoctors() {
       experience: doctorData.experience,
       bio: doctorData.bio,
       consultationFee: doctorData.consultationFee,
-      isAvailable: true
+      isAvailable: true,
+      services: doctorServiceIds
     });
 
     doctors.push({ user, doctor });
-    console.log(`[Seed] Doctor created: Dr. ${doctorData.firstName} ${doctorData.lastName} (${doctorData.specialty})`);
+    console.log(`[Seed] Doctor created: Dr. ${doctorData.firstName} ${doctorData.lastName} (${doctorData.specialty}) - ${doctorServiceIds.length} services`);
   }
 
   return doctors;
@@ -871,8 +905,8 @@ async function seed() {
     await clearDatabase();
     await seedAdmin();
     await seedReceptionist();
-    const doctors = await seedDoctors();
     const services = await seedServices();
+    const doctors = await seedDoctors(services);
     const patients = await seedPatients();
     await seedAppointments(doctors, services, patients);
 

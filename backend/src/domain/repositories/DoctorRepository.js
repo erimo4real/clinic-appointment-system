@@ -22,38 +22,48 @@ class DoctorRepository {
   }
 
   /**
-   * Finds a doctor by ID with user information.
+   * Finds a doctor by ID with user and services information.
    */
   async findById(id) {
-    return await Doctor.findById(id).populate('user', 'firstName lastName email phone');
+    return await Doctor.findById(id)
+      .populate('user', 'firstName lastName email phone')
+      .populate('services');
   }
 
   /**
    * Finds a doctor by associated user ID.
    */
   async findByUserId(userId) {
-    return await Doctor.findOne({ user: userId }).populate('user', 'firstName lastName email phone');
+    return await Doctor.findOne({ user: userId })
+      .populate('user', 'firstName lastName email phone')
+      .populate('services');
   }
 
   /**
    * Finds all doctors with optional filters.
    */
   async findAll(filters = {}) {
-    return await Doctor.find(filters).populate('user', 'firstName lastName email phone');
+    return await Doctor.find(filters)
+      .populate('user', 'firstName lastName email phone')
+      .populate('services');
   }
 
   /**
    * Finds all available doctors.
    */
   async findAvailable() {
-    return await Doctor.find({ isAvailable: true }).populate('user', 'firstName lastName email phone');
+    return await Doctor.find({ isAvailable: true })
+      .populate('user', 'firstName lastName email phone')
+      .populate('services');
   }
 
   /**
    * Finds doctors by specialty.
    */
   async findBySpecialty(specialty) {
-    return await Doctor.find({ specialty, isAvailable: true }).populate('user', 'firstName lastName email phone');
+    return await Doctor.find({ specialty, isAvailable: true })
+      .populate('user', 'firstName lastName email phone')
+      .populate('services');
   }
 
   /**

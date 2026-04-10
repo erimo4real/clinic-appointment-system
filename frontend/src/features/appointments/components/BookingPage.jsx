@@ -66,6 +66,23 @@ const BookingPage = () => {
     return doctor.name || doctor.fullName || 'Doctor';
   };
 
+  // Get services offered by selected doctor
+  const getDoctorServices = () => {
+    if (!bookingData.doctor) return services;
+    const doctorServiceIds = bookingData.doctor.services || [];
+    // If doctor has services linked, filter them
+    if (doctorServiceIds.length > 0) {
+      return services.filter(s => 
+        doctorServiceIds.includes(s.id) || 
+        doctorServiceIds.includes(s._id)
+      );
+    }
+    // Fallback: return all services if no link exists
+    return services;
+  };
+
+  const doctorServices = getDoctorServices();
+
   const handleDoctorSelect = (doctor) => {
     setBookingData({ ...bookingData, doctor, timeSlot: null });
     setStep(2);
@@ -205,25 +222,32 @@ const BookingPage = () => {
               <button onClick={() => setStep(1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4">
                 <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Doctors
               </button>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Service</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Service</h2>
+              <p className="text-gray-500 text-sm mb-6">
+                Services offered by {getDoctorName(bookingData.doctor)}
+              </p>
               <div className="space-y-3">
-                {services.map((service) => (
-                  <button
-                    key={service.id}
-                    onClick={() => handleServiceSelect(service)}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all hover:border-teal-500 ${
-                      bookingData.service?.id === service.id ? 'border-teal-600 bg-teal-50' : 'border-gray-200'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{service.name}</h3>
-                        <p className="text-gray-500 text-sm">{service.duration} minutes</p>
+                {doctorServices.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No services available for this doctor.</p>
+                ) : (
+                  doctorServices.map((service) => (
+                    <button
+                      key={service.id || service._id}
+                      onClick={() => handleServiceSelect(service)}
+                      className={`w-full p-4 rounded-xl border-2 text-left transition-all hover:border-teal-500 ${
+                        bookingData.service?.id === service.id || bookingData.service?._id === service._id ? 'border-teal-600 bg-teal-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{service.name}</h3>
+                          <p className="text-gray-500 text-sm">{service.duration} minutes</p>
+                        </div>
+                        <span className="text-teal-600 font-semibold">₦{(service.price || 0).toLocaleString()}</span>
                       </div>
-                      <span className="text-teal-600 font-semibold">₦{(service.price || 0).toLocaleString()}</span>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           )}

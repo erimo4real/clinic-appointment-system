@@ -130,6 +130,15 @@ const doctorSchema = new mongoose.Schema({
       Sunday: { available: false, start: '09:00', end: '17:00' }
     }
   },
+
+  /**
+   * Services offered by this doctor
+   * References Service documents
+   */
+  services: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Service'
+  }],
   
   // ==========================================
   // TIMESTAMPS

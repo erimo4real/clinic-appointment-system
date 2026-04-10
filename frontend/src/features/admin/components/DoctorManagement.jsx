@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllDoctors, createDoctor, updateDoctor, deleteDoctor } from '../store/adminSlice';
+import { fetchAllDoctors, createDoctor, updateDoctor, deleteDoctor, fetchAllServices } from '../store/adminSlice';
 
 const ITEMS_PER_PAGE = 10;
 
 const specialties = [
   'General Medicine', 'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics',
   'Dermatology', 'Ophthalmology', 'ENT', 'Gynecology', 'Psychiatry',
+  'Oncology', 'Gastroenterology', 'Pulmonology', 'Urology', 'Nephrology',
+  'Endocrinology', 'Rheumatology', 'Other'
 ];
 
 const DoctorManagement = () => {
   const dispatch = useDispatch();
-  const { doctors, doctorsLoading } = useSelector((state) => state.admin);
+  const { doctors, doctorsLoading, services } = useSelector((state) => state.admin);
   const [showModal, setShowModal] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,15 +23,22 @@ const DoctorManagement = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', specialty: '', qualification: '',
     experience: '', consultation_fee: '', bio: '', is_available: true,
+    services: [],
   });
 
   useEffect(() => {
     dispatch(fetchAllDoctors());
+    dispatch(fetchAllServices());
   }, [dispatch]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const doctorData = { ...formData, experience: parseInt(formData.experience), consultation_fee: parseFloat(formData.consultation_fee) };
+    const doctorData = { 
+      ...formData, 
+      experience: parseInt(formData.experience), 
+      consultation_fee: parseFloat(formData.consultation_fee),
+      services: formData.services,
+    };
     if (editingDoctor) {
       dispatch(updateDoctor({ id: editingDoctor.id, data: doctorData }));
     } else {
@@ -37,7 +46,7 @@ const DoctorManagement = () => {
     }
     setShowModal(false);
     setEditingDoctor(null);
-    setFormData({ name: '', email: '', phone: '', specialty: '', qualification: '', experience: '', consultation_fee: '', bio: '', is_available: true });
+    setFormData({ name: '', email: '', phone: '', specialty: '', qualification: '', experience: '', consultation_fee: '', bio: '', is_available: true, services: [] });
     dispatch(fetchAllDoctors());
   };
 
@@ -48,8 +57,18 @@ const DoctorManagement = () => {
       specialty: doctor.specialty || '', qualification: doctor.qualification || '',
       experience: doctor.experience?.toString() || '', consultation_fee: doctor.consultation_fee?.toString() || '',
       bio: doctor.bio || '', is_available: doctor.is_available ?? true,
+      services: doctor.services?.map(s => s.id || s._id) || [],
     });
     setShowModal(true);
+  };
+
+  const handleServiceToggle = (serviceId) => {
+    const currentServices = formData.services || [];
+    if (currentServices.includes(serviceId)) {
+      setFormData({ ...formData, services: currentServices.filter(id => id !== serviceId) });
+    } else {
+      setFormData({ ...formData, services: [...currentServices, serviceId] });
+    }
   };
 
   const handleDelete = (id) => {
@@ -137,8 +156,7 @@ const DoctorManagement = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Qualification</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Experience</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Services</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fee</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
@@ -154,13 +172,24 @@ const DoctorManagement = () => {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">Dr. {doctor.name}</p>
-                          <p className="text-sm text-gray-500">{doctor.email}</p>
+                          <p className="text-sm text-gray-500">{doctor.qualification || '-'}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4"><span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">{doctor.specialty}</span></td>
-                    <td className="px-6 py-4 text-gray-700">{doctor.qualification || '-'}</td>
-                    <td className="px-6 py-4 text-gray-700">{doctor.experience} years</td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {doctor.services?.slice(0, 2).map((service, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-teal-50 text-teal-700 rounded text-xs">{service.name}</span>
+                        ))}
+                        {doctor.services?.length > 2 && (
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">+{doctor.services.length - 2}</span>
+                        )}
+                        {(!doctor.services || doctor.services.length === 0) && (
+                          <span className="text-gray-400 text-xs">No services</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-gray-700 font-semibold">₦{doctor.consultation_fee?.toLocaleString()}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${doctor.is_available ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
@@ -250,6 +279,27 @@ const DoctorManagement = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                 <textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" placeholder="Brief description..." />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Services Offered</label>
+                <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                  {services.map((service) => (
+                    <label key={service.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={formData.services?.includes(service.id)}
+                        onChange={() => handleServiceToggle(service.id)}
+                        className="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500"
+                      />
+                      <span className="text-sm text-gray-700">{service.name}</span>
+                      <span className="text-xs text-gray-400 ml-auto">₦{service.price?.toLocaleString()}</span>
+                    </label>
+                  ))}
+                  {services.length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-2">No services available</p>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{formData.services?.length || 0} services selected</p>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="is_available" checked={formData.is_available} onChange={(e) => setFormData({ ...formData, is_available: e.target.checked })} className="w-4 h-4" />
