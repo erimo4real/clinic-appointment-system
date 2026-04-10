@@ -126,35 +126,48 @@ router.get('/:id', auth, async (req, res) => {
  * 
  * Creates a new appointment.
  * Checks for time slot conflicts before booking.
+ * Supports both authenticated users and guest bookings.
  * 
  * @route POST /api/appointments
- * @requires Authentication
  * @body {string} doctor - Doctor's ID
  * @body {string} service - Service ID
  * @body {string} date - Appointment date (ISO format)
  * @body {string} startTime - Start time (HH:MM format)
  * @body {string} endTime - End time (HH:MM format)
  * @body {string} notes - Additional notes (optional)
+ * @body {string} patientId - Patient user ID (optional, for authenticated bookings)
  * @returns {201} Appointment created successfully
  * @returns {400} Time slot conflict or validation error
  */
-router.post('/', auth, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const appointment = await AppointmentService.createAppointment(req.body, req.user._id);
+    let patientId = req.user?._id;
     
-    // Send confirmation email
-    const doctor = await Doctor.findById(req.body.doctor).populate('user');
-    const service = await Service.findById(req.body.service);
+    // If authenticated user, use their ID
+    // If guest (no user), we'll create a placeholder or handle differently
+    if (!patientId && req.body.patientEmail) {
+      // For guest bookings, we'll create the appointment without user association
+      // The frontend will handle linking after registration
+      patientId = null;
+    }
     
-    if (doctor && service) {
-      const emailData = {
-        date: new Date(req.body.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-        start_time: req.body.startTime,
-        doctor_name: doctor.user ? `${doctor.user.firstName} ${doctor.user.lastName}` : doctor.specialty,
-        service_name: service.name,
-      };
-      const { subject, html } = emailTemplates.appointmentConfirmation(emailData);
-      sendEmail(req.user.email, subject, html).catch(err => console.log('Email send failed:', err.message));
+    const appointment = await AppointmentService.createAppointment(req.body, patientId);
+    
+    // Send confirmation email only if user is authenticated
+    if (req.user?.email) {
+      const doctor = await Doctor.findById(req.body.doctor).populate('user');
+      const service = await Service.findById(req.body.service);
+      
+      if (doctor && service && req.user.email) {
+        const emailData = {
+          date: new Date(req.body.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          start_time: req.body.startTime,
+          doctor_name: doctor.user ? `${doctor.user.firstName} ${doctor.user.lastName}` : doctor.specialty,
+          service_name: service.name,
+        };
+        const { subject, html } = emailTemplates.appointmentConfirmation(emailData);
+        sendEmail(req.user.email, subject, html).catch(err => console.log('Email send failed:', err.message));
+      }
     }
     
     res.status(201).json(appointment);
