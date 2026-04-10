@@ -14,12 +14,37 @@ const NavIcon = ({ name, className }) => {
     arrowLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />,
     calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
     user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+    search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+    clock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    medical: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />,
+    shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
 
+const specialties = [
+  'All Specialties',
+  'General Medicine',
+  'Cardiology',
+  'Neurology',
+  'Orthopedics',
+  'Pediatrics',
+  'Dermatology',
+  'Ophthalmology',
+  'ENT',
+  'Gynecology',
+  'Psychiatry',
+  'Oncology',
+  'Gastroenterology',
+  'Pulmonology',
+  'Urology',
+  'Endocrinology',
+  'Rheumatology',
+];
+
 const Header = () => (
-  <header className="bg-white border-b border-gray-200">
+  <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
     <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <Link to="/" className="flex items-center gap-3">
         <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
@@ -29,16 +54,169 @@ const Header = () => (
         </div>
         <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
       </Link>
-      <Link to="/login" className="px-4 py-2 text-teal-600 font-medium hover:text-teal-700">Sign In</Link>
+      <div className="flex items-center gap-4">
+        <Link to="/doctors" className="text-gray-600 hover:text-teal-600 font-medium hidden sm:block">View Doctors</Link>
+        <Link to="/login" className="px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors">Sign In</Link>
+      </div>
     </div>
   </header>
 );
+
+const HeroSection = () => (
+  <div className="bg-gradient-to-br from-teal-600 via-teal-500 to-teal-400 text-white py-12 px-4">
+    <div className="max-w-4xl mx-auto text-center">
+      <h1 className="text-3xl sm:text-4xl font-bold mb-4">Book Your Appointment</h1>
+      <p className="text-teal-50 text-lg mb-8">Quality healthcare made simple and accessible</p>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+            <NavIcon name="user" className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="font-semibold mb-1">1. Choose Doctor</h3>
+          <p className="text-sm text-teal-100">Browse our specialists</p>
+        </div>
+        
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+            <NavIcon name="medical" className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="font-semibold mb-1">2. Select Service</h3>
+          <p className="text-sm text-teal-100">Pick your treatment</p>
+        </div>
+        
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+            <NavIcon name="calendar" className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="font-semibold mb-1">3. Pick Time</h3>
+          <p className="text-sm text-teal-100">Schedule your visit</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const ProgressSteps = ({ currentStep }) => {
+  const steps = [
+    { num: 1, label: 'Doctor', desc: 'Choose specialist' },
+    { num: 2, label: 'Service', desc: 'Select treatment' },
+    { num: 3, label: 'Schedule', desc: 'Pick date & time' },
+    { num: 4, label: 'Confirm', desc: 'Review & book' },
+  ];
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+      <div className="flex items-center justify-between">
+        {steps.map((step, index) => (
+          <React.Fragment key={step.num}>
+            <div className="flex flex-col items-center">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                currentStep > step.num 
+                  ? 'bg-teal-600 text-white' 
+                  : currentStep === step.num 
+                    ? 'bg-teal-100 text-teal-600 border-2 border-teal-600' 
+                    : 'bg-gray-100 text-gray-400'
+              }`}>
+                {currentStep > step.num ? (
+                  <NavIcon name="check" className="w-5 h-5" />
+                ) : (
+                  step.num
+                )}
+              </div>
+              <span className={`text-xs mt-1 hidden sm:block ${currentStep >= step.num ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+                {step.label}
+              </span>
+              <span className="text-xs text-gray-400 hidden md:block">{step.desc}</span>
+            </div>
+            {index < 3 && (
+              <div className={`flex-1 h-1 mx-2 rounded ${currentStep > step.num ? 'bg-teal-600' : 'bg-gray-200'}`} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const DoctorCard = ({ doctor, isSelected, onSelect }) => {
+  const getDoctorName = (doctor) => {
+    if (doctor.user) {
+      return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
+    }
+    return doctor.name || doctor.fullName || 'Doctor';
+  };
+
+  const serviceNames = doctor.services?.slice(0, 3).map(s => s.name) || [];
+
+  return (
+    <button
+      onClick={() => onSelect(doctor)}
+      className={`w-full p-5 rounded-xl border-2 text-left transition-all duration-200 hover:shadow-lg ${
+        isSelected 
+          ? 'border-teal-600 bg-teal-50 shadow-md' 
+          : 'border-gray-200 bg-white hover:border-teal-400 hover:bg-teal-50/50'
+      }`}
+    >
+      <div className="flex items-start gap-4">
+        <div className="w-20 h-20 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+          {doctor.profileImage ? (
+            <img src={doctor.profileImage} alt={getDoctorName(doctor)} className="w-full h-full object-cover rounded-full" />
+          ) : (
+            <NavIcon name="user" className="w-10 h-10 text-teal-600" />
+          )}
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-gray-900 text-lg">{getDoctorName(doctor)}</h3>
+          <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-700 rounded-full text-xs font-medium mt-1">
+            {doctor.specialty || 'General'}
+          </span>
+          
+          <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-gray-600">
+            <span className="flex items-center gap-1">
+              <NavIcon name="star" className="w-4 h-4 text-amber-400" />
+              {doctor.experience || 0} years exp
+            </span>
+            <span className="text-gray-300">|</span>
+            <span className="font-semibold text-teal-600">
+              ₦{(doctor.consultationFee || doctor.consultation_fee || 0).toLocaleString()}
+            </span>
+          </div>
+
+          {serviceNames.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1">
+              {serviceNames.map((name, i) => (
+                <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                  {name}
+                </span>
+              ))}
+              {doctor.services?.length > 3 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">
+                  +{doctor.services.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {isSelected && (
+          <div className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <NavIcon name="check" className="w-4 h-4 text-white" />
+          </div>
+        )}
+      </div>
+    </button>
+  );
+};
 
 const BookingPage = () => {
   const dispatch = useDispatch();
   const { doctors, availableSlots, services, loading } = useSelector((state) => state.doctors);
   
   const [step, setStep] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [specialtyFilter, setSpecialtyFilter] = useState('All Specialties');
   const [bookingData, setBookingData] = useState({
     doctor: null,
     service: null,
@@ -47,6 +225,7 @@ const BookingPage = () => {
     notes: '',
   });
   const [success, setSuccess] = useState(false);
+  const [booking, setBooking] = useState(false);
 
   useEffect(() => {
     dispatch(fetchDoctors());
@@ -66,25 +245,26 @@ const BookingPage = () => {
     return doctor.name || doctor.fullName || 'Doctor';
   };
 
-  // Get services offered by selected doctor
   const getDoctorServices = () => {
     if (!bookingData.doctor) return services;
-    const doctorServiceIds = bookingData.doctor.services || [];
-    // If doctor has services linked, filter them
+    const doctorServiceIds = bookingData.doctor.services?.map(s => s.id || s._id) || [];
     if (doctorServiceIds.length > 0) {
-      return services.filter(s => 
-        doctorServiceIds.includes(s.id) || 
-        doctorServiceIds.includes(s._id)
-      );
+      return services.filter(s => doctorServiceIds.includes(s.id) || doctorServiceIds.includes(s._id));
     }
-    // Fallback: return all services if no link exists
     return services;
   };
 
   const doctorServices = getDoctorServices();
 
+  const filteredDoctors = doctors.filter(doctor => {
+    const name = getDoctorName(doctor).toLowerCase();
+    const matchesSearch = name.includes(searchTerm.toLowerCase());
+    const matchesSpecialty = specialtyFilter === 'All Specialties' || doctor.specialty === specialtyFilter;
+    return matchesSearch && matchesSpecialty;
+  });
+
   const handleDoctorSelect = (doctor) => {
-    setBookingData({ ...bookingData, doctor, timeSlot: null });
+    setBookingData({ ...bookingData, doctor, service: null, timeSlot: null });
     setStep(2);
   };
 
@@ -101,22 +281,21 @@ const BookingPage = () => {
     setBookingData({ ...bookingData, timeSlot: slot });
   };
 
-  const handleContinue = () => {
-    if (step < 4) setStep(step + 1);
-  };
-
   const handleBook = async () => {
+    setBooking(true);
     const appointmentData = {
       doctor: bookingData.doctor.id,
-      service: bookingData.service.id,
+      service: bookingData.service.id || bookingData.service._id,
       date: bookingData.date,
-      start_time: bookingData.timeSlot.start_time,
+      start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
       notes: bookingData.notes,
     };
     
     const result = await dispatch(createAppointment(appointmentData));
     if (createAppointment.fulfilled.match(result)) {
       setSuccess(true);
+    } else {
+      setBooking(false);
     }
   };
 
@@ -130,18 +309,26 @@ const BookingPage = () => {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-2xl mx-auto py-16 px-4 text-center">
-          <Card className="p-12">
+          <Card className="p-8">
             <CardContent className="pt-6">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <NavIcon name="check" className="w-10 h-10 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Appointment Booked!</h2>
-              <p className="text-gray-600 mb-6">
-                Your appointment with {getDoctorName(bookingData.doctor)} has been scheduled for{' '}
-                {new Date(bookingData.date).toLocaleDateString()} at {bookingData.timeSlot?.start_time}.
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Appointment Booked!</h2>
+              <p className="text-gray-600 mb-2">
+                Your appointment has been scheduled successfully.
               </p>
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium text-gray-900">{getDoctorName(bookingData.doctor)}</span>
+                  <br />
+                  {bookingData.service?.name}
+                  <br />
+                  {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time}
+                </p>
+              </div>
               <div className="space-y-3">
-                <Link to="/login" className="inline-block px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700">
+                <Link to="/login" className="block w-full px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all text-center">
                   Sign In to View Appointments
                 </Link>
                 <Link to="/" className="block text-gray-600 hover:text-teal-600">Back to Home</Link>
@@ -156,193 +343,283 @@ const BookingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+      <HeroSection />
       
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {['Doctor', 'Service', 'Date & Time', 'Confirm'].map((label, index) => (
-              <div key={index} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-medium ${
-                  step > index + 1 ? 'bg-teal-600 text-white' :
-                  step === index + 1 ? 'bg-teal-100 text-teal-600 border-2 border-teal-600' :
-                  'bg-gray-200 text-gray-500'
-                }`}>
-                  {step > index + 1 ? <NavIcon name="check" className="w-5 h-5" /> : index + 1}
-                </div>
-                <span className={`ml-2 hidden sm:inline ${step >= index + 1 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                  {label}
-                </span>
-                {index < 3 && <div className={`w-12 sm:w-24 h-1 mx-2 ${step > index + 1 ? 'bg-teal-600' : 'bg-gray-200'}`} />}
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <ProgressSteps currentStep={step} />
 
         <Card>
           <CardContent className="p-6">
-          {step === 1 && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Select a Doctor</h2>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Loading doctors...</div>
-              ) : doctors.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">No doctors available</p>
-                  <Link to="/" className="text-teal-600 hover:underline">Return to Home</Link>
+            {step === 1 && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Choose Your Doctor</h2>
+                
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <div className="flex-1 relative">
+                    <NavIcon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search doctors by name..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                    />
+                  </div>
+                  <select
+                    value={specialtyFilter}
+                    onChange={(e) => setSpecialtyFilter(e.target.value)}
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white"
+                  >
+                    {specialties.map((spec) => (
+                      <option key={spec} value={spec}>{spec}</option>
+                    ))}
+                  </select>
                 </div>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {doctors.map((doctor) => (
-                    <button
-                      key={doctor.id}
-                      onClick={() => handleDoctorSelect(doctor)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all hover:border-teal-500 ${
-                        bookingData.doctor?.id === doctor.id ? 'border-teal-600 bg-teal-50' : 'border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          <NavIcon name="user" className="w-8 h-8 text-teal-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{getDoctorName(doctor)}</h3>
-                          <p className="text-teal-600 text-sm">{doctor.specialty || 'General'}</p>
-                          <p className="text-gray-500 text-sm">₦{(doctor.consultation_fee || 0).toLocaleString()}</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
 
-          {step === 2 && (
-            <div>
-              <button onClick={() => setStep(1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4">
-                <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Doctors
-              </button>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Service</h2>
-              <p className="text-gray-500 text-sm mb-6">
-                Services offered by {getDoctorName(bookingData.doctor)}
-              </p>
-              <div className="space-y-3">
-                {doctorServices.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No services available for this doctor.</p>
+                {loading ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-gray-500">Loading doctors...</p>
+                  </div>
+                ) : filteredDoctors.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <NavIcon name="user" className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 mb-2">No doctors found</p>
+                    <p className="text-sm text-gray-400">Try adjusting your search or filters</p>
+                  </div>
                 ) : (
-                  doctorServices.map((service) => (
-                    <button
-                      key={service.id || service._id}
-                      onClick={() => handleServiceSelect(service)}
-                      className={`w-full p-4 rounded-xl border-2 text-left transition-all hover:border-teal-500 ${
-                        bookingData.service?.id === service.id || bookingData.service?._id === service._id ? 'border-teal-600 bg-teal-50' : 'border-gray-200'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{service.name}</h3>
-                          <p className="text-gray-500 text-sm">{service.duration} minutes</p>
-                        </div>
-                        <span className="text-teal-600 font-semibold">₦{(service.price || 0).toLocaleString()}</span>
-                      </div>
-                    </button>
-                  ))
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-500 mb-4">{filteredDoctors.length} doctor{filteredDoctors.length !== 1 ? 's' : ''} available</p>
+                    {filteredDoctors.map((doctor) => (
+                      <DoctorCard
+                        key={doctor.id}
+                        doctor={doctor}
+                        isSelected={bookingData.doctor?.id === doctor.id}
+                        onSelect={handleDoctorSelect}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {step === 3 && (
-            <div>
-              <button onClick={() => setStep(2)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4">
-                <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Services
-              </button>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Date & Time</h2>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
-                <Input
-                  type="date"
-                  value={bookingData.date}
-                  onChange={handleDateChange}
-                  min={getMinDate()}
-                />
-              </div>
-              {bookingData.date && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Available Time Slots</label>
-                  {availableSlots.length === 0 ? (
-                    <p className="text-gray-500 py-4">No available slots for this date.</p>
-                  ) : (
-                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                      {availableSlots.map((slot, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleTimeSelect(slot)}
-                          disabled={!slot.available}
-                          className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                            !slot.available ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
-                            bookingData.timeSlot?.start_time === slot.start_time ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-teal-100'
-                          }`}
-                        >
-                          {slot.start_time}
-                        </button>
-                      ))}
+            {step === 2 && (
+              <div>
+                <button 
+                  onClick={() => setStep(1)} 
+                  className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+                >
+                  <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Doctors
+                </button>
+                
+                <div className="bg-teal-50 rounded-xl p-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center">
+                      <NavIcon name="user" className="w-6 h-6 text-teal-600" />
                     </div>
+                    <div>
+                      <p className="font-bold text-gray-900">{getDoctorName(bookingData.doctor)}</p>
+                      <p className="text-sm text-teal-600">{bookingData.doctor.specialty}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Select a Service</h2>
+                <p className="text-gray-500 text-sm mb-6">Choose from {doctorServices.length} available service{doctorServices.length !== 1 ? 's' : ''}</p>
+                
+                <div className="space-y-3">
+                  {doctorServices.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">No services available for this doctor.</p>
+                    </div>
+                  ) : (
+                    doctorServices.map((service) => (
+                      <button
+                        key={service.id || service._id}
+                        onClick={() => handleServiceSelect(service)}
+                        className={`w-full p-4 rounded-xl border-2 text-left transition-all hover:shadow-md ${
+                          bookingData.service?.id === service.id || bookingData.service?._id === service._id 
+                            ? 'border-teal-600 bg-teal-50' 
+                            : 'border-gray-200 bg-white hover:border-teal-400'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{service.name}</h3>
+                            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                              <NavIcon name="clock" className="w-4 h-4" />
+                              {service.duration} minutes
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="block text-teal-600 font-bold text-lg">₦{service.price?.toLocaleString()}</span>
+                            {bookingData.service?.id === service.id || bookingData.service?._id === service._id ? (
+                              <span className="text-xs text-teal-600 font-medium">Selected</span>
+                            ) : (
+                              <span className="text-xs text-gray-400">Click to select</span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))
                   )}
                 </div>
-              )}
-              {bookingData.timeSlot && (
-                <Button onClick={handleContinue} className="mt-6">
-                  Continue to Confirm
-                </Button>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {step === 4 && (
-            <div>
-              <button onClick={() => setStep(3)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4">
-                <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Date & Time
-              </button>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Confirm Appointment</h2>
-              <div className="bg-gray-50 rounded-xl p-6 mb-6">
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Doctor</span>
-                    <span className="font-medium text-gray-900">{getDoctorName(bookingData.doctor)}</span>
+            {step === 3 && (
+              <div>
+                <button 
+                  onClick={() => setStep(2)} 
+                  className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+                >
+                  <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Services
+                </button>
+                
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Select Date & Time</h2>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Choose a Date</label>
+                  <Input
+                    type="date"
+                    value={bookingData.date}
+                    onChange={handleDateChange}
+                    min={getMinDate()}
+                    className="max-w-xs"
+                  />
+                </div>
+                
+                {bookingData.date && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Available Time Slots for {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                    </label>
+                    {Array.isArray(availableSlots) && availableSlots.length === 0 ? (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-700">
+                        <p className="flex items-center gap-2">
+                          <NavIcon name="clock" className="w-5 h-5" />
+                          No available slots for this date. Please try another date.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                        {(Array.isArray(availableSlots) ? availableSlots : []).map((slot, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleTimeSelect(typeof slot === 'string' ? slot : slot.start_time)}
+                            className={`p-3 rounded-lg text-sm font-medium transition-all ${
+                              bookingData.timeSlot === slot || bookingData.timeSlot === slot.start_time
+                                ? 'bg-teal-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-teal-100 hover:text-teal-700'
+                            }`}
+                          >
+                            {typeof slot === 'string' ? slot : slot.start_time}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Service</span>
-                    <span className="font-medium text-gray-900">{bookingData.service?.name}</span>
+                )}
+                
+                {bookingData.timeSlot && (
+                  <div className="mt-6 p-4 bg-teal-50 rounded-lg">
+                    <p className="text-sm text-teal-700">
+                      <span className="font-semibold">Selected:</span> {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {bookingData.timeSlot}
+                    </p>
+                    <Button onClick={() => setStep(4)} className="mt-4 w-full">
+                      Continue to Confirm
+                    </Button>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Date</span>
-                    <span className="font-medium text-gray-900">{new Date(bookingData.date).toLocaleDateString()}</span>
+                )}
+              </div>
+            )}
+
+            {step === 4 && (
+              <div>
+                <button 
+                  onClick={() => setStep(3)} 
+                  className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+                >
+                  <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Schedule
+                </button>
+                
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Confirm Your Appointment</h2>
+                
+                <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl p-6 mb-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <NavIcon name="user" className="w-8 h-8 text-teal-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">{getDoctorName(bookingData.doctor)}</h3>
+                      <p className="text-sm text-teal-600">{bookingData.doctor.specialty}</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Time</span>
-                    <span className="font-medium text-gray-900">{bookingData.timeSlot?.start_time}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-4">
-                    <span className="text-gray-500">Total</span>
-                    <span className="font-bold text-teal-600 text-xl">₦{(bookingData.service?.price || 0).toLocaleString()}</span>
+                  
+                  <div className="border-t border-teal-200 pt-4 space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 flex items-center gap-2">
+                        <NavIcon name="medical" className="w-4 h-4" />
+                        Service
+                      </span>
+                      <span className="font-medium text-gray-900">{bookingData.service?.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 flex items-center gap-2">
+                        <NavIcon name="calendar" className="w-4 h-4" />
+                        Date
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 flex items-center gap-2">
+                        <NavIcon name="clock" className="w-4 h-4" />
+                        Time
+                      </span>
+                      <span className="font-medium text-gray-900">{bookingData.timeSlot}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-teal-200 pt-3">
+                      <span className="text-gray-600 font-medium">Total</span>
+                      <span className="font-bold text-teal-600 text-xl">₦{bookingData.service?.price?.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
+                  <Textarea
+                    value={bookingData.notes}
+                    onChange={(e) => setBookingData({ ...bookingData, notes: e.target.value })}
+                    className="h-24"
+                    placeholder="Any symptoms, concerns, or special requests..."
+                  />
+                </div>
+                
+                <Button 
+                  onClick={handleBook} 
+                  className="w-full py-4 text-lg" 
+                  disabled={booking}
+                >
+                  {booking ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Booking...
+                    </span>
+                  ) : (
+                    'Confirm Booking'
+                  )}
+                </Button>
+                
+                <p className="text-xs text-gray-400 text-center mt-4 flex items-center justify-center gap-1">
+                  <NavIcon name="shield" className="w-4 h-4" />
+                  Your information is secure and encrypted
+                </p>
               </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
-                <Textarea
-                  value={bookingData.notes}
-                  onChange={(e) => setBookingData({ ...bookingData, notes: e.target.value })}
-                  className="h-24"
-                  placeholder="Any symptoms or concerns..."
-                />
-              </div>
-              <Button onClick={handleBook} className="w-full">
-                Confirm Booking
-              </Button>
-            </div>
-          )}
+            )}
           </CardContent>
         </Card>
       </div>
