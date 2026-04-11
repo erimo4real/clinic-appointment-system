@@ -238,38 +238,46 @@ const adminSlice = createSlice({
         state.users.push(action.payload);
       })
       .addCase(updateUser.fulfilled, (state, action) => {
-        const index = state.users.findIndex(u => u.id === action.payload.id);
+        const id = action.payload._id || action.payload.id;
+        const index = state.users.findIndex(u => (u._id || u.id) === id);
         if (index !== -1) state.users[index] = action.payload;
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
-        state.users = state.users.filter(u => u.id !== action.payload);
+        const id = action.payload._id || action.payload.id;
+        state.users = state.users.filter(u => (u._id || u.id) !== id);
       })
       .addCase(createDoctor.fulfilled, (state, action) => {
         state.doctors.push(action.payload);
       })
       .addCase(updateDoctor.fulfilled, (state, action) => {
-        const index = state.doctors.findIndex(d => d.id === action.payload.id);
+        const id = action.payload._id || action.payload.id;
+        const index = state.doctors.findIndex(d => (d._id || d.id) === id);
         if (index !== -1) state.doctors[index] = action.payload;
       })
       .addCase(deleteDoctor.fulfilled, (state, action) => {
-        state.doctors = state.doctors.filter(d => d.id !== action.payload);
+        const id = action.payload._id || action.payload.id;
+        state.doctors = state.doctors.filter(d => (d._id || d.id) !== id);
       })
       .addCase(createService.fulfilled, (state, action) => {
         state.services.push(action.payload);
       })
       .addCase(updateService.fulfilled, (state, action) => {
-        const index = state.services.findIndex(s => s.id === action.payload.id);
+        const id = action.payload._id || action.payload.id;
+        const index = state.services.findIndex(s => (s._id || s.id) === id);
         if (index !== -1) state.services[index] = action.payload;
       })
       .addCase(deleteService.fulfilled, (state, action) => {
-        state.services = state.services.filter(s => s.id !== action.payload);
+        const id = action.payload._id || action.payload.id;
+        state.services = state.services.filter(s => (s._id || s.id) !== id);
       })
       .addCase(updateAppointment.fulfilled, (state, action) => {
-        const index = state.appointments.findIndex(a => a.id === action.payload.id);
+        const id = action.payload._id || action.payload.id;
+        const index = state.appointments.findIndex(a => (a._id || a.id) === id);
         if (index !== -1) state.appointments[index] = action.payload;
       })
       .addCase(deleteAppointment.fulfilled, (state, action) => {
-        state.appointments = state.appointments.filter(a => a.id !== action.payload);
+        const id = action.payload._id || action.payload.id;
+        state.appointments = state.appointments.filter(a => (a._id || a.id) !== id);
       });
   },
 });

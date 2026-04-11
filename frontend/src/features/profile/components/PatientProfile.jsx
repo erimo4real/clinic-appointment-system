@@ -163,7 +163,8 @@ const PatientProfile = () => {
     if (!selectedAppointment) return;
     setActionLoading(true);
     try {
-      await dispatch(cancelAppointment(selectedAppointment.id)).unwrap();
+      const appointmentId = selectedAppointment._id || selectedAppointment.id;
+      await dispatch(cancelAppointment(appointmentId)).unwrap();
       dispatch(fetchMyAppointments());
       setShowCancelModal(false);
     } catch (error) {
@@ -176,8 +177,9 @@ const PatientProfile = () => {
     if (!selectedAppointment || !newDate || !newTime) return;
     setActionLoading(true);
     try {
+      const appointmentId = selectedAppointment._id || selectedAppointment.id;
       await dispatch(updateAppointment({
-        id: selectedAppointment.id,
+        id: appointmentId,
         date: newDate,
         startTime: newTime,
         endTime: newTime.split(':')[0] + ':30',

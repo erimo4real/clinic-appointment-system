@@ -17,6 +17,7 @@ const { body, validationResult } = require('express-validator');
 const AuthService = require('../../application/services/AuthService');
 const { auth } = require('../../infrastructure/middleware/auth');
 const { sendEmail, emailTemplates } = require('../../infrastructure/services/emailService');
+const User = require('../../domain/entities/User');
 
 /**
  * Validation middleware for registration

@@ -254,8 +254,8 @@ const appointmentSlice = createSlice({
       // CANCEL
       // ==================
       .addCase(cancelAppointment.fulfilled, (state, action) => {
-        // Remove cancelled appointment from list or update status
-        state.appointments = state.appointments.filter(a => a._id !== action.payload.id);
+        const cancelledId = action.payload?._id || action.payload?.id;
+        state.appointments = state.appointments.filter(a => a._id !== cancelledId);
       })
       
       // ==================

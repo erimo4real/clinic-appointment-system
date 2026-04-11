@@ -394,7 +394,7 @@ const BookingPage = () => {
 
   useEffect(() => {
     if (bookingData.doctor && bookingData.date) {
-      dispatch(fetchAvailableSlots({ doctorId: bookingData.doctor.id, date: bookingData.date }));
+      dispatch(fetchAvailableSlots({ doctorId: getId(bookingData.doctor), date: bookingData.date }));
     }
   }, [dispatch, bookingData.doctor, bookingData.date]);
 
@@ -414,6 +414,7 @@ const BookingPage = () => {
     return services;
   };
 
+  const getId = (obj) => obj?.id || obj?._id;
   const doctorServices = getDoctorServices();
 
   const filteredDoctors = doctors.filter(doctor => {
@@ -450,8 +451,8 @@ const BookingPage = () => {
     
     try {
       const appointmentData = {
-        doctor: bookingData.doctor.id,
-        service: bookingData.service.id || bookingData.service._id,
+        doctor: getId(bookingData.doctor),
+        service: getId(bookingData.service),
         date: bookingData.date,
         start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
         notes: bookingData.notes,
@@ -519,8 +520,8 @@ const BookingPage = () => {
             bookingData={bookingData}
             onCreateAccount={() => {
               const pendingBooking = {
-                doctor: bookingData.doctor.id,
-                service: bookingData.service.id || bookingData.service._id,
+                doctor: getId(bookingData.doctor),
+                service: getId(bookingData.service),
                 date: bookingData.date,
                 start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
                 notes: bookingData.notes,
@@ -530,8 +531,8 @@ const BookingPage = () => {
             }}
             onSignIn={() => {
               localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify({
-                doctor: bookingData.doctor.id,
-                service: bookingData.service.id || bookingData.service._id,
+                doctor: getId(bookingData.doctor),
+                service: getId(bookingData.service),
                 date: bookingData.date,
                 start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
                 notes: bookingData.notes,

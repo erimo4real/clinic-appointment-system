@@ -10,7 +10,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { appointments } = useSelector((state) => state.appointments);
-  const { users, doctors, appointments: adminAppointments } = useSelector((state) => state.admin);
+  const { users, doctors, appointments: adminAppointments, services } = useSelector((state) => state.admin);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -196,7 +196,7 @@ const Dashboard = () => {
                 <StatCard title="Users" value={users?.length || 0} icon={<NavIcon name="users" className="w-7 h-7 text-teal-600" />} bgColor="bg-teal-50" />
                 <StatCard title="Doctors" value={doctors?.length || 0} icon={<NavIcon name="doctor" className="w-7 h-7 text-green-600" />} bgColor="bg-green-50" />
                 <StatCard title="Appointments" value={adminAppointments?.length || 0} icon={<NavIcon name="calendar" className="w-7 h-7 text-blue-600" />} bgColor="bg-blue-50" />
-                <StatCard title="Services" value={doctors?.length || 0} icon={<NavIcon name="services" className="w-7 h-7 text-purple-600" />} bgColor="bg-purple-50" />
+                <StatCard title="Services" value={services?.length || 0} icon={<NavIcon name="services" className="w-7 h-7 text-purple-600" />} bgColor="bg-purple-50" />
               </div>
 
               <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6">
