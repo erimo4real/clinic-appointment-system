@@ -79,6 +79,28 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
+const StaffRoute = ({ children }) => {
+  const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent"></div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (user?.role !== 'admin' && user?.role !== 'receptionist') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return children;
+};
+
 const App = () => {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
@@ -104,11 +126,11 @@ const App = () => {
           <Route path="/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin" element={<StaffRoute><AdminDashboard /></StaffRoute>} />
           <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
-          <Route path="/admin/doctors" element={<AdminRoute><DoctorManagement /></AdminRoute>} />
-          <Route path="/admin/services" element={<AdminRoute><ServiceManagement /></AdminRoute>} />
-          <Route path="/admin/appointments" element={<AdminRoute><AppointmentManagement /></AdminRoute>} />
+          <Route path="/admin/doctors" element={<StaffRoute><DoctorManagement /></StaffRoute>} />
+          <Route path="/admin/services" element={<StaffRoute><ServiceManagement /></StaffRoute>} />
+          <Route path="/admin/appointments" element={<StaffRoute><AppointmentManagement /></StaffRoute>} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />

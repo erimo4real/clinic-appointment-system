@@ -15,18 +15,22 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAdmin = user?.role === 'admin';
+  const isReceptionist = user?.role === 'receptionist';
   const isPatient = user?.role === 'patient';
+  const isStaff = isAdmin || isReceptionist;
 
   useEffect(() => {
     if (isPatient) {
       dispatch(fetchMyAppointments());
-    } else if (isAdmin) {
+    } else if (isStaff) {
       dispatch(fetchAllAppointments());
-      dispatch(fetchAllUsers());
       dispatch(fetchAllDoctors());
       dispatch(fetchAllServices());
+      if (isAdmin) {
+        dispatch(fetchAllUsers());
+      }
     }
-  }, [dispatch, isPatient, isAdmin]);
+  }, [dispatch, isPatient, isAdmin, isStaff]);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
@@ -42,9 +46,9 @@ const Dashboard = () => {
 
   const userName = user?.firstName || user?.first_name || user?.username || 'User';
 
-  const navItems = isAdmin ? [
+  const navItems = isStaff ? [
     { icon: 'dashboard', label: 'Dashboard', path: '/admin' },
-    { icon: 'users', label: 'Users', path: '/admin/users' },
+    ...(isAdmin ? [{ icon: 'users', label: 'Users', path: '/admin/users' }] : []),
     { icon: 'doctor', label: 'Doctors', path: '/admin/doctors' },
     { icon: 'calendar', label: 'Appointments', path: '/admin/appointments' },
     { icon: 'services', label: 'Services', path: '/admin/services' },
@@ -169,7 +173,7 @@ const Dashboard = () => {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-sm font-semibold text-gray-900">{getGreeting()}, {userName}</p>
-                <p className="text-xs text-gray-500">{isAdmin ? 'Administrator' : 'Patient'}</p>
+                <p className="text-xs text-gray-500">{isAdmin ? 'Administrator' : isReceptionist ? 'Receptionist' : 'Patient'}</p>
               </div>
               <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
                 {userName.charAt(0).toUpperCase()}
@@ -182,18 +186,20 @@ const Dashboard = () => {
         <div className="p-4 lg:p-6">
           <div className="mb-6">
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-              {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
+              {isStaff ? 'Admin Dashboard' : 'My Dashboard'}
             </h1>
             <p className="text-sm lg:text-base text-gray-500">
-              {isAdmin ? 'Manage your clinic operations' : 'Track your appointments and health'}
+              {isStaff ? 'Manage your clinic operations' : 'Track your appointments and health'}
             </p>
           </div>
 
-          {/* Admin Content */}
-          {isAdmin && (
+          {/* Admin/Receptionist Content */}
+          {isStaff && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                <StatCard title="Users" value={users?.length || 0} icon={<NavIcon name="users" className="w-7 h-7 text-teal-600" />} bgColor="bg-teal-50" />
+              <div className={`grid gap-4 lg:gap-6 ${isAdmin ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-2 lg:grid-cols-3'}`}>
+                {isAdmin && (
+                  <StatCard title="Users" value={users?.length || 0} icon={<NavIcon name="users" className="w-7 h-7 text-teal-600" />} bgColor="bg-teal-50" />
+                )}
                 <StatCard title="Doctors" value={doctors?.length || 0} icon={<NavIcon name="doctor" className="w-7 h-7 text-green-600" />} bgColor="bg-green-50" />
                 <StatCard title="Appointments" value={adminAppointments?.length || 0} icon={<NavIcon name="calendar" className="w-7 h-7 text-blue-600" />} bgColor="bg-blue-50" />
                 <StatCard title="Services" value={services?.length || 0} icon={<NavIcon name="services" className="w-7 h-7 text-purple-600" />} bgColor="bg-purple-50" />

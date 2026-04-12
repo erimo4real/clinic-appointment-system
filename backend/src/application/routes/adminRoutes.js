@@ -21,7 +21,7 @@ const Appointment = require('../../domain/entities/Appointment');
 
 /**
  * Middleware to verify user has admin role.
- * Applied to all routes in this router.
+ * Applied to routes that only admins can access.
  */
 const requireAdmin = async (req, res, next) => {
   try {
@@ -37,9 +37,26 @@ const requireAdmin = async (req, res, next) => {
   }
 };
 
-// Apply authentication and admin check to all routes
+/**
+ * Middleware to verify user has admin or receptionist role.
+ * Applied to routes that both admins and receptionists can access.
+ */
+const requireAdminOrReceptionist = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'receptionist') {
+      return res.status(403).json({ message: 'Admin or receptionist access required' });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Apply authentication to all routes
 router.use(auth);
-router.use(requireAdmin);
 
 /**
  * GET /api/admin/stats
@@ -50,7 +67,7 @@ router.use(requireAdmin);
  * @route GET /api/admin/stats
  * @returns {200} Dashboard statistics object
  */
-router.get('/stats', async (req, res) => {
+router.get('/stats', requireAdminOrReceptionist, async (req, res) => {
   try {
     const [
       totalUsers,
@@ -86,11 +103,12 @@ router.get('/stats', async (req, res) => {
  * GET /api/admin/users
  * 
  * Retrieves all users in the system.
+ * Admin only - receptionists cannot access user management.
  * 
  * @route GET /api/admin/users
  * @returns {200} Array of user objects
  */
-router.get('/users', async (req, res) => {
+router.get('/users', requireAdmin, async (req, res) => {
   try {
     const users = await User.find().select('-password').sort({ createdAt: -1 });
     
@@ -116,6 +134,7 @@ router.get('/users', async (req, res) => {
  * POST /api/admin/users
  * 
  * Creates a new user account.
+ * Admin only - receptionists cannot create users.
  * 
  * @route POST /api/admin/users
  * @body {string} username - Unique username
@@ -128,7 +147,7 @@ router.get('/users', async (req, res) => {
  * @returns {201} User created successfully
  * @returns {400} User already exists
  */
-router.post('/users', async (req, res) => {
+router.post('/users', requireAdmin, async (req, res) => {
   try {
     const { username, email, password, first_name, last_name, phone, role } = req.body;
     
@@ -161,6 +180,7 @@ router.post('/users', async (req, res) => {
  * PUT /api/admin/users/:id
  * 
  * Updates an existing user.
+ * Admin only - receptionists cannot update users.
  * 
  * @route PUT /api/admin/users/:id
  * @param {string} id - User's unique ID
@@ -174,7 +194,7 @@ router.post('/users', async (req, res) => {
  * @returns {200} User updated successfully
  * @returns {404} User not found
  */
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', requireAdmin, async (req, res) => {
   try {
     const { username, email, first_name, last_name, phone, role, is_active } = req.body;
     
@@ -202,13 +222,14 @@ router.put('/users/:id', async (req, res) => {
  * DELETE /api/admin/users/:id
  * 
  * Permanently deletes a user.
+ * Admin only - receptionists cannot delete users.
  * 
  * @route DELETE /api/admin/users/:id
  * @param {string} id - User's unique ID
  * @returns {200} User deleted successfully
  * @returns {404} User not found
  */
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', requireAdmin, async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
@@ -224,11 +245,12 @@ router.delete('/users/:id', async (req, res) => {
  * GET /api/admin/doctors
  * 
  * Retrieves all doctors with their user information.
+ * Both admins and receptionists can access this route.
  * 
  * @route GET /api/admin/doctors
  * @returns {200} Array of doctor objects with user details
  */
-router.get('/doctors', async (req, res) => {
+router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
   try {
     const doctors = await Doctor.find()
       .populate('user', 'firstName lastName email phone')
@@ -268,6 +290,7 @@ router.get('/doctors', async (req, res) => {
  * POST /api/admin/doctors
  * 
  * Creates a new doctor with both user account and doctor profile.
+ * Both admins and receptionists can add doctors.
  * 
  * @route POST /api/admin/doctors
  * @body {string} name - Doctor's full name
@@ -281,7 +304,7 @@ router.get('/doctors', async (req, res) => {
  * @body {boolean} is_available - Availability status (optional)
  * @returns {201} Doctor created with credentials
  */
-router.post('/doctors', async (req, res) => {
+router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
   try {
     const { name, email, phone, specialty, qualification, experience, consultation_fee, bio, is_available, schedule } = req.body;
     
@@ -336,6 +359,7 @@ router.post('/doctors', async (req, res) => {
  * PUT /api/admin/doctors/:id
  * 
  * Updates a doctor's profile information.
+ * Both admins and receptionists can update doctors.
  * 
  * @route PUT /api/admin/doctors/:id
  * @param {string} id - Doctor's unique ID
@@ -348,7 +372,7 @@ router.post('/doctors', async (req, res) => {
  * @body {boolean} is_available - New availability (optional)
  * @returns {200} Doctor updated successfully
  */
-router.put('/doctors/:id', async (req, res) => {
+router.put('/doctors/:id', requireAdminOrReceptionist, async (req, res) => {
   try {
     const { name, specialty, qualification, experience, consultation_fee, bio, is_available, schedule } = req.body;
     
@@ -384,13 +408,14 @@ router.put('/doctors/:id', async (req, res) => {
  * DELETE /api/admin/doctors/:id
  * 
  * Deletes a doctor and their associated user account.
+ * Both admins and receptionists can delete doctors.
  * 
  * @route DELETE /api/admin/doctors/:id
  * @param {string} id - Doctor's unique ID
  * @returns {200} Doctor deleted successfully
  * @returns {404} Doctor not found
  */
-router.delete('/doctors/:id', async (req, res) => {
+router.delete('/doctors/:id', requireAdminOrReceptionist, async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id);
     if (!doctor) {
@@ -413,11 +438,12 @@ router.delete('/doctors/:id', async (req, res) => {
  * GET /api/admin/services
  * 
  * Retrieves all services (active and inactive).
+ * Both admins and receptionists can access this route.
  * 
  * @route GET /api/admin/services
  * @returns {200} Array of service objects
  */
-router.get('/services', async (req, res) => {
+router.get('/services', requireAdminOrReceptionist, async (req, res) => {
   try {
     const services = await Service.find().sort({ createdAt: -1 });
 
@@ -441,6 +467,7 @@ router.get('/services', async (req, res) => {
  * POST /api/admin/services
  * 
  * Creates a new medical service.
+ * Both admins and receptionists can add services.
  * 
  * @route POST /api/admin/services
  * @body {string} name - Service name (unique)
@@ -450,7 +477,7 @@ router.get('/services', async (req, res) => {
  * @body {boolean} is_active - Active status (default: true)
  * @returns {201} Service created successfully
  */
-router.post('/services', async (req, res) => {
+router.post('/services', requireAdminOrReceptionist, async (req, res) => {
   try {
     const { name, description, duration, price, is_active } = req.body;
     
@@ -480,6 +507,7 @@ router.post('/services', async (req, res) => {
  * PUT /api/admin/services/:id
  * 
  * Updates an existing service.
+ * Both admins and receptionists can update services.
  * 
  * @route PUT /api/admin/services/:id
  * @param {string} id - Service's unique ID
@@ -490,7 +518,7 @@ router.post('/services', async (req, res) => {
  * @body {boolean} is_active - New status (optional)
  * @returns {200} Service updated successfully
  */
-router.put('/services/:id', async (req, res) => {
+router.put('/services/:id', requireAdminOrReceptionist, async (req, res) => {
   try {
     const { name, description, duration, price, is_active } = req.body;
     
@@ -519,13 +547,14 @@ router.put('/services/:id', async (req, res) => {
  * DELETE /api/admin/services/:id
  * 
  * Permanently deletes a service.
+ * Both admins and receptionists can delete services.
  * 
  * @route DELETE /api/admin/services/:id
  * @param {string} id - Service's unique ID
  * @returns {200} Service deleted successfully
  * @returns {404} Service not found
  */
-router.delete('/services/:id', async (req, res) => {
+router.delete('/services/:id', requireAdminOrReceptionist, async (req, res) => {
   try {
     const service = await Service.findByIdAndDelete(req.params.id);
     if (!service) {
@@ -541,11 +570,12 @@ router.delete('/services/:id', async (req, res) => {
  * GET /api/admin/appointments
  * 
  * Retrieves all appointments in the system.
+ * Both admins and receptionists can access this route.
  * 
  * @route GET /api/admin/appointments
  * @returns {200} Array of appointment objects
  */
-router.get('/appointments', async (req, res) => {
+router.get('/appointments', requireAdminOrReceptionist, async (req, res) => {
   try {
     const appointments = await Appointment.find()
       .populate('patient', 'firstName lastName email phone')
@@ -587,6 +617,7 @@ router.get('/appointments', async (req, res) => {
  * PUT /api/admin/appointments/:id
  * 
  * Updates an appointment's status or notes.
+ * Both admins and receptionists can update appointments.
  * 
  * @route PUT /api/admin/appointments/:id
  * @param {string} id - Appointment's unique ID
@@ -594,7 +625,7 @@ router.get('/appointments', async (req, res) => {
  * @body {string} notes - Updated notes (optional)
  * @returns {200} Appointment updated successfully
  */
-router.put('/appointments/:id', async (req, res) => {
+router.put('/appointments/:id', requireAdminOrReceptionist, async (req, res) => {
   try {
     const { status, notes } = req.body;
     
@@ -617,13 +648,14 @@ router.put('/appointments/:id', async (req, res) => {
  * DELETE /api/admin/appointments/:id
  * 
  * Permanently deletes an appointment.
+ * Both admins and receptionists can delete appointments.
  * 
  * @route DELETE /api/admin/appointments/:id
  * @param {string} id - Appointment's unique ID
  * @returns {200} Appointment deleted successfully
  * @returns {404} Appointment not found
  */
-router.delete('/appointments/:id', async (req, res) => {
+router.delete('/appointments/:id', requireAdminOrReceptionist, async (req, res) => {
   try {
     const appointment = await Appointment.findByIdAndDelete(req.params.id);
     if (!appointment) {
