@@ -30,11 +30,11 @@ const appointmentSchema = new mongoose.Schema({
   /**
    * Patient who booked the appointment
    * Reference to User collection
+   * Optional for guest bookings
    */
   patient: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: [true, 'Patient is required']
+    ref: 'User'
   },
   
   /**
