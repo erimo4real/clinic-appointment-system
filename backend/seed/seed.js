@@ -746,24 +746,24 @@ async function seedAdmin() {
 }
 
 /**
- * Service mapping for each doctor by specialty
+ * Service mapping for each doctor by specialty (max 3 services per doctor)
  */
 const doctorServicesMap = {
-  'Cardiology': ['Cardiac Checkup', 'ECG/EKG', 'Blood Test Panel', 'Annual Physical Exam'],
-  'General Medicine': ['General Consultation', 'Blood Test Panel', 'Annual Physical Exam', 'Vaccination', 'Wound Care'],
-  'Pediatrics': ['Pediatric Checkup', 'Vaccination', 'Blood Test Panel', 'Allergy Testing'],
+  'Cardiology': ['Cardiac Checkup', 'ECG/EKG', 'Annual Physical Exam'],
+  'General Medicine': ['General Consultation', 'Blood Test Panel', 'Vaccination'],
+  'Pediatrics': ['Pediatric Checkup', 'Vaccination', 'Allergy Testing'],
   'Dermatology': ['Dermatology Consultation', 'Allergy Testing', 'Annual Physical Exam'],
-  'Orthopedics': ['Orthopedic Evaluation', 'X-Ray Imaging', 'Blood Test Panel', 'Annual Physical Exam'],
-  'Neurology': ['Neurology Consultation', 'MRI Scan', 'Blood Test Panel', 'ECG/EKG'],
-  'Gastroenterology': ['Blood Test Panel', 'Ultrasound Scan', 'Allergy Testing', 'General Consultation'],
+  'Orthopedics': ['Orthopedic Evaluation', 'X-Ray Imaging', 'Blood Test Panel'],
+  'Neurology': ['Neurology Consultation', 'MRI Scan', 'Blood Test Panel'],
+  'Gastroenterology': ['Blood Test Panel', 'Ultrasound Scan', 'General Consultation'],
   'Ophthalmology': ['Eye Examination', 'Blood Test Panel', 'Annual Physical Exam'],
   'Psychiatry': ['Mental Health Consultation', 'Annual Physical Exam', 'Blood Test Panel'],
-  'Pulmonology': ['Blood Test Panel', 'X-Ray Imaging', 'CT Scan', 'Annual Physical Exam'],
-  'Endocrinology': ['Diabetes Management', 'Blood Test Panel', 'Annual Physical Exam', 'Allergy Testing'],
-  'Urology': ['Blood Test Panel', 'Ultrasound Scan', 'X-Ray Imaging', 'Annual Physical Exam'],
-  'Gynecology': ['Ultrasound Scan', 'Blood Test Panel', 'Vaccination', 'Annual Physical Exam'],
-  'Oncology': ['Blood Test Panel', 'CT Scan', 'MRI Scan', 'Annual Physical Exam'],
-  'Rheumatology': ['Blood Test Panel', 'Allergy Testing', 'X-Ray Imaging', 'Annual Physical Exam'],
+  'Pulmonology': ['Blood Test Panel', 'X-Ray Imaging', 'CT Scan'],
+  'Endocrinology': ['Diabetes Management', 'Blood Test Panel', 'Annual Physical Exam'],
+  'Urology': ['Blood Test Panel', 'Ultrasound Scan', 'X-Ray Imaging'],
+  'Gynecology': ['Ultrasound Scan', 'Blood Test Panel', 'Vaccination'],
+  'Oncology': ['Blood Test Panel', 'CT Scan', 'Annual Physical Exam'],
+  'Rheumatology': ['Blood Test Panel', 'Allergy Testing', 'X-Ray Imaging'],
 };
 
 /**

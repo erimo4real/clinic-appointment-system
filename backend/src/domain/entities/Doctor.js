@@ -133,11 +133,18 @@ const doctorSchema = new mongoose.Schema({
 
   /**
    * Services offered by this doctor
+   * Maximum 3 services per doctor
    * References Service documents
    */
   services: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Service'
+    ref: 'Service',
+    validate: {
+      validator: function(v) {
+        return v.length <= 3;
+      },
+      message: 'A doctor cannot have more than 3 services'
+    }
   }],
   
   // ==========================================

@@ -66,7 +66,7 @@ const DoctorManagement = () => {
     const currentServices = formData.services || [];
     if (currentServices.includes(serviceId)) {
       setFormData({ ...formData, services: currentServices.filter(id => id !== serviceId) });
-    } else {
+    } else if (currentServices.length < 3) {
       setFormData({ ...formData, services: [...currentServices, serviceId] });
     }
   };
@@ -299,7 +299,7 @@ const DoctorManagement = () => {
                     <p className="text-sm text-gray-500 text-center py-2">No services available</p>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{formData.services?.length || 0} services selected</p>
+                <p className="text-xs text-gray-500 mt-1">{formData.services?.length || 0}/3 services selected (max 3)</p>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="is_available" checked={formData.is_available} onChange={(e) => setFormData({ ...formData, is_available: e.target.checked })} className="w-4 h-4" />
