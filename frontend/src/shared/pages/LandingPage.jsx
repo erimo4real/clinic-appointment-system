@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDoctors } from '../../features/doctors/store/doctorSlice';
+import { fetchAllServices } from '../../features/admin/store/adminSlice';
 
 const LoadingScreen = () => {
   const [dots, setDots] = useState('');
@@ -43,46 +46,44 @@ const NavIcon = ({ name, className }) => {
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
 
+const EmptyState = ({ icon, title, message }) => (
+  <div className="bg-gray-50 rounded-xl p-8 text-center">
+    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <NavIcon name={icon} className="w-8 h-8 text-gray-400" />
+    </div>
+    <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+    <p className="text-gray-500 text-sm">{message}</p>
+  </div>
+);
+
 const LandingPage = () => {
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [doctors, setDoctors] = useState([]);
-  const [services, setServices] = useState([]);
+  const { doctors, loading: doctorsLoading } = useSelector((state) => state.doctors);
+  const { services, loading: servicesLoading } = useSelector((state) => state.admin);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const API_URL = 'https://clinic-appointment-system-88np.onrender.com/api';
-        const doctorsRes = await fetch(API_URL + '/doctors').then(r => r.json()).catch(() => []);
-        const servicesRes = await fetch(API_URL + '/services').then(r => r.json()).catch(() => []);
-        setDoctors(Array.isArray(doctorsRes) ? doctorsRes : []);
-        setServices(Array.isArray(servicesRes) ? servicesRes : []);
-        
-        if (!Array.isArray(doctorsRes) || doctorsRes.length === 0) {
-          setServices([
-            { name: 'General Consultation', description: 'Comprehensive care for common health issues', price: 8000 },
-            { name: 'Cardiac Checkup', description: 'Expert heart care and cardiovascular prevention', price: 25000 },
-            { name: 'Pediatric Care', description: 'Quality healthcare for children', price: 10000 },
-          ]);
-          setDoctors([
-            { user: { firstName: 'John', lastName: 'Smith' }, specialty: 'Cardiology', experience: 15 },
-            { user: { firstName: 'Sarah', lastName: 'Jones' }, specialty: 'General Medicine', experience: 10 },
-            { user: { firstName: 'David', lastName: 'Lee' }, specialty: 'Pediatrics', experience: 8 },
-          ]);
-        }
+        await Promise.all([
+          dispatch(fetchDoctors()),
+          dispatch(fetchAllServices())
+        ]);
       } catch (err) {
-        setDoctors([]);
-        setServices([]);
+        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
+  }, [dispatch]);
 
   if (loading) return <LoadingScreen />;
+
+  const doctorCount = doctors.length;
+  const specialtyCount = [...new Set(doctors.map(d => d.specialty))].length;
 
   return (
     <div className="min-h-screen bg-white">
@@ -132,7 +133,7 @@ const LandingPage = () => {
             <div>
               <div className="inline-flex items-center px-4 py-2 bg-teal-100 text-teal-700 rounded-full text-sm font-medium mb-6">
                 <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
-                Trusted by 10,000+ Patients
+                Trusted Healthcare Platform
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
                 Your Health, <br />
@@ -153,15 +154,15 @@ const LandingPage = () => {
               </div>
               <div className="flex items-center gap-6 lg:gap-8 mt-10">
                 <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{doctors.length || '50+'}</div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{doctorCount > 0 ? doctorCount : '0'}</div>
                   <div className="text-sm text-gray-500">Expert Doctors</div>
                 </div>
                 <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">10K+</div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{doctorCount * 50}+</div>
                   <div className="text-sm text-gray-500">Happy Patients</div>
                 </div>
                 <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">15+</div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{specialtyCount > 0 ? specialtyCount : '0'}</div>
                   <div className="text-sm text-gray-500">Specialties</div>
                 </div>
               </div>
@@ -173,16 +174,16 @@ const LandingPage = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-teal-100 to-teal-200 rounded-full flex items-center justify-center mx-auto mb-6">
                   <NavIcon name="user" className="w-10 h-10 text-teal-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 text-center mb-2">Featured Doctor</h3>
-                <p className="text-teal-600 font-medium text-center mb-6">Cardiology Specialist</p>
+                <h3 className="text-xl font-semibold text-gray-900 text-center mb-2">Book an Appointment</h3>
+                <p className="text-gray-500 text-center mb-6">Schedule a visit with our specialists</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                     <NavIcon name="star" className="w-5 h-5 text-amber-500" />
-                    <span className="text-gray-700">15+ Years Experience</span>
+                    <span className="text-gray-700">Top-rated doctors</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                     <NavIcon name="check" className="w-5 h-5 text-teal-500" />
-                    <span className="text-gray-700">Available Today</span>
+                    <span className="text-gray-700">Easy online booking</span>
                   </div>
                   <Link to="/booking" className="block w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-center font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">
                     Book Now
@@ -202,18 +203,35 @@ const LandingPage = () => {
             <p className="text-gray-500 max-w-2xl mx-auto">Comprehensive healthcare services for you and your family</p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {services.map((service, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 lg:p-8 hover:shadow-lg transition-shadow">
-                <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-4">
-                  <NavIcon name="calendar" className="w-7 h-7 text-teal-600" />
+          {services.length === 0 ? (
+            <EmptyState 
+              icon="calendar" 
+              title="No Services Available at the Moment" 
+              message="Please check back later." 
+            />
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {services.slice(0, 6).map((service, i) => (
+                <div key={service.id || service._id || i} className="bg-white rounded-2xl p-6 lg:p-8 hover:shadow-lg transition-shadow">
+                  <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-4">
+                    <NavIcon name="calendar" className="w-7 h-7 text-teal-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name}</h3>
+                  <p className="text-gray-600 mb-4">{service.description || 'Professional healthcare service'}</p>
+                  <p className="text-teal-600 font-semibold">₦{(service.price || 0).toLocaleString()}</p>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name}</h3>
-                <p className="text-gray-600 mb-4">{service.description}</p>
-                <p className="text-teal-600 font-semibold">₦{(service.price || 0).toLocaleString()}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+          
+          {services.length > 0 && (
+            <div className="text-center mt-8">
+              <Link to="/services" className="inline-flex items-center gap-2 px-6 py-3 text-teal-600 font-semibold hover:text-teal-700 transition-colors">
+                View All Services
+                <NavIcon name="arrow" className="w-5 h-5" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -225,25 +243,46 @@ const LandingPage = () => {
             <p className="text-gray-500 max-w-2xl mx-auto">Meet our team of experienced medical professionals</p>
           </div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {doctors.slice(0, 4).map((doctor, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 text-center border border-gray-100 hover:shadow-lg hover:border-teal-100 transition-all">
-                <div className="w-24 h-24 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <NavIcon name="user" className="w-12 h-12 text-teal-600" />
+          {doctors.length === 0 ? (
+            <EmptyState 
+              icon="users" 
+              title="No Doctors Available at the Moment" 
+              message="Please check back later." 
+            />
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {doctors.slice(0, 4).map((doctor, i) => (
+                <div key={doctor.id || doctor._id || i} className="bg-white rounded-2xl p-6 text-center border border-gray-100 hover:shadow-lg hover:border-teal-100 transition-all">
+                  <div className="w-24 h-24 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    {doctor.profileImage ? (
+                      <img src={doctor.profileImage} alt={`Dr. ${doctor.user?.firstName}`} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      <NavIcon name="user" className="w-12 h-12 text-teal-600" />
+                    )}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    Dr. {doctor.user?.firstName || ''} {doctor.user?.lastName || ''}
+                  </h3>
+                  <p className="text-teal-600 font-medium">{doctor.specialty}</p>
+                  {doctor.experience && (
+                    <p className="text-gray-400 text-sm mt-1">{doctor.experience} years experience</p>
+                  )}
+                  <Link to="/booking" className="mt-4 inline-flex items-center gap-1 text-teal-600 font-medium hover:text-teal-700">
+                    Book <NavIcon name="arrow" className="w-4 h-4" />
+                  </Link>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                  Dr. {doctor.user?.firstName || ''} {doctor.user?.lastName || ''}
-                </h3>
-                <p className="text-teal-600 font-medium">{doctor.specialty}</p>
-                {doctor.experience && (
-                  <p className="text-gray-400 text-sm mt-1">{doctor.experience} years experience</p>
-                )}
-                <Link to="/booking" className="mt-4 inline-flex items-center gap-1 text-teal-600 font-medium hover:text-teal-700">
-                  Book <NavIcon name="arrow" className="w-4 h-4" />
-                </Link>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {doctors.length > 0 && (
+            <div className="text-center mt-8">
+              <Link to="/doctors" className="inline-flex items-center gap-2 px-6 py-3 text-teal-600 font-semibold hover:text-teal-700 transition-colors">
+                View All Doctors
+                <NavIcon name="arrow" className="w-5 h-5" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -289,11 +328,11 @@ const LandingPage = () => {
                 <div className="text-white/80">Patient Satisfaction</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">15+</div>
-                <div className="text-white/80">Years Experience</div>
+                <div className="text-4xl font-bold mb-2">{specialtyCount > 0 ? specialtyCount : '0'}+</div>
+                <div className="text-white/80">Specialties</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{doctors.length || '50+'}</div>
+                <div className="text-4xl font-bold mb-2">{doctorCount > 0 ? doctorCount : '0'}</div>
                 <div className="text-white/80">Medical Experts</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
