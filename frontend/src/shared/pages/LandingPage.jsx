@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors } from '../../features/doctors/store/doctorSlice';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL 
+  ? process.env.REACT_APP_API_URL.replace(/\/$/, '') + '/api'
+  : 'https://clinic-appointment-system-88np.onrender.com/api';
 
 const LoadingScreen = () => {
   const [dots, setDots] = useState('');
