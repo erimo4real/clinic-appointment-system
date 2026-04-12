@@ -450,11 +450,17 @@ const BookingPage = () => {
     setBooking(true);
     
     try {
+      const timeSlot = typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time;
+      const [hours, minutes] = timeSlot.split(':');
+      const endHour = parseInt(hours) + 1;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
+      
       const appointmentData = {
         doctor: getId(bookingData.doctor),
         service: getId(bookingData.service),
         date: bookingData.date,
-        start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
+        startTime: timeSlot,
+        endTime: endTime,
         notes: bookingData.notes,
       };
       
@@ -519,22 +525,34 @@ const BookingPage = () => {
           <BookingSuccessPage
             bookingData={bookingData}
             onCreateAccount={() => {
+              const timeSlot = typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time;
+              const [hours, minutes] = timeSlot.split(':');
+              const endHour = parseInt(hours) + 1;
+              const endTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
+              
               const pendingBooking = {
                 doctor: getId(bookingData.doctor),
                 service: getId(bookingData.service),
                 date: bookingData.date,
-                start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
+                startTime: timeSlot,
+                endTime: endTime,
                 notes: bookingData.notes,
               };
               localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(pendingBooking));
               setIsRegistering(true);
             }}
             onSignIn={() => {
+              const timeSlot = typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time;
+              const [hours, minutes] = timeSlot.split(':');
+              const endHour = parseInt(hours) + 1;
+              const endTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
+              
               localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify({
                 doctor: getId(bookingData.doctor),
                 service: getId(bookingData.service),
                 date: bookingData.date,
-                start_time: typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time,
+                startTime: timeSlot,
+                endTime: endTime,
                 notes: bookingData.notes,
               }));
               navigate('/login');
