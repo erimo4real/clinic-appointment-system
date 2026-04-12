@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors } from '../../features/doctors/store/doctorSlice';
-import { fetchAllServices } from '../../features/admin/store/adminSlice';
+
+const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com/api';
 
 const LoadingScreen = () => {
   const [dots, setDots] = useState('');
@@ -60,17 +61,20 @@ const LandingPage = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [services, setServices] = useState([]);
   const { doctors, loading: doctorsLoading } = useSelector((state) => state.doctors);
-  const { services, loading: servicesLoading } = useSelector((state) => state.admin);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        await Promise.all([
-          dispatch(fetchDoctors()),
-          dispatch(fetchAllServices())
-        ]);
+        await dispatch(fetchDoctors());
+        
+        const servicesRes = await fetch(`${API_URL}/services`);
+        if (servicesRes.ok) {
+          const servicesData = await servicesRes.json();
+          setServices(Array.isArray(servicesData) ? servicesData : []);
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -154,7 +158,7 @@ const LandingPage = () => {
               </div>
               <div className="flex items-center gap-6 lg:gap-8 mt-10">
                 <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{doctorCount > 0 ? doctorCount : '0'}</div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{doctorCount}</div>
                   <div className="text-sm text-gray-500">Expert Doctors</div>
                 </div>
                 <div>
@@ -162,7 +166,7 @@ const LandingPage = () => {
                   <div className="text-sm text-gray-500">Happy Patients</div>
                 </div>
                 <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{specialtyCount > 0 ? specialtyCount : '0'}</div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{specialtyCount}</div>
                   <div className="text-sm text-gray-500">Specialties</div>
                 </div>
               </div>
@@ -328,11 +332,11 @@ const LandingPage = () => {
                 <div className="text-white/80">Patient Satisfaction</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{specialtyCount > 0 ? specialtyCount : '0'}+</div>
+                <div className="text-4xl font-bold mb-2">{specialtyCount}+</div>
                 <div className="text-white/80">Specialties</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{doctorCount > 0 ? doctorCount : '0'}</div>
+                <div className="text-4xl font-bold mb-2">{doctorCount}</div>
                 <div className="text-white/80">Medical Experts</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
