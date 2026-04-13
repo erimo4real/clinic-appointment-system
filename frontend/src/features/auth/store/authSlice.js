@@ -3,9 +3,11 @@ import api from '../../../shared/services/api';
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
+    document.cookie = 'token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
     const response = await api.post('/auth/login', credentials);
     if (response.data.token) {
       document.cookie = `token=${response.data.token};max-age=${7 * 24 * 60 * 60};path=/;SameSite=Lax`;
+      localStorage.setItem('token', response.data.token);
     }
     return response.data;
   } catch (error) {
@@ -40,8 +42,11 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWith
     await api.post('/auth/logout');
   } catch (error) {
   }
-  document.cookie = 'token=;max-age=0;path=/';
-  document.cookie = 'auth_token=;max-age=0;path=/';
+  document.cookie = 'token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
+  document.cookie = 'auth_token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
+  localStorage.removeItem('token');
+  localStorage.removeItem('auth_token');
+  sessionStorage.clear();
   return { success: true };
 });
 
@@ -64,6 +69,12 @@ const authSlice = createSlice({
   },
   reducers: {
     clearError: (state) => {
+      state.error = null;
+    },
+    logout: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.loading = false;
       state.error = null;
     },
   },
@@ -113,6 +124,12 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
       })
       
+      .addCase(logoutUser.pending, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.loading = false;
+        state.error = null;
+      })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
@@ -134,5 +151,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, logout } = authSlice.actions;
 export default authSlice.reducer;

@@ -14,16 +14,26 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    let token = null;
+    
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
       const parts = cookie.trim().split('=');
       const name = parts[0];
       const value = parts.slice(1).join('=');
       
-      if (name === 'token') {
-        config.headers.Authorization = `Bearer ${decodeURIComponent(value)}`;
+      if (name === 'token' && value) {
+        token = decodeURIComponent(value);
         break;
       }
+    }
+    
+    if (!token) {
+      token = localStorage.getItem('token');
+    }
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   }
