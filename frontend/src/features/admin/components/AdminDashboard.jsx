@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDoctors, fetchAllServices, createUser, updateUser, deleteUser, createDoctor, updateDoctor, deleteDoctor, createService, updateService, deleteService } from '../store/adminSlice';
 import { logoutUser } from '../../auth/store/authSlice';
 import { fetchAllAppointments as fetchAppointments, updateAppointment, deleteAppointment } from '../../appointments/store/appointmentSlice';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend } from 'recharts';
 
 const NavIcon = ({ name, className }) => {
   const icons = {
@@ -23,6 +24,24 @@ const NavIcon = ({ name, className }) => {
     chart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
+};
+
+const COLORS = ['#14b8a6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100">
+        <p className="font-semibold text-gray-900">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className="text-sm" style={{ color: entry.color || entry.fill }}>
+            {entry.name}: {typeof entry.value === 'number' ? (entry.name.toLowerCase().includes('revenue') ? `₦${entry.value.toLocaleString()}` : entry.value) : entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
 };
 
 const LoadingSpinner = () => (
@@ -158,6 +177,45 @@ const AdminDashboard = () => {
                      activeTab === 'doctors' ? Math.ceil(filteredDoctors.length / ITEMS_PER_PAGE) :
                      activeTab === 'services' ? Math.ceil(filteredServices.length / ITEMS_PER_PAGE) : 1;
 
+  const pendingCount = appointments.filter(a => a.status === 'pending').length;
+  const completedCount = appointments.filter(a => a.status === 'completed').length;
+  const confirmedCount = appointments.filter(a => a.status === 'confirmed').length;
+  const cancelledCount = appointments.filter(a => a.status === 'cancelled').length;
+
+  const appointmentStatusData = [
+    { name: 'Pending', value: pendingCount, color: '#f59e0b' },
+    { name: 'Confirmed', value: confirmedCount, color: '#3b82f6' },
+    { name: 'Completed', value: completedCount, color: '#10b981' },
+    { name: 'Cancelled', value: cancelledCount, color: '#ef4444' },
+  ].filter(d => d.value > 0);
+
+  const getWeeklyData = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date();
+    const weekData = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const count = appointments.filter(a => a.date === dateStr).length;
+      weekData.push({ day: days[date.getDay()], appointments: count, date: dateStr });
+    }
+    return weekData;
+  };
+
+  const weeklyData = getWeeklyData();
+
+  const specialtyData = doctors.reduce((acc, doctor) => {
+    const specialty = doctor.specialty || 'General';
+    const existing = acc.find(item => item.name === specialty);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      acc.push({ name: specialty, count: 1 });
+    }
+    return acc;
+  }, []);
+
   const renderDashboard = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -178,28 +236,84 @@ const AdminDashboard = () => {
           <p className="text-3xl font-bold text-violet-600 mt-1">{services.length}</p>
         </div>
       </div>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Recent Appointments</h3>
-        {appointments.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No appointments yet</p>
-        ) : (
-          <div className="space-y-3">
-            {appointments.slice(0, 5).map((apt) => (
-              <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">{apt.patient_name}</p>
-                  <p className="text-sm text-gray-500">Dr. {apt.doctor_name} - {apt.service_name}</p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Appointments by Status</h3>
+          {appointmentStatusData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie data={appointmentStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
+                  {appointmentStatusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-500">No appointment data</div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">This Week's Appointments</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={weeklyData}>
+              <defs>
+                <linearGradient id="colorWeek" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="appointments" stroke="#14b8a6" fillOpacity={1} fill="url(#colorWeek)" name="Appointments" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Doctors by Specialty</h3>
+          {specialtyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={specialtyData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="count" fill="#10b981" radius={[0, 8, 8, 0]} name="Doctors" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-500">No doctor data</div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Recent Appointments</h3>
+          {appointments.length === 0 ? (
+            <div className="h-64 flex items-center justify-center text-gray-500">No appointments yet</div>
+          ) : (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {appointments.slice(0, 8).map((apt) => (
+                <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">{apt.patient_name}</p>
+                    <p className="text-sm text-gray-500">Dr. {apt.doctor_name} - {apt.service_name}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    apt.status === 'completed' ? 'bg-green-100 text-green-700' :
+                    apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                    apt.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                    'bg-blue-100 text-blue-700'
+                  }`}>{apt.status}</span>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  apt.status === 'completed' ? 'bg-green-100 text-green-700' :
-                  apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                  apt.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                  'bg-blue-100 text-blue-700'
-                }`}>{apt.status}</span>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
