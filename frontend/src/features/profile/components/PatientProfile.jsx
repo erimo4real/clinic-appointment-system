@@ -451,7 +451,7 @@ const PatientProfile = () => {
                 </div>
               </>
             )}
-          </>
+          </div>
         )}
 
         {/* Feedback Tab */}
