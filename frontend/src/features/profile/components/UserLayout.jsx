@@ -17,16 +17,19 @@ const NavIcon = ({ name, className }) => {
     shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
     menu: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />,
     close: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />,
+    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+    thumbUp: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
 
-const UserLayout = ({ children, title, subtitle }) => {
+const UserLayout = ({ children, activeTab, onTabChange, title, subtitle }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
@@ -44,19 +47,33 @@ const UserLayout = ({ children, title, subtitle }) => {
     { icon: 'profile', label: 'My Profile', path: '/profile' },
   ];
 
+  const sidebarItems = [
+    { id: 'profile', icon: 'user', label: 'Profile' },
+    { id: 'appointments', icon: 'calendar', label: 'Appointments' },
+    { id: 'feedback', icon: 'thumbUp', label: 'Feedback' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-50 to-slate-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-sm shadow-teal-200">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-              </div>
-              <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
+              <button 
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+              >
+                <NavIcon name={sidebarOpen ? 'close' : 'menu'} className="w-6 h-6" />
+              </button>
+              <Link to="/" className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-sm shadow-teal-200">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </div>
+                <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
+              </Link>
             </div>
 
             <div className="flex items-center gap-3">
@@ -107,19 +124,12 @@ const UserLayout = ({ children, title, subtitle }) => {
                   </>
                 )}
               </div>
-
-              <button 
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-              >
-                <NavIcon name={mobileMenuOpen ? 'close' : 'menu'} className="w-6 h-6" />
-              </button>
             </div>
           </div>
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1">
+          <div className="lg:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1">
             {navItems.map((item, i) => (
               <Link
                 key={i}
@@ -142,31 +152,93 @@ const UserLayout = ({ children, title, subtitle }) => {
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {(title || subtitle) && (
-          <div className="mb-6">
-            {title && <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{title}</h1>}
-            {subtitle && <p className="text-gray-500 mt-1">{subtitle}</p>}
+      <div className="flex">
+        {/* Sidebar - Desktop */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-gray-200 pt-16">
+          <nav className="flex-1 px-4 py-6 space-y-1">
+            {sidebarItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => onTabChange && onTabChange(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  activeTab === item.id
+                    ? 'bg-teal-50 text-teal-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <NavIcon name={item.icon} className="w-5 h-5" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
+          <div className="p-4 border-t border-gray-200">
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+            >
+              <NavIcon name="dashboard" className="w-5 h-5" />
+              <span className="text-sm font-medium">Back to Dashboard</span>
+            </Link>
           </div>
-        )}
-        {children}
-      </main>
+        </aside>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 bg-white px-4 sm:px-6 py-6 mt-auto">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">MedBook Pro - Clinic Appointment Management System</p>
-          <div className="flex items-center gap-4 text-sm text-gray-400">
-            <span className="flex items-center gap-1">
-              <NavIcon name="shield" className="w-4 h-4 text-emerald-500" />
-              Secure
-            </span>
-            <span>•</span>
-            <span>© 2024</span>
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <>
+            <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+            <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl lg:hidden">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <span className="text-lg font-bold text-gray-900">Menu</span>
+                <button onClick={() => setSidebarOpen(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+                  <NavIcon name="close" className="w-5 h-5" />
+                </button>
+              </div>
+              <nav className="flex-1 px-4 py-6 space-y-1">
+                {sidebarItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      onTabChange && onTabChange(item.id);
+                      setSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      activeTab === item.id
+                        ? 'bg-teal-50 text-teal-700'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <NavIcon name={item.icon} className="w-5 h-5" />
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+              <div className="p-4 border-t border-gray-200">
+                <Link
+                  to="/dashboard"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  <NavIcon name="dashboard" className="w-5 h-5" />
+                  <span className="text-sm font-medium">Back to Dashboard</span>
+                </Link>
+              </div>
+            </aside>
+          </>
+        )}
+
+        {/* Main Content */}
+        <main className="flex-1 lg:ml-64 min-h-[calc(100vh-4rem)]">
+          <div className="p-4 sm:p-6 lg:p-8">
+            {(title || subtitle) && (
+              <div className="mb-6">
+                {title && <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{title}</h1>}
+                {subtitle && <p className="text-gray-500 mt-1">{subtitle}</p>}
+              </div>
+            )}
+            {children}
           </div>
-        </div>
-      </footer>
+        </main>
+      </div>
     </div>
   );
 };
