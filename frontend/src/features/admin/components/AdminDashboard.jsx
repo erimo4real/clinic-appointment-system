@@ -50,8 +50,6 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const ITEMS_PER_PAGE = 10;
-
 const AdminDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -75,6 +73,7 @@ const AdminDashboard = () => {
   const userName = user?.firstName || user?.first_name || user?.username || 'User';
   const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const isAdmin = user?.role === 'admin';
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
