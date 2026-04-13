@@ -13,9 +13,17 @@ const NavIcon = ({ name, className }) => {
   const icons = {
     plus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />,
     search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+    edit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />,
+    trash: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
+
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="w-10 h-10 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div>
+  </div>
+);
 
 const UserManagement = () => {
   const dispatch = useDispatch();
@@ -171,7 +179,7 @@ const UserManagement = () => {
 
         <div className="overflow-x-auto">
           {usersLoading ? (
-            <TableSkeleton rows={5} cols={6} />
+            <LoadingSpinner />
           ) : filteredUsers.length === 0 ? (
             <EmptyState
               icon="users"
@@ -181,57 +189,47 @@ const UserManagement = () => {
               onAction={() => setShowModal(true)}
             />
           ) : (
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {paginatedUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center text-teal-600 font-semibold">
-                          {(user.first_name || user.username || 'U').charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{user.first_name} {user.last_name}</p>
-                          <p className="text-sm text-gray-500">@{user.username}</p>
-                        </div>
+            <div className="divide-y divide-gray-100">
+              {paginatedUsers.map((user) => (
+                <div key={user.id} className="p-4 sm:px-6 sm:py-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-teal-100 rounded-full flex items-center justify-center text-teal-600 font-semibold text-sm sm:text-base">
+                        {(user.first_name || user.username || 'U').charAt(0).toUpperCase()}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-700">{user.email}</td>
-                    <td className="px-6 py-4 text-gray-700">{user.phone || '-'}</td>
-                    <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{user.first_name} {user.last_name}</p>
+                        <p className="text-sm text-gray-500">@{user.username}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button onClick={() => handleEdit(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                        <NavIcon name="edit" className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => setDeleteId(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                        <NavIcon name="trash" className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Email:</span>
+                      <span className="ml-1 text-gray-900 truncate block">{user.email}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Phone:</span>
+                      <span className="ml-1 text-gray-900">{user.phone || '-'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getRoleBadge(user.role)}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
                         {user.is_active ? 'Active' : 'Inactive'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleEdit(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button onClick={() => setDeleteId(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
         {totalPages > 1 && (
