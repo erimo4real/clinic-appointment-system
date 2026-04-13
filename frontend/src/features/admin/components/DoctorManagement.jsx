@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllDoctors, createDoctor, updateDoctor, deleteDoctor, fetchAllServices } from '../store/adminSlice';
+import AdminLayout from './AdminLayout';
 
 const ITEMS_PER_PAGE = 10;
+
+const NavIcon = ({ name, className }) => {
+  const icons = {
+    plus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />,
+    search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+  };
+  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
+};
 
 const specialties = [
   'General Medicine', 'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics',
@@ -99,16 +109,11 @@ const DoctorManagement = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <AdminLayout title="Doctor Management" subtitle="Manage your clinic's doctors">
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Doctor Management</h1>
-          <p className="text-gray-600 mt-1">Manage your clinic's doctors</p>
-        </div>
+        <div></div>
         <button onClick={() => setShowModal(true)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <NavIcon name="plus" className="w-5 h-5" />
           Add Doctor
         </button>
       </div>
@@ -313,7 +318,7 @@ const DoctorManagement = () => {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 };
 

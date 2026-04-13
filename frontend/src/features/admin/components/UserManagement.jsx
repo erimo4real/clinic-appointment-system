@@ -5,8 +5,17 @@ import { TableSkeleton } from '../../../components/ui/Skeleton';
 import { useToast } from '../../../components/ui/Toast';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
 import EmptyState from '../../../components/ui/EmptyState';
+import AdminLayout from './AdminLayout';
 
 const ITEMS_PER_PAGE = 10;
+
+const NavIcon = ({ name, className }) => {
+  const icons = {
+    plus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />,
+    search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+  };
+  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
+};
 
 const UserManagement = () => {
   const dispatch = useDispatch();
@@ -109,16 +118,11 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <AdminLayout title="User Management" subtitle="Manage all registered users">
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage all registered users</p>
-        </div>
+        <div></div>
         <button onClick={() => setShowModal(true)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <NavIcon name="plus" className="w-5 h-5" />
           Add User
         </button>
       </div>
@@ -310,7 +314,7 @@ const UserManagement = () => {
         confirmText="Delete"
         type="danger"
       />
-    </div>
+    </AdminLayout>
   );
 };
 
