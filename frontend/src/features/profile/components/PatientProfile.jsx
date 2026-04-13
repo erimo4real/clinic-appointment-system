@@ -250,7 +250,6 @@ const PatientProfile = () => {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <>
-            {/* Stats Cards */}
             <div className="grid grid-cols-3 gap-4">
               <StatCard
                 title="Upcoming"
@@ -271,82 +270,81 @@ const PatientProfile = () => {
                 icon={<NavIcon name="thumbUp" className="w-6 h-6 text-purple-600" />}
               />
             </div>
-        {activeTab === 'profile' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-            <div className="px-4 lg:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900">Personal Information</h2>
-              <button 
-                onClick={() => setIsEditing(!isEditing)} 
-                className="flex items-center gap-2 text-teal-600 hover:text-teal-700 font-medium text-sm"
-              >
-                <NavIcon name="edit" className="w-4 h-4" /> 
-                {isEditing ? 'Cancel' : 'Edit'}
-              </button>
-            </div>
-            <div className="p-4 lg:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">First Name</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    value={profileData.first_name} 
-                    onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })} 
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" 
-                  />
-                ) : (
-                  <p className="text-gray-900">{user?.firstName || '-'}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Last Name</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    value={profileData.last_name} 
-                    onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })} 
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" 
-                  />
-                ) : (
-                  <p className="text-gray-900">{user?.lastName || '-'}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
-                <p className="text-gray-900">{user?.email || '-'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Phone</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    value={profileData.phone} 
-                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} 
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" 
-                  />
-                ) : (
-                  <p className="text-gray-900">{user?.phone || '-'}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Role</label>
-                <p className="text-gray-900 capitalize">{user?.role || '-'}</p>
-              </div>
-            </div>
-            {isEditing && (
-              <div className="px-4 lg:px-6 pb-4 lg:pb-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <div className="px-4 lg:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900">Personal Information</h2>
                 <button 
-                  onClick={handleProfileUpdate} 
-                  className="px-6 py-2.5 bg-teal-600 text-white rounded-xl hover:bg-teal-700 font-medium"
+                  onClick={() => setIsEditing(!isEditing)} 
+                  className="flex items-center gap-2 text-teal-600 hover:text-teal-700 font-medium text-sm"
                 >
-                  Save Changes
+                  <NavIcon name="edit" className="w-4 h-4" /> 
+                  {isEditing ? 'Cancel' : 'Edit'}
                 </button>
               </div>
-            )}
+              <div className="p-4 lg:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">First Name</label>
+                  {isEditing ? (
+                    <input 
+                      type="text" 
+                      value={profileData.first_name} 
+                      onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })} 
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" 
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.firstName || '-'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Last Name</label>
+                  {isEditing ? (
+                    <input 
+                      type="text" 
+                      value={profileData.last_name} 
+                      onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })} 
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" 
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.lastName || '-'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                  <p className="text-gray-900">{user?.email || '-'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Phone</label>
+                  {isEditing ? (
+                    <input 
+                      type="text" 
+                      value={profileData.phone} 
+                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} 
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" 
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.phone || '-'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Role</label>
+                  <p className="text-gray-900 capitalize">{user?.role || '-'}</p>
+                </div>
+              </div>
+              {isEditing && (
+                <div className="px-4 lg:px-6 pb-4 lg:pb-6">
+                  <button 
+                    onClick={handleProfileUpdate} 
+                    className="px-6 py-2.5 bg-teal-600 text-white rounded-xl hover:bg-teal-700 font-medium"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
 
         {/* Appointments Tab */}
-        {activeTab === 'appointments' && (
         {activeTab === 'appointments' && (
           <div className="space-y-6">
             {appointmentsLoading ? (
@@ -457,7 +455,6 @@ const PatientProfile = () => {
         )}
 
         {/* Feedback Tab */}
-        {activeTab === 'feedback' && (
         {activeTab === 'feedback' && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">My Feedback History</h2>
