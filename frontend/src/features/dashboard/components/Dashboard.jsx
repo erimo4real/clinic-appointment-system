@@ -172,7 +172,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   const getGreeting = () => {

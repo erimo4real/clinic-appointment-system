@@ -27,12 +27,28 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
   }
 });
 
-export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, { rejectWithValue }) => {
+export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, { rejectWithValue, getState }) => {
+  const localToken = localStorage.getItem('token');
+  const cookies = document.cookie.split(';');
+  let cookieToken = null;
+  for (const cookie of cookies) {
+    const parts = cookie.trim().split('=');
+    if (parts[0] === 'token' && parts[1]) {
+      cookieToken = decodeURIComponent(parts.slice(1).join('='));
+      break;
+    }
+  }
+  
+  if (!localToken && !cookieToken) {
+    return rejectWithValue('No token found');
+  }
+  
   try {
     const response = await api.get('/auth/me');
     return response.data;
   } catch (error) {
-    document.cookie = 'token=;max-age=0;path=/';
+    localStorage.removeItem('token');
+    document.cookie = 'token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
     return rejectWithValue(error.response?.data?.message || 'Session expired');
   }
 });
@@ -66,6 +82,7 @@ const authSlice = createSlice({
     isAuthenticated: false,
     loading: true,
     error: null,
+    sessionId: 0,
   },
   reducers: {
     clearError: (state) => {
@@ -76,6 +93,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.loading = false;
       state.error = null;
+      state.sessionId += 1;
     },
   },
   extraReducers: (builder) => {
@@ -129,6 +147,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.loading = false;
         state.error = null;
+        state.sessionId += 1;
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;

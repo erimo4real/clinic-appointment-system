@@ -33,7 +33,7 @@ const UserLayout = ({ children, activeTab, onTabChange, title, subtitle }) => {
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   const userName = user?.firstName || user?.first_name || user?.username || 'User';
