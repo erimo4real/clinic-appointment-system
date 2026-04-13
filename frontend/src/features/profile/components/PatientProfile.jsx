@@ -483,7 +483,7 @@ const PatientProfile = () => {
                 ))}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
