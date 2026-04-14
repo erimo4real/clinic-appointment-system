@@ -14,22 +14,17 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    let token = null;
-    
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const parts = cookie.trim().split('=');
-      const name = parts[0];
-      const value = parts.slice(1).join('=');
-      
-      if (name === 'token' && value) {
-        token = decodeURIComponent(value);
-        break;
-      }
-    }
+    let token = localStorage.getItem('token');
     
     if (!token) {
-      token = localStorage.getItem('token');
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const parts = cookie.trim().split('=');
+        if (parts[0] === 'token' && parts[1]) {
+          token = decodeURIComponent(parts.slice(1).join('='));
+          break;
+        }
+      }
     }
     
     if (token) {
