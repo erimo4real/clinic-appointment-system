@@ -311,27 +311,44 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     }
     
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
     
     // Split name into first and last parts
-    const nameParts = name.split(' ');
-    const firstName = nameParts[0];
+    const nameParts = String(name).trim().split(' ');
+    const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     
-    // Generate password if not provided
-    const finalPassword = password || Math.random().toString(36).slice(-8);
+    // Generate password if not provided (ensure at least 6 characters)
+    let finalPassword = password;
+    if (!finalPassword) {
+      finalPassword = Math.random().toString(36).substring(2, 10);
+    }
+    
+    // Ensure password is at least 6 characters
+    if (finalPassword.length < 6) {
+      finalPassword = finalPassword.padEnd(6, '0');
+    }
+    
+    // Generate unique username
+    const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    let username = baseUsername;
+    let counter = 1;
+    while (await User.findOne({ username })) {
+      username = `${baseUsername}${counter}`;
+      counter++;
+    }
     
     // Create user account for the doctor
     const user = new User({
-      username: email.split('@')[0],
-      email,
+      username,
+      email: email.toLowerCase(),
       password: finalPassword,
       firstName,
       lastName,
-      phone,
+      phone: phone || '',
       role: 'doctor',
     });
 
@@ -340,10 +357,10 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     // Create basic doctor profile
     const doctor = new Doctor({
       user: user._id,
-      specialty: 'General Medicine', // Default specialty
+      specialty: 'General Medicine',
       qualification: '',
       experience: 0,
-      consultationFee: 5000, // Default fee
+      consultationFee: 5000,
       bio: '',
       isAvailable: true,
       services: [],
@@ -354,15 +371,16 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     res.status(201).json({
       id: doctor._id,
       user_id: user._id,
-      name: `${firstName} ${lastName}`,
-      email,
-      phone,
-      password: finalPassword, // Return password so admin can share with doctor
-      message: 'Doctor created. Doctor should complete their profile on first login.',
+      name: `${firstName} ${lastName}`.trim(),
+      email: user.email,
+      phone: user.phone,
+      username: user.username,
+      password: finalPassword,
+      message: 'Doctor created successfully. Doctor can complete profile after login.',
     });
   } catch (error) {
     console.error('Error creating doctor:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message || 'Failed to create doctor' });
   }
 });
 
