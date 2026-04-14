@@ -14,21 +14,14 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    let token = localStorage.getItem('token');
-    
-    if (!token) {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const parts = cookie.trim().split('=');
-        if (parts[0] === 'token' && parts[1]) {
-          token = decodeURIComponent(parts.slice(1).join('='));
-          break;
-        }
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const parts = cookie.trim().split('=');
+      if (parts[0] === 'token' && parts[1]) {
+        const token = decodeURIComponent(parts.slice(1).join('='));
+        config.headers.Authorization = `Bearer ${token}`;
+        break;
       }
-    }
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   }

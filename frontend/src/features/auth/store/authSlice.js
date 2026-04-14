@@ -6,8 +6,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
     document.cookie = 'token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
     const response = await api.post('/auth/login', credentials);
     if (response.data.token) {
-      document.cookie = `token=${response.data.token};max-age=${7 * 24 * 60 * 60};path=/;SameSite=Lax`;
-      localStorage.setItem('token', response.data.token);
+      document.cookie = `token=${response.data.token};max-age=${7 * 24 * 60 * 60};path=/;SameSite=Lax;Secure`;
     }
     return response.data;
   } catch (error) {
@@ -27,19 +26,18 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
   }
 });
 
-export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, { rejectWithValue, getState }) => {
-  const localToken = localStorage.getItem('token');
+export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, { rejectWithValue }) => {
   const cookies = document.cookie.split(';');
-  let cookieToken = null;
+  let hasToken = false;
   for (const cookie of cookies) {
     const parts = cookie.trim().split('=');
     if (parts[0] === 'token' && parts[1]) {
-      cookieToken = decodeURIComponent(parts.slice(1).join('='));
+      hasToken = true;
       break;
     }
   }
   
-  if (!localToken && !cookieToken) {
+  if (!hasToken) {
     return rejectWithValue('No token found');
   }
   
@@ -47,7 +45,6 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
     const response = await api.get('/auth/me');
     return response.data;
   } catch (error) {
-    localStorage.removeItem('token');
     document.cookie = 'token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
     return rejectWithValue(error.response?.data?.message || 'Session expired');
   }
@@ -60,9 +57,6 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWith
   }
   document.cookie = 'token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
   document.cookie = 'auth_token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
-  localStorage.removeItem('token');
-  localStorage.removeItem('auth_token');
-  sessionStorage.clear();
   return { success: true };
 });
 
@@ -133,13 +127,8 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload && action.payload._id) {
-          state.user = action.payload;
-          state.isAuthenticated = true;
-        } else {
-          state.user = null;
-          state.isAuthenticated = false;
-        }
+        state.user = action.payload;
+        state.isAuthenticated = true;
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
         state.loading = false;
