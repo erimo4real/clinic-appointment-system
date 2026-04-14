@@ -291,39 +291,44 @@ router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
 /**
  * POST /api/admin/doctors
  * 
- * Creates a new doctor with both user account and doctor profile.
- * Both admins and receptionists can add doctors.
+ * Creates a new doctor with user account.
+ * Admin/receptionist creates basic account, doctor completes profile later.
  * 
  * @route POST /api/admin/doctors
  * @body {string} name - Doctor's full name
  * @body {string} email - Doctor's email
  * @body {string} phone - Phone number (optional)
- * @body {string} specialty - Medical specialty
- * @body {string} qualification - Medical qualifications
- * @body {number} experience - Years of experience (optional)
- * @body {number} consultation_fee - Consultation fee
- * @body {string} bio - Biography (optional)
- * @body {boolean} is_available - Availability status (optional)
- * @body {array} services - Array of service IDs (optional)
- * @returns {201} Doctor created with credentials
+ * @body {string} password - Password (optional, auto-generated if not provided)
+ * @returns {201} Doctor created with login credentials
  */
 router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
   try {
-    const { name, email, phone, specialty, qualification, experience, consultation_fee, bio, is_available, services, schedule } = req.body;
+    const { name, email, phone, password } = req.body;
+    
+    // Validate required fields
+    if (!name || !email) {
+      return res.status(400).json({ message: 'Name and email are required' });
+    }
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
     
     // Split name into first and last parts
     const nameParts = name.split(' ');
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ') || '';
     
-    // Generate random password for the doctor
-    const password = Math.random().toString(36).slice(-8);
+    // Generate password if not provided
+    const finalPassword = password || Math.random().toString(36).slice(-8);
     
     // Create user account for the doctor
     const user = new User({
       username: email.split('@')[0],
       email,
-      password,
+      password: finalPassword,
       firstName,
       lastName,
       phone,
@@ -332,28 +337,28 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
 
     await user.save();
 
-    // Create doctor profile linked to user
+    // Create basic doctor profile
     const doctor = new Doctor({
       user: user._id,
-      specialty,
-      qualification,
-      experience: experience || 0,
-      consultationFee: consultation_fee,
-      bio,
-      isAvailable: is_available ?? true,
-      schedule: schedule || undefined,
-      services: services || [],
+      specialty: 'General Medicine', // Default specialty
+      qualification: '',
+      experience: 0,
+      consultationFee: 5000, // Default fee
+      bio: '',
+      isAvailable: true,
+      services: [],
     });
 
     await doctor.save();
     
     res.status(201).json({
       id: doctor._id,
+      user_id: user._id,
       name: `${firstName} ${lastName}`,
       email,
-      specialty,
-      qualification,
-      services: services || [],
+      phone,
+      password: finalPassword, // Return password so admin can share with doctor
+      message: 'Doctor created. Doctor should complete their profile on first login.',
     });
   } catch (error) {
     console.error('Error creating doctor:', error);

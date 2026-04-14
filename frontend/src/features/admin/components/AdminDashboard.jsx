@@ -103,12 +103,12 @@ const AdminDashboard = () => {
       if (type === 'user') {
         setFormData({ first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || '', phone: item.phone || '', role: item.role || 'patient' });
       } else if (type === 'doctor') {
-        setFormData({ name: item.name || '', specialty: item.specialty || '', qualification: item.qualification || '', experience: item.experience || '', consultation_fee: item.consultation_fee || '', services: item.services || [] });
+        setFormData({ name: item.name || '', email: item.email || '', phone: item.phone || '' });
       } else if (type === 'service') {
         setFormData({ name: item.name || '', description: item.description || '', duration: item.duration || '', price: item.price || '' });
       }
     } else {
-      setFormData(type === 'doctor' ? { services: [] } : {});
+      setFormData({});
     }
     setShowModal(true);
   };
@@ -841,84 +841,25 @@ const AdminDashboard = () => {
               {modalType === 'doctor' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. John Smith" required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
-                    <select value={formData.specialty || ''} onChange={(e) => setFormData({ ...formData, specialty: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required>
-                      <option value="">Select Specialty</option>
-                      <option value="General Medicine">General Medicine</option>
-                      <option value="Cardiology">Cardiology</option>
-                      <option value="Neurology">Neurology</option>
-                      <option value="Orthopedics">Orthopedics</option>
-                      <option value="Pediatrics">Pediatrics</option>
-                      <option value="Dermatology">Dermatology</option>
-                      <option value="Ophthalmology">Ophthalmology</option>
-                      <option value="ENT">ENT</option>
-                      <option value="Gynecology">Gynecology</option>
-                      <option value="Psychiatry">Psychiatry</option>
-                      <option value="Oncology">Oncology</option>
-                      <option value="Gastroenterology">Gastroenterology</option>
-                      <option value="Pulmonology">Pulmonology</option>
-                      <option value="Urology">Urology</option>
-                      <option value="Nephrology">Nephrology</option>
-                      <option value="Endocrinology">Endocrinology</option>
-                      <option value="Rheumatology">Rheumatology</option>
-                      <option value="Other">Other</option>
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. doctor@clinic.com" required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
-                    <input type="text" value={formData.qualification || ''} onChange={(e) => setFormData({ ...formData, qualification: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
+                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. +234..." />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Services (select up to 3)</label>
-                    <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-1">
-                      {services.length === 0 ? (
-                        <p className="text-sm text-gray-500 p-2">No services available. Please add services first.</p>
-                      ) : (
-                        services.map((service) => {
-                          const selectedServices = formData.services || [];
-                          const isChecked = selectedServices.includes(service.id);
-                          const isDisabled = !isChecked && selectedServices.length >= 3;
-                          return (
-                            <label key={service.id} className={`flex items-center gap-2 p-2 rounded cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                disabled={isDisabled}
-                                onChange={(e) => {
-                                  let newServices = [...(formData.services || [])];
-                                  if (e.target.checked) {
-                                    if (newServices.length < 3) {
-                                      newServices.push(service.id);
-                                    }
-                                  } else {
-                                    newServices = newServices.filter(id => id !== service.id);
-                                  }
-                                  setFormData({ ...formData, services: newServices });
-                                }}
-                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
-                              />
-                              <span className="text-sm text-gray-700">{service.name}</span>
-                              <span className="text-xs text-gray-400 ml-auto">₦{service.price?.toLocaleString()}</span>
-                            </label>
-                          );
-                        })
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">{(formData.services || []).length}/3 services selected</p>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password (leave empty for auto-generate)</label>
+                    <input type="password" value={formData.password || ''} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Auto-generated if empty" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Experience (years)</label>
-                      <input type="number" value={formData.experience || ''} onChange={(e) => setFormData({ ...formData, experience: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Consultation Fee (₦)</label>
-                      <input type="number" value={formData.consultation_fee || ''} onChange={(e) => setFormData({ ...formData, consultation_fee: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
-                    </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-700">
+                      <strong>Note:</strong> Doctor can complete their profile (specialty, services, fee, etc.) after logging in.
+                    </p>
                   </div>
                 </>
               )}
