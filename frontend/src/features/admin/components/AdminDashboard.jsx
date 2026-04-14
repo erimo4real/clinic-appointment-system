@@ -331,7 +331,6 @@ const AdminDashboard = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const ITEMS_PER_PAGE = 10;
   const usersTotalPages = Math.ceil(filteredByRole.length / ITEMS_PER_PAGE);
   const doctorsTotalPages = Math.ceil(filteredBySpecialty.length / ITEMS_PER_PAGE);
   const servicesTotalPages = Math.ceil(filteredByStatus.length / ITEMS_PER_PAGE);
