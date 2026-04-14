@@ -103,12 +103,12 @@ const AdminDashboard = () => {
       if (type === 'user') {
         setFormData({ first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || '', phone: item.phone || '', role: item.role || 'patient' });
       } else if (type === 'doctor') {
-        setFormData({ name: item.name || '', specialty: item.specialty || '', qualification: item.qualification || '', experience: item.experience || '', consultation_fee: item.consultation_fee || '' });
+        setFormData({ name: item.name || '', specialty: item.specialty || '', qualification: item.qualification || '', experience: item.experience || '', consultation_fee: item.consultation_fee || '', services: item.services || [] });
       } else if (type === 'service') {
         setFormData({ name: item.name || '', description: item.description || '', duration: item.duration || '', price: item.price || '' });
       }
     } else {
-      setFormData({});
+      setFormData(type === 'doctor' ? { services: [] } : {});
     }
     setShowModal(true);
   };
@@ -475,25 +475,40 @@ const AdminDashboard = () => {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase w-16">#</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Services</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fee</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {paginated.map((d, index) => (
-                      <tr key={d.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                        <td className="px-4 py-4 font-medium text-gray-900">{d.name}</td>
-                        <td className="px-4 py-4 text-gray-600">{d.specialty}</td>
-                        <td className="px-4 py-4 text-gray-600 font-semibold text-green-600">₦{d.consultation_fee?.toLocaleString()}</td>
-                        <td className="px-4 py-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete('doctor', d.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {paginated.map((d, index) => {
+                      const doctorServices = (d.services || []).map(sId => services.find(s => s.id === sId)?.name).filter(Boolean);
+                      return (
+                        <tr key={d.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
+                          <td className="px-4 py-4 font-medium text-gray-900">{d.name}</td>
+                          <td className="px-4 py-4 text-gray-600">{d.specialty}</td>
+                          <td className="px-4 py-4">
+                            {doctorServices.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {doctorServices.map((svc, i) => (
+                                  <span key={i} className="px-2 py-0.5 bg-teal-50 text-teal-700 text-xs rounded-full">{svc}</span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-xs">No services</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-gray-600 font-semibold text-green-600">₦{d.consultation_fee?.toLocaleString()}</td>
+                          <td className="px-4 py-4">
+                            <div className="flex gap-2">
+                              <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
+                              <button onClick={() => handleDelete('doctor', d.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -831,11 +846,69 @@ const AdminDashboard = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
-                    <input type="text" value={formData.specialty || ''} onChange={(e) => setFormData({ ...formData, specialty: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
+                    <select value={formData.specialty || ''} onChange={(e) => setFormData({ ...formData, specialty: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required>
+                      <option value="">Select Specialty</option>
+                      <option value="General Medicine">General Medicine</option>
+                      <option value="Cardiology">Cardiology</option>
+                      <option value="Neurology">Neurology</option>
+                      <option value="Orthopedics">Orthopedics</option>
+                      <option value="Pediatrics">Pediatrics</option>
+                      <option value="Dermatology">Dermatology</option>
+                      <option value="Ophthalmology">Ophthalmology</option>
+                      <option value="ENT">ENT</option>
+                      <option value="Gynecology">Gynecology</option>
+                      <option value="Psychiatry">Psychiatry</option>
+                      <option value="Oncology">Oncology</option>
+                      <option value="Gastroenterology">Gastroenterology</option>
+                      <option value="Pulmonology">Pulmonology</option>
+                      <option value="Urology">Urology</option>
+                      <option value="Nephrology">Nephrology</option>
+                      <option value="Endocrinology">Endocrinology</option>
+                      <option value="Rheumatology">Rheumatology</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
                     <input type="text" value={formData.qualification || ''} onChange={(e) => setFormData({ ...formData, qualification: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Services (select up to 3)</label>
+                    <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-1">
+                      {services.length === 0 ? (
+                        <p className="text-sm text-gray-500 p-2">No services available. Please add services first.</p>
+                      ) : (
+                        services.map((service) => {
+                          const selectedServices = formData.services || [];
+                          const isChecked = selectedServices.includes(service.id);
+                          const isDisabled = !isChecked && selectedServices.length >= 3;
+                          return (
+                            <label key={service.id} className={`flex items-center gap-2 p-2 rounded cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                disabled={isDisabled}
+                                onChange={(e) => {
+                                  let newServices = [...(formData.services || [])];
+                                  if (e.target.checked) {
+                                    if (newServices.length < 3) {
+                                      newServices.push(service.id);
+                                    }
+                                  } else {
+                                    newServices = newServices.filter(id => id !== service.id);
+                                  }
+                                  setFormData({ ...formData, services: newServices });
+                                }}
+                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
+                              />
+                              <span className="text-sm text-gray-700">{service.name}</span>
+                              <span className="text-xs text-gray-400 ml-auto">₦{service.price?.toLocaleString()}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{(formData.services || []).length}/3 services selected</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
