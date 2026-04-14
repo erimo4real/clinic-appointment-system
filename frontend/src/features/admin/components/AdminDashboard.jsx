@@ -110,48 +110,65 @@ const AdminDashboard = () => {
     } else {
       setFormData({});
     }
+    setSearchTerm('');
+    setCurrentPage(1);
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (modalType === 'user') {
-      if (editingItem) {
-        await dispatch(updateUser({ id: editingItem.id, data: formData }));
-      } else {
-        await dispatch(createUser(formData));
+    try {
+      if (modalType === 'user') {
+        if (editingItem) {
+          await dispatch(updateUser({ id: editingItem.id, data: formData })).unwrap();
+        } else {
+          await dispatch(createUser(formData)).unwrap();
+        }
+        dispatch(fetchAllUsers());
+        alert('User saved successfully!');
+      } else if (modalType === 'doctor') {
+        if (editingItem) {
+          await dispatch(updateDoctor({ id: editingItem.id, data: formData })).unwrap();
+        } else {
+          const result = await dispatch(createDoctor(formData)).unwrap();
+          dispatch(fetchAllDoctors());
+          alert(`Doctor created successfully!\n\nEmail: ${result.email}\nPassword: ${result.password}\n\nDoctor should complete their profile after login.`);
+        }
+      } else if (modalType === 'service') {
+        if (editingItem) {
+          await dispatch(updateService({ id: editingItem.id, data: formData })).unwrap();
+        } else {
+          await dispatch(createService(formData)).unwrap();
+        }
+        dispatch(fetchAllServices());
+        alert('Service saved successfully!');
       }
-      dispatch(fetchAllUsers());
-    } else if (modalType === 'doctor') {
-      if (editingItem) {
-        await dispatch(updateDoctor({ id: editingItem.id, data: formData }));
-      } else {
-        await dispatch(createDoctor(formData));
-      }
-      dispatch(fetchAllDoctors());
-    } else if (modalType === 'service') {
-      if (editingItem) {
-        await dispatch(updateService({ id: editingItem.id, data: formData }));
-      } else {
-        await dispatch(createService(formData));
-      }
-      dispatch(fetchAllServices());
+      setShowModal(false);
+      setEditingItem(null);
+      setFormData({});
+    } catch (error) {
+      console.error('Error:', error);
+      alert(`Error: ${error?.message || error || 'Something went wrong'}`);
     }
-    setShowModal(false);
-    setEditingItem(null);
   };
 
   const handleDelete = async (type, id) => {
     if (!window.confirm(`Delete this ${type}?`)) return;
-    if (type === 'user') {
-      await dispatch(deleteUser(id));
-      dispatch(fetchAllUsers());
-    } else if (type === 'doctor') {
-      await dispatch(deleteDoctor(id));
-      dispatch(fetchAllDoctors());
-    } else if (type === 'service') {
-      await dispatch(deleteService(id));
-      dispatch(fetchAllServices());
+    try {
+      if (type === 'user') {
+        await dispatch(deleteUser(id)).unwrap();
+        dispatch(fetchAllUsers());
+      } else if (type === 'doctor') {
+        await dispatch(deleteDoctor(id)).unwrap();
+        dispatch(fetchAllDoctors());
+      } else if (type === 'service') {
+        await dispatch(deleteService(id)).unwrap();
+        dispatch(fetchAllServices());
+      }
+      alert(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully!`);
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(`Error deleting ${type}: ${error?.message || error}`);
     }
   };
 
@@ -886,8 +903,10 @@ const AdminDashboard = () => {
                 </>
               )}
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={() => { setShowModal(false); setEditingItem(null); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">Save</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingItem(null); setFormData({}); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Cancel</button>
+                <button type="submit" className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50" disabled={!formData.name || !formData.email}>
+                  {isLoading ? 'Saving...' : 'Save'}
+                </button>
               </div>
             </form>
           </div>
