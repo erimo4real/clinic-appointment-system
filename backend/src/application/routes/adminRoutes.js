@@ -254,6 +254,7 @@ router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
   try {
     const doctors = await Doctor.find()
       .populate('user', 'firstName lastName email phone')
+      .populate('services', 'name price duration')
       .sort({ createdAt: -1 });
 
     const formatted = doctors.map(d => {
@@ -276,6 +277,7 @@ router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
         bio: d.bio,
         is_available: d.isAvailable,
         schedule: scheduleObj,
+        services: d.services ? d.services.map(s => s._id || s) : [],
         createdAt: d.createdAt,
       };
     });
@@ -302,11 +304,12 @@ router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
  * @body {number} consultation_fee - Consultation fee
  * @body {string} bio - Biography (optional)
  * @body {boolean} is_available - Availability status (optional)
+ * @body {array} services - Array of service IDs (optional)
  * @returns {201} Doctor created with credentials
  */
 router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
   try {
-    const { name, email, phone, specialty, qualification, experience, consultation_fee, bio, is_available, schedule } = req.body;
+    const { name, email, phone, specialty, qualification, experience, consultation_fee, bio, is_available, services, schedule } = req.body;
     
     // Split name into first and last parts
     const nameParts = name.split(' ');
@@ -339,6 +342,7 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       bio,
       isAvailable: is_available ?? true,
       schedule: schedule || undefined,
+      services: services || [],
     });
 
     await doctor.save();
@@ -349,6 +353,7 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       email,
       specialty,
       qualification,
+      services: services || [],
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -374,7 +379,7 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
  */
 router.put('/doctors/:id', requireAdminOrReceptionist, async (req, res) => {
   try {
-    const { name, specialty, qualification, experience, consultation_fee, bio, is_available, schedule } = req.body;
+    const { name, specialty, qualification, experience, consultation_fee, bio, is_available, services, schedule } = req.body;
     
     const doctor = await Doctor.findById(req.params.id).populate('user');
     if (!doctor) {
@@ -396,6 +401,7 @@ router.put('/doctors/:id', requireAdminOrReceptionist, async (req, res) => {
     if (bio !== undefined) doctor.bio = bio;
     if (is_available !== undefined) doctor.isAvailable = is_available;
     if (schedule) doctor.schedule = schedule;
+    if (services !== undefined) doctor.services = services;
 
     await doctor.save();
     res.json({ message: 'Doctor updated successfully' });
