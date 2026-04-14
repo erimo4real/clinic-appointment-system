@@ -169,13 +169,6 @@ const AdminDashboard = () => {
     (s.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const paginatedDoctors = filteredDoctors.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const paginatedServices = filteredServices.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const totalPages = activeTab === 'users' ? Math.ceil(filteredUsers.length / ITEMS_PER_PAGE) :
-                     activeTab === 'doctors' ? Math.ceil(filteredDoctors.length / ITEMS_PER_PAGE) :
-                     activeTab === 'services' ? Math.ceil(filteredServices.length / ITEMS_PER_PAGE) : 1;
-
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
   const completedCount = appointments.filter(a => a.status === 'completed').length;
   const confirmedCount = appointments.filter(a => a.status === 'confirmed').length;
