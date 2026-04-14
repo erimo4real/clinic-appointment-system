@@ -254,7 +254,6 @@ router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
   try {
     const doctors = await Doctor.find()
       .populate('user', 'firstName lastName email phone')
-      .populate('services', 'name price duration')
       .sort({ createdAt: -1 });
 
     const formatted = doctors.map(d => {
@@ -277,13 +276,14 @@ router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
         bio: d.bio,
         is_available: d.isAvailable,
         schedule: scheduleObj,
-        services: d.services ? d.services.map(s => s._id || s) : [],
+        services: d.services || [],
         createdAt: d.createdAt,
       };
     });
 
     res.json(formatted);
   } catch (error) {
+    console.error('Error fetching doctors:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -356,6 +356,7 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       services: services || [],
     });
   } catch (error) {
+    console.error('Error creating doctor:', error);
     res.status(500).json({ message: error.message });
   }
 });
