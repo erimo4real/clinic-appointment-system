@@ -367,6 +367,7 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     });
 
     await doctor.save();
+    console.log('Doctor profile created:', doctor._id);
     
     res.status(201).json({
       id: doctor._id,
@@ -380,7 +381,11 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating doctor:', error);
-    res.status(500).json({ message: error.message || 'Failed to create doctor' });
+    if (error.name === 'ValidationError') {
+      res.status(400).json({ message: error.message, validationErrors: Object.keys(error.errors).map(k => error.errors[k].message) });
+    } else {
+      res.status(500).json({ message: error.message || 'Failed to create doctor' });
+    }
   }
 });
 
