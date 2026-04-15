@@ -71,8 +71,8 @@ const doctorSchema = new mongoose.Schema({
    */
   qualification: { 
     type: String, 
-    required: [true, 'Qualification is required'],
-    trim: true
+    trim: true,
+    default: ''
   },
 
   /** Years of medical experience */
