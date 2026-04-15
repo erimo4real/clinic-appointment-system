@@ -12,21 +12,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use(
-  (config) => {
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const parts = cookie.trim().split('=');
-      if (parts[0] === 'token' && parts[1]) {
-        const token = decodeURIComponent(parts.slice(1).join('='));
-        config.headers.Authorization = `Bearer ${token}`;
-        break;
-      }
-    }
-    return config;
-  }
-);
-
 api.interceptors.response.use(
   (response) => response,
   (error) => {
