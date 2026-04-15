@@ -353,9 +353,10 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     });
 
     await user.save();
+    console.log('User saved:', user._id, 'role:', user.role);
 
     // Create basic doctor profile
-    const doctor = new Doctor({
+    const doctorData = {
       user: user._id,
       specialty: 'General Medicine',
       qualification: '',
@@ -364,10 +365,20 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       bio: '',
       isAvailable: true,
       services: [],
-    });
+    };
+    console.log('Creating doctor with data:', JSON.stringify(doctorData, null, 2));
 
+    const doctor = new Doctor(doctorData);
+    console.log('Doctor object created, validating...');
+    
+    const validationError = doctor.validateSync();
+    if (validationError) {
+      console.error('Doctor validation failed:', validationError);
+      throw validationError;
+    }
+    
     await doctor.save();
-    console.log('Doctor profile created:', doctor._id);
+    console.log('Doctor saved successfully:', doctor._id);
     
     res.status(201).json({
       id: doctor._id,
