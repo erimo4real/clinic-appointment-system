@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDoctors, fetchAllServices, createUser, updateUser, deleteUser, createDoctor, updateDoctor, deleteDoctor, createService, updateService, deleteService } from '../store/adminSlice';
 import { logoutUser } from '../../auth/store/authSlice';
 import { fetchAllAppointments as fetchAppointments, updateAppointment, deleteAppointment } from '../../appointments/store/appointmentSlice';
+import { useToast } from '../../../components/ui/Toast';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend } from 'recharts';
 
 const NavIcon = ({ name, className }) => {
@@ -53,6 +54,7 @@ const LoadingSpinner = () => (
 const AdminDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const toast = useToast();
   const { user } = useSelector((state) => state.auth);
   const { stats, appointments, users, doctors, services, loading, usersLoading, doctorsLoading, appointmentsLoading, servicesLoading } = useSelector((state) => state.admin);
   const { appointments: patientAppointments } = useSelector((state) => state.appointments);
@@ -121,34 +123,47 @@ const AdminDashboard = () => {
       if (modalType === 'user') {
         if (editingItem) {
           await dispatch(updateUser({ id: editingItem.id, data: formData })).unwrap();
+          toast.success('User updated successfully');
         } else {
           await dispatch(createUser(formData)).unwrap();
+          toast.success('User created successfully');
         }
         dispatch(fetchAllUsers());
-        alert('User saved successfully!');
       } else if (modalType === 'doctor') {
         if (editingItem) {
           await dispatch(updateDoctor({ id: editingItem.id, data: formData })).unwrap();
+          toast.success('Doctor updated successfully');
         } else {
           const result = await dispatch(createDoctor(formData)).unwrap();
           dispatch(fetchAllDoctors());
-          alert(`Doctor created successfully!\n\nEmail: ${result.email}\nPassword: ${result.password}\n\nDoctor should complete their profile after login.`);
+          if (result.password) {
+            toast.success(
+              <div>
+                <p className="font-semibold">Doctor created successfully!</p>
+                <p className="mt-1 text-sm opacity-90">Password: <span className="font-mono bg-white/20 px-2 py-0.5 rounded">{result.password}</span></p>
+                <p className="mt-1 text-xs opacity-75">Share these credentials with the doctor</p>
+              </div>
+            );
+          } else {
+            toast.success('Doctor created successfully');
+          }
         }
       } else if (modalType === 'service') {
         if (editingItem) {
           await dispatch(updateService({ id: editingItem.id, data: formData })).unwrap();
+          toast.success('Service updated successfully');
         } else {
           await dispatch(createService(formData)).unwrap();
+          toast.success('Service created successfully');
         }
         dispatch(fetchAllServices());
-        alert('Service saved successfully!');
       }
       setShowModal(false);
       setEditingItem(null);
       setFormData({});
     } catch (error) {
       console.error('Error:', error);
-      alert(`Error: ${error?.message || error || 'Something went wrong'}`);
+      toast.error(error?.message || 'Something went wrong');
     }
   };
 
@@ -165,10 +180,10 @@ const AdminDashboard = () => {
         await dispatch(deleteService(id)).unwrap();
         dispatch(fetchAllServices());
       }
-      alert(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully!`);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
     } catch (error) {
       console.error('Delete error:', error);
-      alert(`Error deleting ${type}: ${error?.message || error}`);
+      toast.error(`Error deleting ${type}: ${error?.message || error}`);
     }
   };
 
@@ -228,100 +243,148 @@ const AdminDashboard = () => {
   const renderDashboard = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <p className="text-sm text-gray-500">Total Users</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{users.length}</p>
+        <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 to-teal-600"></div>
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <NavIcon name="users" className="w-5 h-5 text-teal-600" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-gray-900">{users.length}</p>
+            <p className="text-sm text-gray-500 mt-1">Total Users</p>
+          </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <p className="text-sm text-gray-500">Doctors</p>
-          <p className="text-3xl font-bold text-emerald-600 mt-1">{doctors.length}</p>
+        <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <NavIcon name="doctor" className="w-5 h-5 text-emerald-600" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-emerald-600">{doctors.length}</p>
+            <p className="text-sm text-gray-500 mt-1">Doctors</p>
+          </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <p className="text-sm text-gray-500">Appointments</p>
-          <p className="text-3xl font-bold text-blue-600 mt-1">{appointments.length}</p>
+        <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <NavIcon name="calendar" className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
+            <p className="text-sm text-gray-500 mt-1">Appointments</p>
+          </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <p className="text-sm text-gray-500">Services</p>
-          <p className="text-3xl font-bold text-violet-600 mt-1">{services.length}</p>
+        <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-violet-600"></div>
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <NavIcon name="services" className="w-5 h-5 text-violet-600" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-violet-600">{services.length}</p>
+            <p className="text-sm text-gray-500 mt-1">Services</p>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Appointments by Status</h3>
-          {appointmentStatusData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={appointmentStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
-                  {appointmentStatusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center text-gray-500">No appointment data</div>
-          )}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-900">Appointments by Status</h3>
+          </div>
+          <div className="p-6">
+            {appointmentStatusData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={appointmentStatusData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
+                    {appointmentStatusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-500">No appointment data</div>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">This Week's Appointments</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={weeklyData}>
-              <defs>
-                <linearGradient id="colorWeek" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="appointments" stroke="#14b8a6" fillOpacity={1} fill="url(#colorWeek)" name="Appointments" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Doctors by Specialty</h3>
-          {specialtyData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={specialtyData} layout="vertical">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-900">This Week's Appointments</h3>
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={weeklyData}>
+                <defs>
+                  <linearGradient id="colorWeek" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" fill="#10b981" radius={[0, 8, 8, 0]} name="Doctors" />
-              </BarChart>
+                <Area type="monotone" dataKey="appointments" stroke="#14b8a6" fillOpacity={1} fill="url(#colorWeek)" name="Appointments" />
+              </AreaChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center text-gray-500">No doctor data</div>
-          )}
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Recent Appointments</h3>
-          {appointments.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-gray-500">No appointments yet</div>
-          ) : (
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {appointments.slice(0, 8).map((apt) => (
-                <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">{apt.patient_name}</p>
-                    <p className="text-sm text-gray-500">Dr. {apt.doctor_name} - {apt.service_name}</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-900">Doctors by Specialty</h3>
+          </div>
+          <div className="p-6">
+            {specialtyData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={specialtyData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis type="number" tick={{ fontSize: 12 }} />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" fill="#10b981" radius={[0, 8, 8, 0]} name="Doctors" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-500">No doctor data</div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-900">Recent Appointments</h3>
+          </div>
+          <div className="p-4">
+            {appointments.length === 0 ? (
+              <div className="h-64 flex items-center justify-center text-gray-500">No appointments yet</div>
+            ) : (
+              <div className="space-y-3 max-h-72 overflow-y-auto">
+                {appointments.slice(0, 8).map((apt) => (
+                  <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                    <div>
+                      <p className="font-medium text-gray-900">{apt.patient_name}</p>
+                      <p className="text-sm text-gray-500">Dr. {apt.doctor_name} - {apt.service_name}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      apt.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                      apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                      apt.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>{apt.status}</span>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    apt.status === 'completed' ? 'bg-green-100 text-green-700' :
-                    apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                    apt.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                    'bg-blue-100 text-blue-700'
-                  }`}>{apt.status}</span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -405,43 +468,50 @@ const AdminDashboard = () => {
             </button>
           )}
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <div className="relative">
               <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+              <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
             </div>
           </div>
           {isLoading ? (
             <LoadingSpinner />
           ) : filteredByRole.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No users found</div>
+            <div className="p-12 text-center text-gray-500">No users found</div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase w-16">#</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {paginated.map((u, index) => (
-                      <tr key={u.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                        <td className="px-4 py-4 font-medium text-gray-900">{u.first_name} {u.last_name}</td>
-                        <td className="px-4 py-4 text-gray-600">{u.email}</td>
-                        <td className="px-4 py-4"><span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium capitalize">{u.role}</span></td>
-                        <td className="px-4 py-4"><span className={`px-2 py-1 rounded-full text-xs font-medium ${u.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{u.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td className="px-4 py-4">
+                      <tr key={u.id} className="hover:bg-teal-50/30 transition-colors">
+                        <td className="px-6 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                              {(u.first_name || 'U')[0]}{(u.last_name || '')[0]}
+                            </div>
+                            <span className="font-medium text-gray-900">{u.first_name} {u.last_name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">{u.email}</td>
+                        <td className="px-6 py-4"><span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium capitalize text-gray-700">{u.role}</span></td>
+                        <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>{u.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td className="px-6 py-4">
                           <div className="flex gap-2">
-                            <button onClick={() => openModal('user', u)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
-                            {isAdmin && <button onClick={() => handleDelete('user', u.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>}
+                            <button onClick={() => openModal('user', u)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><NavIcon name="edit" className="w-4 h-4" /></button>
+                            {isAdmin && <button onClick={() => handleDelete('user', u.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><NavIcon name="trash" className="w-4 h-4" /></button>}
                           </div>
                         </td>
                       </tr>
@@ -472,40 +542,47 @@ const AdminDashboard = () => {
             <NavIcon name="plus" className="w-5 h-5" /> Add Doctor
           </button>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <div className="relative">
               <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+              <input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
             </div>
           </div>
           {doctorsLoading ? (
             <LoadingSpinner />
           ) : filteredBySpecialty.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No doctors found</div>
+            <div className="p-12 text-center text-gray-500">No doctors found</div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase w-16">#</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Services</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fee</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Services</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fee</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {paginated.map((d, index) => {
                       const doctorServices = (d.services || []).map(sId => services.find(s => s.id === sId)?.name).filter(Boolean);
                       return (
-                        <tr key={d.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                          <td className="px-4 py-4 font-medium text-gray-900">{d.name}</td>
-                          <td className="px-4 py-4 text-gray-600">{d.specialty}</td>
-                          <td className="px-4 py-4">
+                        <tr key={d.id} className="hover:bg-teal-50/30 transition-colors">
+                          <td className="px-6 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                {(d.name || 'D')[0]}
+                              </div>
+                              <span className="font-medium text-gray-900">Dr. {d.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4"><span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">{d.specialty || 'General'}</span></td>
+                          <td className="px-6 py-4">
                             {doctorServices.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {doctorServices.map((svc, i) => (
@@ -516,11 +593,11 @@ const AdminDashboard = () => {
                               <span className="text-gray-400 text-xs">No services</span>
                             )}
                           </td>
-                          <td className="px-4 py-4 text-gray-600 font-semibold text-green-600">₦{d.consultation_fee?.toLocaleString()}</td>
-                          <td className="px-4 py-4">
+                          <td className="px-6 py-4 text-emerald-600 font-semibold">₦{d.consultation_fee?.toLocaleString()}</td>
+                          <td className="px-6 py-4">
                             <div className="flex gap-2">
-                              <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
-                              <button onClick={() => handleDelete('doctor', d.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>
+                              <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><NavIcon name="edit" className="w-4 h-4" /></button>
+                              <button onClick={() => handleDelete('doctor', d.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><NavIcon name="trash" className="w-4 h-4" /></button>
                             </div>
                           </td>
                         </tr>
@@ -553,46 +630,46 @@ const AdminDashboard = () => {
             <NavIcon name="plus" className="w-5 h-5" /> Add Service
           </button>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <div className="relative">
               <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search services..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+              <input type="text" placeholder="Search services..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
             </div>
           </div>
           {servicesLoading ? (
             <LoadingSpinner />
           ) : filteredByStatus.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No services found</div>
+            <div className="p-12 text-center text-gray-500">No services found</div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase w-16">#</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {paginated.map((s, index) => (
-                      <tr key={s.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                        <td className="px-4 py-4">
+                      <tr key={s.id} className="hover:bg-teal-50/30 transition-colors">
+                        <td className="px-6 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
+                        <td className="px-6 py-4">
                           <p className="font-medium text-gray-900">{s.name}</p>
                           <p className="text-sm text-gray-500 truncate max-w-xs">{s.description}</p>
                         </td>
-                        <td className="px-4 py-4 text-gray-700">{s.duration} min</td>
-                        <td className="px-4 py-4 text-gray-700 font-semibold text-green-600">₦{s.price?.toLocaleString()}</td>
-                        <td className="px-4 py-4"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${s.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{s.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td className="px-4 py-4">
+                        <td className="px-6 py-4 text-gray-700">{s.duration} min</td>
+                        <td className="px-6 py-4 text-emerald-600 font-semibold">₦{s.price?.toLocaleString()}</td>
+                        <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${s.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>{s.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td className="px-6 py-4">
                           <div className="flex gap-2">
-                            <button onClick={() => openModal('service', s)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete('service', s.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>
+                            <button onClick={() => openModal('service', s)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><NavIcon name="edit" className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete('service', s.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><NavIcon name="trash" className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -623,45 +700,45 @@ const AdminDashboard = () => {
             </select>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <div className="relative">
               <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search appointments..." value={filterSearch} onChange={(e) => { setFilterSearch(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+              <input type="text" placeholder="Search appointments..." value={filterSearch} onChange={(e) => { setFilterSearch(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
             </div>
           </div>
           {appointmentsLoading ? (
             <LoadingSpinner />
           ) : filteredAppointments.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No appointments found</div>
+            <div className="p-12 text-center text-gray-500">No appointments found</div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase w-16">#</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Patient</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Patient</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {paginated.map((apt, index) => (
-                      <tr key={apt.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                        <td className="px-4 py-4 font-medium text-gray-900">{apt.patient_name}</td>
-                        <td className="px-4 py-4 text-gray-700">Dr. {apt.doctor_name}</td>
-                        <td className="px-4 py-4 text-gray-700">{apt.service_name}</td>
-                        <td className="px-4 py-4 text-gray-700">{apt.date}</td>
-                        <td className="px-4 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            apt.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            apt.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                            apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                            'bg-blue-100 text-blue-800'
+                      <tr key={apt.id} className="hover:bg-teal-50/30 transition-colors">
+                        <td className="px-6 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900">{apt.patient_name}</td>
+                        <td className="px-6 py-4 text-gray-700">Dr. {apt.doctor_name}</td>
+                        <td className="px-6 py-4 text-gray-700">{apt.service_name}</td>
+                        <td className="px-6 py-4 text-gray-700">{apt.date}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            apt.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                            apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                            apt.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
+                            'bg-blue-100 text-blue-700'
                           }`}>{apt.status}</span>
                         </td>
                       </tr>
@@ -698,27 +775,28 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-slate-100">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
         <div className="px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
                 <NavIcon name={sidebarOpen ? 'close' : 'menu'} className="w-6 h-6" />
               </button>
-              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-200">
                 <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                 </svg>
               </div>
               <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-800">Admin</span>
             </div>
 
             <div className="flex items-center gap-3">
               <div className="relative">
                 <button onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
-                  <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                  <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg shadow-teal-200">
                     {userInitials}
                   </div>
                   <span className="hidden sm:block text-sm font-medium text-gray-700">{userName}</span>
@@ -753,7 +831,7 @@ const AdminDashboard = () => {
 
       <div className="flex">
         {/* Sidebar - Desktop */}
-        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-gray-200 pt-16">
+        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-gray-100 pt-16">
           <nav className="flex-1 px-4 py-6 space-y-1">
             {sidebarItems.map((item) => (
               <button
@@ -761,8 +839,8 @@ const AdminDashboard = () => {
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   activeTab === item.id
-                    ? 'bg-teal-50 text-teal-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-200'
+                    : 'text-gray-600 hover:bg-teal-50 hover:text-teal-700'
                 }`}
               >
                 <NavIcon name={item.icon} className="w-5 h-5" />
@@ -817,36 +895,38 @@ const AdminDashboard = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              {editingItem ? 'Edit' : 'Add'} {modalType.charAt(0).toUpperCase() + modalType.slice(1)}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
+              <h2 className="text-xl font-bold text-white">
+                {editingItem ? 'Edit' : 'Add'} {modalType.charAt(0).toUpperCase() + modalType.slice(1)}
+              </h2>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {modalType === 'user' && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                      <input type="text" value={formData.first_name || ''} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
+                      <input type="text" value={formData.first_name || ''} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" required />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                      <input type="text" value={formData.last_name || ''} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
+                      <input type="text" value={formData.last_name || ''} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" required />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required={!editingItem} />
+                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" required={!editingItem} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
                   </div>
                   {isAdmin && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                      <select value={formData.role || 'patient'} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                      <select value={formData.role || 'patient'} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
                         <option value="patient">Patient</option>
                         <option value="receptionist">Receptionist</option>
                         <option value="admin">Admin</option>
@@ -859,22 +939,22 @@ const AdminDashboard = () => {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. John Smith" required />
+                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. John Smith" required />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. doctor@clinic.com" required />
+                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. doctor@clinic.com" required />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
-                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. +234..." />
+                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. +234..." />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Password (leave empty for auto-generate)</label>
-                    <input type="password" value={formData.password || ''} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Auto-generated if empty" />
+                    <input type="password" value={formData.password || ''} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Auto-generated if empty" />
                   </div>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm text-blue-700">
+                  <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
+                    <p className="text-sm text-teal-700">
                       <strong>Note:</strong> Doctor can complete their profile (specialty, services, fee, etc.) after logging in.
                     </p>
                   </div>
@@ -884,27 +964,27 @@ const AdminDashboard = () => {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
-                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
+                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea value={formData.description || ''} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full h-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+                    <textarea value={formData.description || ''} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full h-20 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
-                      <input type="number" value={formData.duration || ''} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
+                      <input type="number" value={formData.duration || ''} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Price (₦)</label>
-                      <input type="number" value={formData.price || ''} onChange={(e) => setFormData({ ...formData, price: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" required />
+                      <input type="number" value={formData.price || ''} onChange={(e) => setFormData({ ...formData, price: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
                     </div>
                   </div>
                 </>
               )}
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={() => { setShowModal(false); setEditingItem(null); setFormData({}); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">Cancel</button>
-                <button type="submit" className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50" disabled={!formData.name || !formData.email}>
+                <button type="button" onClick={() => { setShowModal(false); setEditingItem(null); setFormData({}); }} className="px-5 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 font-medium text-gray-700">Cancel</button>
+                <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl hover:from-teal-600 hover:to-teal-700 font-medium shadow-lg shadow-teal-200 disabled:opacity-50">
                   {isLoading ? 'Saving...' : 'Save'}
                 </button>
               </div>
