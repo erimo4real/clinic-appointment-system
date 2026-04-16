@@ -100,6 +100,60 @@ router.get('/stats', requireAdminOrReceptionist, async (req, res) => {
 });
 
 /**
+ * POST /api/admin/sync-doctors
+ * 
+ * Creates missing doctor profiles for users with role='doctor'
+ * Fixes doctors that exist in users collection but not in doctors collection
+ * 
+ * @route POST /api/admin/sync-doctors
+ * @returns {200} Sync results
+ */
+router.post('/sync-doctors', requireAdmin, async (req, res) => {
+  try {
+    const doctorUsers = await User.find({ role: 'doctor' });
+    const results = { created: 0, skipped: 0, errors: [] };
+    
+    for (const user of doctorUsers) {
+      const existingDoctor = await Doctor.findOne({ user: user._id });
+      
+      if (existingDoctor) {
+        results.skipped++;
+        continue;
+      }
+      
+      try {
+        const doctor = new Doctor({
+          user: user._id,
+          specialty: 'General Medicine',
+          qualification: '',
+          experience: 0,
+          consultationFee: 5000,
+          bio: '',
+          isAvailable: true,
+          services: [],
+        });
+        
+        await doctor.save();
+        results.created++;
+        console.log(`Created doctor profile for user: ${user.email}`);
+      } catch (err) {
+        results.errors.push({ email: user.email, error: err.message });
+      }
+    }
+    
+    res.json({
+      message: 'Sync completed',
+      totalDoctorUsers: doctorUsers.length,
+      doctorProfilesCreated: results.created,
+      doctorProfilesSkipped: results.skipped,
+      errors: results.errors,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
  * GET /api/admin/users
  * 
  * Retrieves all users in the system.
@@ -305,58 +359,55 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
     
-    // Validate required fields
     if (!name || !email) {
       return res.status(400).json({ message: 'Name and email are required' });
     }
     
-    // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User with this email already exists' });
-    }
-    
-    // Split name into first and last parts
     const nameParts = String(name).trim().split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     
-    // Generate password if not provided (ensure at least 6 characters)
-    let finalPassword = password;
-    if (!finalPassword) {
-      finalPassword = Math.random().toString(36).substring(2, 10);
+    let user = await User.findOne({ email: email.toLowerCase() });
+    let isNewUser = false;
+    
+    if (!user) {
+      isNewUser = true;
+      let finalPassword = password || Math.random().toString(36).substring(2, 10);
+      if (finalPassword.length < 6) finalPassword = finalPassword.padEnd(6, '0');
+      
+      const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+      let username = baseUsername;
+      let counter = 1;
+      while (await User.findOne({ username })) {
+        username = `${baseUsername}${counter}`;
+        counter++;
+      }
+      
+      user = new User({
+        username,
+        email: email.toLowerCase(),
+        password: finalPassword,
+        firstName,
+        lastName,
+        phone: phone || '',
+        role: 'doctor',
+      });
+      
+      await user.save();
+    } else if (user.role !== 'doctor') {
+      user.role = 'doctor';
+      user.firstName = firstName || user.firstName;
+      user.lastName = lastName || user.lastName;
+      await user.save();
     }
     
-    // Ensure password is at least 6 characters
-    if (finalPassword.length < 6) {
-      finalPassword = finalPassword.padEnd(6, '0');
+    let doctor = await Doctor.findOne({ user: user._id });
+    
+    if (doctor) {
+      return res.status(400).json({ message: 'Doctor profile already exists for this user' });
     }
     
-    // Generate unique username
-    const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    let username = baseUsername;
-    let counter = 1;
-    while (await User.findOne({ username })) {
-      username = `${baseUsername}${counter}`;
-      counter++;
-    }
-    
-    // Create user account for the doctor
-    const user = new User({
-      username,
-      email: email.toLowerCase(),
-      password: finalPassword,
-      firstName,
-      lastName,
-      phone: phone || '',
-      role: 'doctor',
-    });
-
-    await user.save();
-    console.log('User saved:', user._id, 'role:', user.role);
-
-    // Create basic doctor profile
-    const doctorData = {
+    doctor = new Doctor({
       user: user._id,
       specialty: 'General Medicine',
       qualification: '',
@@ -365,38 +416,22 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       bio: '',
       isAvailable: true,
       services: [],
-    };
-    console.log('Creating doctor with data:', JSON.stringify(doctorData, null, 2));
-
-    const doctor = new Doctor(doctorData);
-    console.log('Doctor object created, validating...');
-    
-    const validationError = doctor.validateSync();
-    if (validationError) {
-      console.error('Doctor validation failed:', validationError);
-      throw validationError;
-    }
+    });
     
     await doctor.save();
-    console.log('Doctor saved successfully:', doctor._id);
     
     res.status(201).json({
       id: doctor._id,
       user_id: user._id,
-      name: `${firstName} ${lastName}`.trim(),
+      name: `${user.firstName} ${user.lastName}`.trim(),
       email: user.email,
       phone: user.phone,
       username: user.username,
-      password: finalPassword,
-      message: 'Doctor created successfully. Doctor can complete profile after login.',
+      message: 'Doctor created successfully',
     });
   } catch (error) {
     console.error('Error creating doctor:', error);
-    if (error.name === 'ValidationError') {
-      res.status(400).json({ message: error.message, validationErrors: Object.keys(error.errors).map(k => error.errors[k].message) });
-    } else {
-      res.status(500).json({ message: error.message || 'Failed to create doctor' });
-    }
+    res.status(500).json({ message: error.message || 'Failed to create doctor' });
   }
 });
 
