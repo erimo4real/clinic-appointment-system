@@ -427,7 +427,10 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       email: user.email,
       phone: user.phone,
       username: user.username,
-      message: 'Doctor created successfully',
+      password: isNewUser ? finalPassword : undefined,
+      message: isNewUser 
+        ? 'Doctor created successfully. Share credentials with doctor.' 
+        : 'Doctor profile created for existing user.',
     });
   } catch (error) {
     console.error('Error creating doctor:', error);
