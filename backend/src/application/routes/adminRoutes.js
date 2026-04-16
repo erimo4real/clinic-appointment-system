@@ -503,13 +503,22 @@ router.delete('/doctors/:id', requireAdminOrReceptionist, async (req, res) => {
       return res.status(404).json({ message: 'Doctor not found' });
     }
 
+    const doctorUserId = doctor.user;
+    const doctorId = doctor._id;
+
     // Delete associated user account
-    await User.findByIdAndDelete(doctor.user);
+    await User.findByIdAndDelete(doctorUserId);
     
     // Delete doctor profile
-    await Doctor.findByIdAndDelete(req.params.id);
+    await Doctor.findByIdAndDelete(doctorId);
     
-    res.json({ message: 'Doctor deleted successfully' });
+    // Delete all appointments with this doctor
+    const deletedAppointments = await Appointment.deleteMany({ doctor: doctorId });
+    
+    res.json({ 
+      message: 'Doctor deleted successfully',
+      appointmentsDeleted: deletedAppointments.deletedCount
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
