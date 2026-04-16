@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllDoctors, createDoctor, updateDoctor, deleteDoctor, fetchAllServices } from '../store/adminSlice';
+import { useToast } from '../../../components/ui/Toast';
 import AdminLayout from './AdminLayout';
 
 const ITEMS_PER_PAGE = 10;
@@ -31,6 +32,7 @@ const specialties = [
 
 const DoctorManagement = () => {
   const dispatch = useDispatch();
+  const toast = useToast();
   const { doctors, doctorsLoading, services } = useSelector((state) => state.admin);
   const [showModal, setShowModal] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
@@ -38,6 +40,7 @@ const DoctorManagement = () => {
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', specialty: '', qualification: '',
     experience: '', consultation_fee: '', bio: '', is_available: true,
@@ -51,21 +54,43 @@ const DoctorManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     const doctorData = { 
       ...formData, 
       experience: parseInt(formData.experience), 
       consultation_fee: parseFloat(formData.consultation_fee),
       services: formData.services,
     };
-    if (editingDoctor) {
-      dispatch(updateDoctor({ id: editingDoctor.id, data: doctorData }));
-    } else {
-      dispatch(createDoctor(doctorData));
+    
+    try {
+      if (editingDoctor) {
+        await dispatch(updateDoctor({ id: editingDoctor.id, data: doctorData })).unwrap();
+        toast.success('Doctor updated successfully');
+      } else {
+        const result = await dispatch(createDoctor(doctorData)).unwrap();
+        if (result.password) {
+          toast.success(
+            <div>
+              <p>Doctor created successfully!</p>
+              <p className="mt-1 text-sm font-normal">
+                Password: <span className="font-bold font-mono bg-green-100 px-2 py-0.5 rounded">{result.password}</span>
+              </p>
+              <p className="mt-1 text-xs text-green-700">Share these credentials with the doctor</p>
+            </div>
+          );
+        } else {
+          toast.success('Doctor created successfully');
+        }
+      }
+      setShowModal(false);
+      setEditingDoctor(null);
+      setFormData({ name: '', email: '', phone: '', specialty: '', qualification: '', experience: '', consultation_fee: '', bio: '', is_available: true, services: [] });
+      dispatch(fetchAllDoctors());
+    } catch (error) {
+      toast.error(error?.message || 'Failed to save doctor');
+    } finally {
+      setSubmitting(false);
     }
-    setShowModal(false);
-    setEditingDoctor(null);
-    setFormData({ name: '', email: '', phone: '', specialty: '', qualification: '', experience: '', consultation_fee: '', bio: '', is_available: true, services: [] });
-    dispatch(fetchAllDoctors());
   };
 
   const handleEdit = (doctor) => {
