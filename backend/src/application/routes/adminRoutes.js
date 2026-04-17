@@ -364,16 +364,19 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       return res.status(400).json({ message: 'Name and email are required' });
     }
     
+    console.log('Creating doctor:', { name, email, phone });
+    
     const nameParts = String(name).trim().split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     
     let user = await User.findOne({ email: email.toLowerCase() });
     let isNewUser = false;
+    let finalPassword = '';
     
     if (!user) {
       isNewUser = true;
-      let finalPassword = password || Math.random().toString(36).substring(2, 10);
+      finalPassword = password || Math.random().toString(36).substring(2, 10);
       if (finalPassword.length < 6) finalPassword = finalPassword.padEnd(6, '0');
       
       const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -394,7 +397,9 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
         role: 'doctor',
       });
       
+      console.log('Saving user...');
       await user.save();
+      console.log('User saved:', user._id);
     } else if (user.role !== 'doctor') {
       user.role = 'doctor';
       user.firstName = firstName || user.firstName;
@@ -402,12 +407,14 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       await user.save();
     }
     
+    console.log('Checking for existing doctor profile...');
     let doctor = await Doctor.findOne({ user: user._id });
     
     if (doctor) {
       return res.status(400).json({ message: 'Doctor profile already exists for this user' });
     }
     
+    console.log('Creating doctor profile...');
     doctor = new Doctor({
       user: user._id,
       specialty: 'General Medicine',
