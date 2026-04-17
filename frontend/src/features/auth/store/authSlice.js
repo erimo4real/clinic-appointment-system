@@ -27,25 +27,10 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
 });
 
 export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, { rejectWithValue }) => {
-  const cookies = document.cookie.split(';');
-  let hasToken = false;
-  for (const cookie of cookies) {
-    const parts = cookie.trim().split('=');
-    if (parts[0] === 'token' && parts[1]) {
-      hasToken = true;
-      break;
-    }
-  }
-  
-  if (!hasToken) {
-    return rejectWithValue('No token found');
-  }
-  
   try {
     const response = await api.get('/auth/me');
     return response.data;
   } catch (error) {
-    document.cookie = 'token=;max-age=0;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
     return rejectWithValue(error.response?.data?.message || 'Session expired');
   }
 });

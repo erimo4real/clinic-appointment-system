@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCurrentUser } from './features/auth/store/authSlice';
@@ -30,20 +30,26 @@ const PublicRoute = ({ children }) => {
 };
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
   
   if (loading) return <LoadingScreen />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated && !user) return <Navigate to="/login" replace />;
   
   return children;
 };
 
 const App = () => {
   const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    dispatch(fetchCurrentUser());
+    dispatch(fetchCurrentUser()).finally(() => {
+      setInitialLoad(false);
+    });
   }, [dispatch]);
+
+  if (initialLoad) return <LoadingScreen />;
 
   return (
     <ThemeProvider>
