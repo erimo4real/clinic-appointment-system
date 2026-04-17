@@ -122,6 +122,84 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  doctorCreated: (doctorData) => ({
+    subject: '🎉 Welcome to MedBook Pro Clinic - Your Doctor Account Created',
+    html: `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #14b8a6; margin: 0;">MedBook Pro</h1>
+          <p style="color: #666; margin-top: 5px;">Clinic Appointment Management System</p>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%); border-radius: 16px; padding: 30px; margin-bottom: 20px;">
+          <h2 style="color: #059669; margin-top: 0;">🎉 Welcome to the Team, Dr. ${doctorData.name}!</h2>
+          <p style="color: #374151; font-size: 16px;">Your doctor account has been successfully created by the administrator.</p>
+        </div>
+
+        <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+          <h3 style="color: #111827; margin-top: 0; border-bottom: 2px solid #14b8a6; padding-bottom: 10px;">📋 Your Login Credentials</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 12px; color: #6b7280; width: 120px;"><strong>Email:</strong></td>
+              <td style="padding: 12px; color: #111827; font-weight: 600;">${doctorData.email}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; color: #6b7280;"><strong>Password:</strong></td>
+              <td style="padding: 12px; color: #111827; font-weight: 600; font-family: monospace; background: #e5e7eb; padding: 8px 12px; border-radius: 6px; display: inline-block;">${doctorData.password}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #111827; border-bottom: 2px solid #14b8a6; padding-bottom: 10px;">🔗 Login Here</h3>
+          <a href="${process.env.FRONTEND_URL || 'https://clinic-appointment-management-sys.netlify.app'}/login" 
+             style="display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 16px;">
+            Login to Dashboard
+          </a>
+        </div>
+
+        <div style="background: #f0f9ff; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+          <h3 style="color: #0369a1; margin-top: 0;">⚡ Next Steps - Complete Your Profile</h3>
+          <ul style="color: #374151; line-height: 1.8;">
+            <li>Login using the credentials above</li>
+            <li>Navigate to your <strong>Profile</strong> section</li>
+            <li>Add your <strong>specialty</strong> (e.g., Cardiology, Pediatrics)</li>
+            <li>Set your <strong>consultation fee</strong></li>
+            <li>Add the <strong>services</strong> you offer</li>
+            <li>Write a short <strong>bio</strong> about yourself</li>
+            <li>Set your <strong>availability schedule</strong></li>
+          </ul>
+        </div>
+
+        <div style="background: #fef3c7; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+          <h3 style="color: #92400e; margin-top: 0;">📊 Your Dashboard Features</h3>
+          <ul style="color: #374151; line-height: 1.8;">
+            <li>📅 View and manage patient appointments</li>
+            <li>👤 Update your profile and specialty</li>
+            <li>💰 Set your consultation fee</li>
+            <li>🩺 Add services you offer</li>
+            <li>⏰ Manage your availability schedule</li>
+            <li>📋 View patient appointments assigned to you</li>
+          </ul>
+        </div>
+
+        <div style="background: #f3e8ff; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+          <h3 style="color: #7c3aed; margin-top: 0;">📞 Need Help?</h3>
+          <p style="color: #374151;">If you have any questions or need assistance, please contact the administrator or reach out to our support team.</p>
+        </div>
+
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+          <p><strong>MedBook Pro Clinic</strong></p>
+          <p>📍 123 Medical Center, Lagos, Nigeria</p>
+          <p>🌐 www.medbookpro.com</p>
+          <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
+            This is an automated message from MedBook Pro Clinic. Please do not reply directly to this email.
+          </p>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 module.exports = { sendEmail, emailTemplates };

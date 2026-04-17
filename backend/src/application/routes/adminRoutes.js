@@ -18,6 +18,7 @@ const User = require('../../domain/entities/User');
 const Doctor = require('../../domain/entities/Doctor');
 const Service = require('../../domain/entities/Service');
 const Appointment = require('../../domain/entities/Appointment');
+const { sendEmail, emailTemplates } = require('../../infrastructure/services/emailService');
 
 /**
  * Middleware to verify user has admin role.
@@ -421,6 +422,27 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     await doctor.save();
     console.log('Doctor saved successfully:', doctor._id, 'User ID:', user._id);
     
+    // Send welcome email to the new doctor
+    if (isNewUser && user.email) {
+      const emailContent = emailTemplates.doctorCreated({
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        email: user.email,
+        password: finalPassword,
+      });
+      
+      sendEmail(user.email, emailContent.subject, emailContent.html)
+        .then(result => {
+          if (result.success) {
+            console.log('Welcome email sent to doctor:', user.email);
+          } else {
+            console.log('Failed to send welcome email:', result.error);
+          }
+        })
+        .catch(err => {
+          console.log('Error sending welcome email:', err.message);
+        });
+    }
+    
     res.status(201).json({
       id: doctor._id,
       user_id: user._id,
@@ -433,11 +455,6 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
         ? 'Doctor created successfully. Share credentials with doctor.' 
         : 'Doctor profile created for existing user.',
     });
-  } catch (error) {
-    console.error('Error creating doctor:', error);
-    res.status(500).json({ message: error.message || 'Failed to create doctor' });
-  }
-});
   } catch (error) {
     console.error('Error creating doctor:', error);
     res.status(500).json({ message: error.message || 'Failed to create doctor' });
