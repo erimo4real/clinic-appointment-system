@@ -419,6 +419,7 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     });
     
     await doctor.save();
+    console.log('Doctor saved successfully:', doctor._id, 'User ID:', user._id);
     
     res.status(201).json({
       id: doctor._id,
@@ -432,6 +433,11 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
         ? 'Doctor created successfully. Share credentials with doctor.' 
         : 'Doctor profile created for existing user.',
     });
+  } catch (error) {
+    console.error('Error creating doctor:', error);
+    res.status(500).json({ message: error.message || 'Failed to create doctor' });
+  }
+});
   } catch (error) {
     console.error('Error creating doctor:', error);
     res.status(500).json({ message: error.message || 'Failed to create doctor' });

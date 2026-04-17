@@ -532,12 +532,16 @@ const AdminDashboard = () => {
           await dispatch(updateDoctor({ id: editingItem.id, data: formData })).unwrap();
           toast.success('Doctor updated');
         } else {
-          const result = await dispatch(createDoctor(formData)).unwrap();
-          dispatch(fetchAllDoctors());
-          if (result.password) {
-            toast.success(<div><p>Doctor created!</p><p className="text-sm">Password: {result.password}</p></div>);
-          } else {
-            toast.success('Doctor created');
+          try {
+            const result = await dispatch(createDoctor(formData)).unwrap();
+            dispatch(fetchAllDoctors());
+            if (result.password) {
+              toast.success(<div><p className="font-semibold">Doctor created!</p><p className="text-sm mt-1">Password: <span className="font-mono bg-white/20 px-1 rounded">{result.password}</span></p><p className="text-xs mt-1 opacity-80">Share these credentials with the doctor</p></div>);
+            } else {
+              toast.success('Doctor created successfully');
+            }
+          } catch (error) {
+            toast.error(error?.message || 'Failed to create doctor');
           }
         }
       } else if (modalType === 'service') {
