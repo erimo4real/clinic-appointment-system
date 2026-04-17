@@ -198,7 +198,7 @@ const Header = ({ user: propUser, onLogout }) => {
                         </span>
                       </div>
                       <div className="py-1">
-                        {user?.role === 'admin' && (
+                        {(user?.role === 'admin' || user?.role === 'receptionist') && (
                           <Link 
                             to="/admin" 
                             className="flex items-center px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 font-medium"
@@ -208,7 +208,7 @@ const Header = ({ user: propUser, onLogout }) => {
                             <span className="ml-2">Admin Panel</span>
                           </Link>
                         )}
-                        {user?.role !== 'admin' && (
+                        {user?.role !== 'admin' && user?.role !== 'receptionist' && (
                           <Link 
                             to="/profile" 
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -247,12 +247,12 @@ const Header = ({ user: propUser, onLogout }) => {
               </>
             )}
             
-            {isAuthenticated && (user?.role === 'admin' || user?.role === 'doctor') && (
+            {isAuthenticated && (user?.role === 'admin' || user?.role === 'receptionist') && (
               <Link 
-                to={user?.role === 'admin' ? '/admin' : '/profile'} 
+                to="/admin" 
                 className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
               >
-                {user?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
+                Admin Panel
               </Link>
             )}
           </div>

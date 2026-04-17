@@ -14,12 +14,7 @@ import ServicesPage from './features/services/components/ServicesPage';
 import DoctorsPage from './features/doctors/components/DoctorsPage';
 import BookingPage from './features/appointments/components/BookingPage';
 import PatientProfile from './features/profile/components/PatientProfile';
-
 import AdminDashboard from './features/admin/components/AdminDashboard';
-import UserManagement from './features/admin/components/UserManagement';
-import DoctorManagement from './features/admin/components/DoctorManagement';
-import ServiceManagement from './features/admin/components/ServiceManagement';
-import AppointmentManagement from './features/admin/components/AppointmentManagement';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useSelector((state) => state.auth);
@@ -57,28 +52,6 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-const AdminRoute = ({ children }) => {
-  const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent"></div>
-      </div>
-    );
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (user?.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return children;
-};
-
 const StaffRoute = ({ children }) => {
   const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
   
@@ -103,7 +76,6 @@ const StaffRoute = ({ children }) => {
 
 const App = () => {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchCurrentUser());
@@ -125,12 +97,9 @@ const App = () => {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
 
-          {/* Admin Routes */}
+          {/* Admin Routes - Single Dashboard with Tabs */}
           <Route path="/admin" element={<StaffRoute><AdminDashboard /></StaffRoute>} />
-          <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
-          <Route path="/admin/doctors" element={<StaffRoute><DoctorManagement /></StaffRoute>} />
-          <Route path="/admin/services" element={<StaffRoute><ServiceManagement /></StaffRoute>} />
-          <Route path="/admin/appointments" element={<StaffRoute><AppointmentManagement /></StaffRoute>} />
+          <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />

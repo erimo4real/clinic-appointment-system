@@ -198,13 +198,7 @@ const Dashboard = () => {
 
   const recentAppointments = (isPatient ? appointments : adminAppointments).slice(0, 5);
 
-  const navItems = isStaff ? [
-    { icon: 'dashboard', label: 'Dashboard', path: '/admin' },
-    ...(isAdmin ? [{ icon: 'users', label: 'Users', path: '/admin/users' }] : []),
-    { icon: 'doctor', label: 'Doctors', path: '/admin/doctors' },
-    { icon: 'calendar', label: 'Appointments', path: '/admin/appointments' },
-    { icon: 'services', label: 'Services', path: '/admin/services' },
-  ] : [
+  const navItems = [
     { icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
     { icon: 'plus', label: 'Book Appointment', path: '/booking' },
     { icon: 'doctor', label: 'Find Doctors', path: '/doctors' },
@@ -417,21 +411,21 @@ const Dashboard = () => {
                     icon={<NavIcon name="doctor" className="w-5 h-5" />}
                     title="Add Doctor"
                     description="Register new doctor"
-                    to="/admin/doctors"
+                    to="/admin"
                     color="bg-emerald-500"
                   />
                   <QuickActionCard
                     icon={<NavIcon name="services" className="w-5 h-5" />}
                     title="Add Service"
                     description="New treatment option"
-                    to="/admin/services"
+                    to="/admin"
                     color="bg-violet-500"
                   />
                   <QuickActionCard
                     icon={<NavIcon name="calendar" className="w-5 h-5" />}
                     title="Appointments"
                     description="Manage bookings"
-                    to="/admin/appointments"
+                    to="/admin"
                     color="bg-blue-500"
                   />
                 </div>
@@ -441,7 +435,7 @@ const Dashboard = () => {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                   <h2 className="text-lg font-semibold text-gray-900">Recent Appointments</h2>
-                  <Link to="/admin/appointments" className="flex items-center gap-1 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors">
+                  <Link to="/admin" className="flex items-center gap-1 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors">
                     View All
                     <NavIcon name="chevronRight" className="w-4 h-4" />
                   </Link>
