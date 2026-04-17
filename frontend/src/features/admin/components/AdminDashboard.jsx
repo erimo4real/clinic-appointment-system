@@ -3,9 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDoctors, fetchAllServices, createUser, updateUser, deleteUser, createDoctor, updateDoctor, deleteDoctor, createService, updateService, deleteService } from '../store/adminSlice';
 import { logoutUser } from '../../auth/store/authSlice';
-import { fetchAllAppointments as fetchAppointments, updateAppointment, deleteAppointment } from '../../appointments/store/appointmentSlice';
+import { fetchAllAppointments as fetchAppointments } from '../../appointments/store/appointmentSlice';
 import { useToast } from '../../../components/ui/Toast';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 const NavIcon = ({ name, className }) => {
   const icons = {
@@ -22,27 +22,10 @@ const NavIcon = ({ name, className }) => {
     edit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />,
     trash: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />,
     search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
-    chart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />,
+    chevronRight: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />,
+    shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
-};
-
-const COLORS = ['#14b8a6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
-
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100">
-        <p className="font-semibold text-gray-900">{label}</p>
-        {payload.map((entry, index) => (
-          <p key={index} className="text-sm" style={{ color: entry.color || entry.fill }}>
-            {entry.name}: {typeof entry.value === 'number' ? (entry.name.toLowerCase().includes('revenue') ? `₦${entry.value.toLocaleString()}` : entry.value) : entry.value}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
 };
 
 const LoadingSpinner = () => (
@@ -56,13 +39,12 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useSelector((state) => state.auth);
-  const { stats, appointments, users, doctors, services, loading, usersLoading, doctorsLoading, appointmentsLoading, servicesLoading } = useSelector((state) => state.admin);
-  const { appointments: patientAppointments } = useSelector((state) => state.appointments);
+  const { appointments, users, doctors, services, loading, usersLoading, doctorsLoading, appointmentsLoading, servicesLoading } = useSelector((state) => state.admin);
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeMenu, setActiveMenu] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -90,32 +72,13 @@ const AdminDashboard = () => {
     navigate('/login', { replace: true });
   };
 
-  const sidebarItems = [
-    { id: 'dashboard', icon: 'chart', label: 'Dashboard' },
+  const menuItems = [
+    { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
     ...(isAdmin ? [{ id: 'users', icon: 'users', label: 'Users' }] : []),
     { id: 'doctors', icon: 'doctor', label: 'Doctors' },
     { id: 'services', icon: 'services', label: 'Services' },
     { id: 'appointments', icon: 'calendar', label: 'Book' },
   ];
-
-  const openModal = (type, item = null) => {
-    setModalType(type);
-    setEditingItem(item);
-    if (item) {
-      if (type === 'user') {
-        setFormData({ first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || '', phone: item.phone || '', role: item.role || 'patient' });
-      } else if (type === 'doctor') {
-        setFormData({ name: item.name || '', email: item.email || '', phone: item.phone || '' });
-      } else if (type === 'service') {
-        setFormData({ name: item.name || '', description: item.description || '', duration: item.duration || '', price: item.price || '' });
-      }
-    } else {
-      setFormData({});
-    }
-    setSearchTerm('');
-    setCurrentPage(1);
-    setShowModal(true);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -139,9 +102,8 @@ const AdminDashboard = () => {
           if (result.password) {
             toast.success(
               <div>
-                <p className="font-semibold">Doctor created successfully!</p>
-                <p className="mt-1 text-sm opacity-90">Password: <span className="font-mono bg-white/20 px-2 py-0.5 rounded">{result.password}</span></p>
-                <p className="mt-1 text-xs opacity-75">Share these credentials with the doctor</p>
+                <p className="font-semibold">Doctor created!</p>
+                <p className="text-sm opacity-90">Password: {result.password}</p>
               </div>
             );
           } else {
@@ -162,7 +124,6 @@ const AdminDashboard = () => {
       setEditingItem(null);
       setFormData({});
     } catch (error) {
-      console.error('Error:', error);
       toast.error(error?.message || 'Something went wrong');
     }
   };
@@ -180,11 +141,29 @@ const AdminDashboard = () => {
         await dispatch(deleteService(id)).unwrap();
         dispatch(fetchAllServices());
       }
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted`);
     } catch (error) {
-      console.error('Delete error:', error);
-      toast.error(`Error deleting ${type}: ${error?.message || error}`);
+      toast.error(`Error deleting: ${error?.message || error}`);
     }
+  };
+
+  const openModal = (type, item = null) => {
+    setModalType(type);
+    setEditingItem(item);
+    if (item) {
+      if (type === 'user') {
+        setFormData({ first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || '', phone: item.phone || '', role: item.role || 'patient' });
+      } else if (type === 'doctor') {
+        setFormData({ name: item.name || '', email: item.email || '', phone: item.phone || '' });
+      } else if (type === 'service') {
+        setFormData({ name: item.name || '', description: item.description || '', duration: item.duration || '', price: item.price || '' });
+      }
+    } else {
+      setFormData({});
+    }
+    setSearchTerm('');
+    setCurrentPage(1);
+    setShowModal(true);
   };
 
   const filteredUsers = users.filter(u => 
@@ -199,6 +178,11 @@ const AdminDashboard = () => {
   const filteredServices = services.filter(s =>
     (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (s.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredAppointments = appointments.filter(apt =>
+    searchTerm === '' ||
+    (apt.patient_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (apt.doctor_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
@@ -222,74 +206,50 @@ const AdminDashboard = () => {
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       const count = appointments.filter(a => a.date === dateStr).length;
-      weekData.push({ day: days[date.getDay()], appointments: count, date: dateStr });
+      weekData.push({ day: days[date.getDay()], appointments: count });
     }
     return weekData;
   };
 
   const weeklyData = getWeeklyData();
-
   const specialtyData = doctors.reduce((acc, doctor) => {
     const specialty = doctor.specialty || 'General';
     const existing = acc.find(item => item.name === specialty);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      acc.push({ name: specialty, count: 1 });
-    }
+    if (existing) existing.count += 1;
+    else acc.push({ name: specialty, count: 1 });
     return acc;
   }, []);
 
   const renderDashboard = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 to-teal-600"></div>
-          <div className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <NavIcon name="users" className="w-5 h-5 text-teal-600" />
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{users.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Total Users</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+          <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center mb-3">
+            <NavIcon name="users" className="w-5 h-5 text-teal-600" />
           </div>
+          <p className="text-3xl font-bold text-gray-900">{users.length}</p>
+          <p className="text-sm text-gray-500">Total Users</p>
         </div>
-        <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-          <div className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <NavIcon name="doctor" className="w-5 h-5 text-emerald-600" />
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-emerald-600">{doctors.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Doctors</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
+            <NavIcon name="doctor" className="w-5 h-5 text-emerald-600" />
           </div>
+          <p className="text-3xl font-bold text-emerald-600">{doctors.length}</p>
+          <p className="text-sm text-gray-500">Doctors</p>
         </div>
-        <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600"></div>
-          <div className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <NavIcon name="calendar" className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Appointments</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+          <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+            <NavIcon name="calendar" className="w-5 h-5 text-blue-600" />
           </div>
+          <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
+          <p className="text-sm text-gray-500">Appointments</p>
         </div>
-        <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-violet-600"></div>
-          <div className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <NavIcon name="services" className="w-5 h-5 text-violet-600" />
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-violet-600">{services.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Services</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+          <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center mb-3">
+            <NavIcon name="services" className="w-5 h-5 text-violet-600" />
           </div>
+          <p className="text-3xl font-bold text-violet-600">{services.length}</p>
+          <p className="text-sm text-gray-500">Services</p>
         </div>
       </div>
 
@@ -303,21 +263,21 @@ const AdminDashboard = () => {
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie data={appointmentStatusData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
-                    {appointmentStatusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                    {appointmentStatusData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Tooltip />
+                  <PieChart.Legend />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500">No appointment data</div>
+              <div className="h-64 flex items-center justify-center text-gray-500">No data</div>
             )}
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">This Week's Appointments</h3>
+            <h3 className="font-semibold text-gray-900">This Week</h3>
           </div>
           <div className="p-6">
             <ResponsiveContainer width="100%" height={280}>
@@ -331,8 +291,8 @@ const AdminDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="appointments" stroke="#14b8a6" fillOpacity={1} fill="url(#colorWeek)" name="Appointments" />
+                <Tooltip />
+                <Area type="monotone" dataKey="appointments" stroke="#14b8a6" fillOpacity={1} fill="url(#colorWeek)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -349,12 +309,12 @@ const AdminDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis type="number" tick={{ fontSize: 12 }} />
                   <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="count" fill="#10b981" radius={[0, 8, 8, 0]} name="Doctors" />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#10b981" radius={[0, 8, 8, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500">No doctor data</div>
+              <div className="h-64 flex items-center justify-center text-gray-500">No data</div>
             )}
           </div>
         </div>
@@ -365,16 +325,16 @@ const AdminDashboard = () => {
           </div>
           <div className="p-4">
             {appointments.length === 0 ? (
-              <div className="h-64 flex items-center justify-center text-gray-500">No appointments yet</div>
+              <div className="h-64 flex items-center justify-center text-gray-500">No appointments</div>
             ) : (
               <div className="space-y-3 max-h-72 overflow-y-auto">
                 {appointments.slice(0, 8).map((apt) => (
-                  <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                     <div>
                       <p className="font-medium text-gray-900">{apt.patient_name}</p>
-                      <p className="text-sm text-gray-500">Dr. {apt.doctor_name} - {apt.service_name}</p>
+                      <p className="text-sm text-gray-500">Dr. {apt.doctor_name}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       apt.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
                       apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                       apt.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
@@ -390,372 +350,208 @@ const AdminDashboard = () => {
     </div>
   );
 
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [specialtyFilter, setSpecialtyFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [appointmentStatusFilter, setAppointmentStatusFilter] = useState('all');
-  const [filterSearch, setFilterSearch] = useState('');
-
-  const uniqueSpecialties = [...new Set(doctors.map(d => d.specialty).filter(Boolean))];
-
-  const filteredByRole = roleFilter === 'all' ? filteredUsers : filteredUsers.filter(u => u.role === roleFilter);
-  const filteredBySpecialty = specialtyFilter === 'all' ? filteredDoctors : filteredDoctors.filter(d => d.specialty === specialtyFilter);
-  const filteredByStatus = statusFilter === 'all' ? filteredServices : filteredServices.filter(s => s.is_active === (statusFilter === 'active'));
-
-  const filteredAppointments = appointments.filter(apt => {
-    const matchesSearch = filterSearch === '' ||
-      (apt.patient_name || '').toLowerCase().includes(filterSearch.toLowerCase()) ||
-      (apt.doctor_name || '').toLowerCase().includes(filterSearch.toLowerCase()) ||
-      (apt.service_name || '').toLowerCase().includes(filterSearch.toLowerCase());
-    const matchesStatus = appointmentStatusFilter === 'all' || apt.status === appointmentStatusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const usersTotalPages = Math.ceil(filteredByRole.length / ITEMS_PER_PAGE);
-  const doctorsTotalPages = Math.ceil(filteredBySpecialty.length / ITEMS_PER_PAGE);
-  const servicesTotalPages = Math.ceil(filteredByStatus.length / ITEMS_PER_PAGE);
-  const appointmentsTotalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE);
-
-  const getCurrentPageData = (data, totalPages) => {
-    const page = Math.min(Math.max(1, currentPage), totalPages || 1);
-    return data.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-  };
-
-  const renderPagination = (totalPages, currentTotal, filteredTotal, section) => {
-    if (totalPages <= 1) return null;
-    const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
-    const end = Math.min(currentPage * ITEMS_PER_PAGE, filteredTotal);
-    return (
-      <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
-        <p className="text-sm text-gray-500">
-          Showing {filteredTotal === 0 ? 0 : start}-{end} of {filteredTotal} {section}
-        </p>
-        <div className="flex items-center gap-1">
-          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 px-3 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">Prev</button>
-          {[...Array(Math.min(totalPages, 5))].map((_, i) => {
-            let page = i + 1;
-            if (totalPages > 5) {
-              if (currentPage > 3) page = currentPage - 2 + i;
-              if (currentPage > totalPages - 2) page = totalPages - 4 + i;
-            }
-            return (
-              <button key={page} onClick={() => setCurrentPage(page)} className={`p-2 px-3 text-sm border rounded-lg ${currentPage === page ? 'bg-teal-600 text-white border-teal-600' : 'border-gray-300 hover:bg-gray-100'}`}>{page}</button>
-            );
-          })}
-          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 px-3 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+  const renderUsers = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
-      </div>
-    );
-  };
-
-  const renderUsers = () => {
-    const paginated = getCurrentPageData(filteredByRole, usersTotalPages);
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm">
-              <option value="all">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="receptionist">Receptionist</option>
-              <option value="doctor">Doctor</option>
-              <option value="patient">Patient</option>
-            </select>
-          </div>
-          {isAdmin && (
-            <button onClick={() => openModal('user')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2">
-              <NavIcon name="plus" className="w-5 h-5" /> Add User
-            </button>
-          )}
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <div className="relative">
-              <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
-            </div>
-          </div>
-          {isLoading ? (
-            <LoadingSpinner />
-          ) : filteredByRole.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No users found</div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50/50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {paginated.map((u, index) => (
-                      <tr key={u.id} className="hover:bg-teal-50/30 transition-colors">
-                        <td className="px-6 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                              {(u.first_name || 'U')[0]}{(u.last_name || '')[0]}
-                            </div>
-                            <span className="font-medium text-gray-900">{u.first_name} {u.last_name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">{u.email}</td>
-                        <td className="px-6 py-4"><span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium capitalize text-gray-700">{u.role}</span></td>
-                        <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>{u.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => openModal('user', u)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><NavIcon name="edit" className="w-4 h-4" /></button>
-                            {isAdmin && <button onClick={() => handleDelete('user', u.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><NavIcon name="trash" className="w-4 h-4" /></button>}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {renderPagination(usersTotalPages, filteredByRole.length, filteredByRole.length, 'users')}
-            </>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderDoctors = () => {
-    const paginated = getCurrentPageData(filteredBySpecialty, doctorsTotalPages);
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <select value={specialtyFilter} onChange={(e) => { setSpecialtyFilter(e.target.value); setCurrentPage(1); }} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm">
-              <option value="all">All Specialties</option>
-              {uniqueSpecialties.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <button onClick={() => openModal('doctor')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2">
-            <NavIcon name="plus" className="w-5 h-5" /> Add Doctor
+        {isAdmin && (
+          <button onClick={() => openModal('user')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
+            <NavIcon name="plus" className="w-5 h-5" /> Add User
           </button>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <div className="relative">
-              <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
-            </div>
-          </div>
-          {doctorsLoading ? (
-            <LoadingSpinner />
-          ) : filteredBySpecialty.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No doctors found</div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50/50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Services</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fee</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {paginated.map((d, index) => {
-                      const doctorServices = (d.services || []).map(sId => services.find(s => s.id === sId)?.name).filter(Boolean);
-                      return (
-                        <tr key={d.id} className="hover:bg-teal-50/30 transition-colors">
-                          <td className="px-6 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                {(d.name || 'D')[0]}
-                              </div>
-                              <span className="font-medium text-gray-900">Dr. {d.name}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4"><span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">{d.specialty || 'General'}</span></td>
-                          <td className="px-6 py-4">
-                            {doctorServices.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {doctorServices.map((svc, i) => (
-                                  <span key={i} className="px-2 py-0.5 bg-teal-50 text-teal-700 text-xs rounded-full">{svc}</span>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 text-xs">No services</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-emerald-600 font-semibold">₦{d.consultation_fee?.toLocaleString()}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex gap-2">
-                              <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><NavIcon name="edit" className="w-4 h-4" /></button>
-                              <button onClick={() => handleDelete('doctor', d.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><NavIcon name="trash" className="w-4 h-4" /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {renderPagination(doctorsTotalPages, filteredBySpecialty.length, filteredBySpecialty.length, 'doctors')}
-            </>
-          )}
-        </div>
+        )}
       </div>
-    );
-  };
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {isLoading ? <LoadingSpinner /> : filteredUsers.length === 0 ? (
+          <div className="p-12 text-center text-gray-500">No users found</div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredUsers.map((u) => (
+                <tr key={u.id} className="hover:bg-teal-50/30">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">{(u.first_name || 'U')[0]}{(u.last_name || '')[0]}</div>
+                      <span className="font-medium text-gray-900">{u.first_name} {u.last_name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">{u.email}</td>
+                  <td className="px-6 py-4"><span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium capitalize text-gray-700">{u.role}</span></td>
+                  <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>{u.is_active ? 'Active' : 'Inactive'}</span></td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button onClick={() => openModal('user', u)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
+                      {isAdmin && <button onClick={() => handleDelete('user', u.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
 
-  const renderServices = () => {
-    const paginated = getCurrentPageData(filteredByStatus, servicesTotalPages);
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm">
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-          <button onClick={() => openModal('service')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2">
-            <NavIcon name="plus" className="w-5 h-5" /> Add Service
-          </button>
+  const renderDoctors = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <div className="relative">
-              <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search services..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
-            </div>
-          </div>
-          {servicesLoading ? (
-            <LoadingSpinner />
-          ) : filteredByStatus.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No services found</div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50/50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {paginated.map((s, index) => (
-                      <tr key={s.id} className="hover:bg-teal-50/30 transition-colors">
-                        <td className="px-6 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-gray-900">{s.name}</p>
-                          <p className="text-sm text-gray-500 truncate max-w-xs">{s.description}</p>
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">{s.duration} min</td>
-                        <td className="px-6 py-4 text-emerald-600 font-semibold">₦{s.price?.toLocaleString()}</td>
-                        <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${s.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>{s.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => openModal('service', s)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><NavIcon name="edit" className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete('service', s.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><NavIcon name="trash" className="w-4 h-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {renderPagination(servicesTotalPages, filteredByStatus.length, filteredByStatus.length, 'services')}
-            </>
-          )}
-        </div>
+        <button onClick={() => openModal('doctor')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
+          <NavIcon name="plus" className="w-5 h-5" /> Add Doctor
+        </button>
       </div>
-    );
-  };
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {doctorsLoading ? <LoadingSpinner /> : filteredDoctors.length === 0 ? (
+          <div className="p-12 text-center text-gray-500">No doctors found</div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fee</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredDoctors.map((d) => (
+                <tr key={d.id} className="hover:bg-teal-50/30">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">{(d.name || 'D')[0]}</div>
+                      <span className="font-medium text-gray-900">Dr. {d.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4"><span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">{d.specialty || 'General'}</span></td>
+                  <td className="px-6 py-4 text-emerald-600 font-semibold">₦{d.consultation_fee?.toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete('doctor', d.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
 
-  const renderAppointments = () => {
-    const paginated = filteredAppointments.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <select value={appointmentStatusFilter} onChange={(e) => { setAppointmentStatusFilter(e.target.value); setCurrentPage(1); }} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm">
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
+  const renderServices = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" placeholder="Search services..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <div className="relative">
-              <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search appointments..." value={filterSearch} onChange={(e) => { setFilterSearch(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
-            </div>
-          </div>
-          {appointmentsLoading ? (
-            <LoadingSpinner />
-          ) : filteredAppointments.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No appointments found</div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50/50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Patient</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {paginated.map((apt, index) => (
-                      <tr key={apt.id} className="hover:bg-teal-50/30 transition-colors">
-                        <td className="px-6 py-4 text-gray-500 text-sm">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                        <td className="px-6 py-4 font-medium text-gray-900">{apt.patient_name}</td>
-                        <td className="px-6 py-4 text-gray-700">Dr. {apt.doctor_name}</td>
-                        <td className="px-6 py-4 text-gray-700">{apt.service_name}</td>
-                        <td className="px-6 py-4 text-gray-700">{apt.date}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            apt.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
-                            apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                            apt.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>{apt.status}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {renderPagination(appointmentsTotalPages, filteredAppointments.length, filteredAppointments.length, 'appointments')}
-            </>
-          )}
+        <button onClick={() => openModal('service')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
+          <NavIcon name="plus" className="w-5 h-5" /> Add Service
+        </button>
+      </div>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {servicesLoading ? <LoadingSpinner /> : filteredServices.length === 0 ? (
+          <div className="p-12 text-center text-gray-500">No services found</div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredServices.map((s) => (
+                <tr key={s.id} className="hover:bg-teal-50/30">
+                  <td className="px-6 py-4">
+                    <p className="font-medium text-gray-900">{s.name}</p>
+                    <p className="text-sm text-gray-500 truncate max-w-xs">{s.description}</p>
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">{s.duration} min</td>
+                  <td className="px-6 py-4 text-emerald-600 font-semibold">₦{s.price?.toLocaleString()}</td>
+                  <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${s.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>{s.is_active ? 'Active' : 'Inactive'}</span></td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button onClick={() => openModal('service', s)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete('service', s.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderAppointments = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" placeholder="Search appointments..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
       </div>
-    );
-  };
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {appointmentsLoading ? <LoadingSpinner /> : filteredAppointments.length === 0 ? (
+          <div className="p-12 text-center text-gray-500">No appointments found</div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Patient</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredAppointments.map((apt) => (
+                <tr key={apt.id} className="hover:bg-teal-50/30">
+                  <td className="px-6 py-4 font-medium text-gray-900">{apt.patient_name}</td>
+                  <td className="px-6 py-4 text-gray-700">Dr. {apt.doctor_name}</td>
+                  <td className="px-6 py-4 text-gray-700">{apt.service_name}</td>
+                  <td className="px-6 py-4 text-gray-700">{apt.date}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      apt.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                      apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                      apt.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>{apt.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
 
   const renderContent = () => {
-    switch (activeTab) {
+    switch (activeMenu) {
       case 'users': return renderUsers();
       case 'doctors': return renderDoctors();
       case 'services': return renderServices();
@@ -764,133 +560,120 @@ const AdminDashboard = () => {
     }
   };
 
-  const getTitle = () => {
-    switch (activeTab) {
+  const getPageTitle = () => {
+    switch (activeMenu) {
       case 'users': return 'User Management';
       case 'doctors': return 'Doctor Management';
       case 'services': return 'Service Management';
       case 'appointments': return 'Appointments';
-      default: return 'Admin Dashboard';
+      default: return 'Dashboard';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-slate-100">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
-        <div className="px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-                <NavIcon name={sidebarOpen ? 'close' : 'menu'} className="w-6 h-6" />
-              </button>
-              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-200">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-              </div>
-              <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
-              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-800">Admin</span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 flex">
+      {/* Sidebar */}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
+        <div className="p-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <button onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
-                  <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg shadow-teal-200">
-                    {userInitials}
-                  </div>
-                  <span className="hidden sm:block text-sm font-medium text-gray-700">{userName}</span>
-                </button>
-
-                {profileDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900">{userName}</p>
-                        <p className="text-xs text-gray-500">{user?.email}</p>
-                      </div>
-                      <div className="py-1">
-                        <Link to="/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                          My Profile
-                        </Link>
-                      </div>
-                      <div className="border-t border-gray-100 py-1">
-                        <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-2 text-sm text-rose-600 hover:bg-rose-50">
-                          Sign Out
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            {!sidebarCollapsed && <span className="text-xl font-bold text-gray-900">MedBook Pro</span>}
           </div>
         </div>
-      </header>
 
-      <div className="flex">
-        {/* Sidebar - Desktop */}
-        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-gray-100 pt-16">
-          <nav className="flex-1 px-4 py-6 space-y-1">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === item.id
-                    ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-200'
-                    : 'text-gray-600 hover:bg-teal-50 hover:text-teal-700'
-                }`}
-              >
-                <NavIcon name={item.icon} className="w-5 h-5" />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
+        <nav className="flex-1 p-4 space-y-1">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveMenu(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                activeMenu === item.id
+                  ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-teal-50 hover:text-teal-700'
+              }`}
+            >
+              <NavIcon name={item.icon} className="w-5 h-5" />
+              {!sidebarCollapsed && <span>{item.label}</span>}
+            </button>
+          ))}
+        </nav>
 
-        {/* Mobile Sidebar Overlay */}
-        {sidebarOpen && (
-          <>
-            <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-            <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl lg:hidden">
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <span className="text-lg font-bold text-gray-900">Menu</span>
-                <button onClick={() => setSidebarOpen(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
-                  <NavIcon name="close" className="w-5 h-5" />
+        <div className="p-4 border-t border-gray-100">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 transition-all"
+          >
+            <NavIcon name="logout" className="w-5 h-5" />
+            {!sidebarCollapsed && <span>Logout</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Header */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30">
+          <div className="px-4 sm:px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+                  <NavIcon name="menu" className="w-6 h-6" />
                 </button>
+                <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
               </div>
-              <nav className="flex-1 px-4 py-6 space-y-1">
-                {sidebarItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setSidebarOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      activeTab === item.id
-                        ? 'bg-teal-50 text-teal-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <NavIcon name={item.icon} className="w-5 h-5" />
-                    {item.label}
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <button onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100">
+                    <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">{userInitials}</div>
+                    <span className="hidden sm:block text-sm font-medium text-gray-700">{userName}</span>
                   </button>
-                ))}
-              </nav>
-            </aside>
-          </>
-        )}
-
-        {/* Main Content */}
-        <main className="flex-1 lg:ml-64 min-h-[calc(100vh-4rem)]">
-          <div className="p-4 sm:p-6 lg:p-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">{getTitle()}</h1>
-            {renderContent()}
+                  {profileDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="text-sm font-medium text-gray-900">{userName}</p>
+                          <p className="text-xs text-gray-500">{user?.email}</p>
+                        </div>
+                        <Link to="/" onClick={() => setProfileDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Home</Link>
+                        <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50">Logout</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          {renderContent()}
         </main>
+
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-sm text-gray-500">MedBook Pro - Clinic Appointment System</p>
+            <div className="flex items-center gap-4 text-sm text-gray-400">
+              <span className="flex items-center gap-1">
+                <NavIcon name="shield" className="w-4 h-4 text-emerald-500" />
+                Secure
+              </span>
+              <span>•</span>
+              <span>© {new Date().getFullYear()}</span>
+            </div>
+          </div>
+        </footer>
       </div>
 
       {/* Modal */}
@@ -898,9 +681,7 @@ const AdminDashboard = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
-              <h2 className="text-xl font-bold text-white">
-                {editingItem ? 'Edit' : 'Add'} {modalType.charAt(0).toUpperCase() + modalType.slice(1)}
-              </h2>
+              <h2 className="text-xl font-bold text-white">{editingItem ? 'Edit' : 'Add'} {modalType.charAt(0).toUpperCase() + modalType.slice(1)}</h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {modalType === 'user' && (
@@ -908,20 +689,20 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                      <input type="text" value={formData.first_name || ''} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" required />
+                      <input type="text" value={formData.first_name || ''} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                      <input type="text" value={formData.last_name || ''} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" required />
+                      <input type="text" value={formData.last_name || ''} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" required={!editingItem} />
+                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required={!editingItem} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
                   </div>
                   {isAdmin && (
                     <div>
@@ -939,24 +720,18 @@ const AdminDashboard = () => {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. John Smith" required />
+                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="John Smith" required />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. doctor@clinic.com" required />
+                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="doctor@clinic.com" required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
-                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. +234..." />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password (leave empty for auto-generate)</label>
-                    <input type="password" value={formData.password || ''} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Auto-generated if empty" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
                   </div>
                   <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
-                    <p className="text-sm text-teal-700">
-                      <strong>Note:</strong> Doctor can complete their profile (specialty, services, fee, etc.) after logging in.
-                    </p>
+                    <p className="text-sm text-teal-700"><strong>Note:</strong> Doctor can complete their profile after login.</p>
                   </div>
                 </>
               )}
@@ -984,9 +759,7 @@ const AdminDashboard = () => {
               )}
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => { setShowModal(false); setEditingItem(null); setFormData({}); }} className="px-5 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 font-medium text-gray-700">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl hover:from-teal-600 hover:to-teal-700 font-medium shadow-lg shadow-teal-200 disabled:opacity-50">
-                  {isLoading ? 'Saving...' : 'Save'}
-                </button>
+                <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl hover:from-teal-600 hover:to-teal-700 font-medium shadow-lg">Save</button>
               </div>
             </form>
           </div>
