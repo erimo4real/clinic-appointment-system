@@ -12,4 +12,15 @@ const api = axios.create({
   withCredentials: true,
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const url = error.config?.url || '';
+    if (error.response?.status === 401 && (url === '/auth/me' || url.includes('/auth/me'))) {
+      return Promise.resolve({ data: null });
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
