@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDoctors, fetchAllServices, createUser, updateUser, deleteUser, createDoctor, updateDoctor, deleteDoctor, createService, updateService, deleteService } from '../store/adminSlice';
 import { logoutUser } from '../../auth/store/authSlice';
-import { fetchAllAppointments as fetchAppointments } from '../../appointments/store/appointmentSlice';
+import { fetchAllAppointments as fetchAppointments, fetchMyAppointments } from '../../appointments/store/appointmentSlice';
 import { useToast } from '../../../components/ui/Toast';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
@@ -22,8 +22,9 @@ const NavIcon = ({ name, className }) => {
     edit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />,
     trash: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />,
     search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
-    chevronRight: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />,
     shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+    profile: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+    home: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
@@ -34,167 +35,17 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const AdminDashboard = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const toast = useToast();
+const MainDashboard = () => {
   const { user } = useSelector((state) => state.auth);
-  const { appointments, users, doctors, services, loading, usersLoading, doctorsLoading, appointmentsLoading, servicesLoading } = useSelector((state) => state.admin);
-
-  const [activeMenu, setActiveMenu] = useState('dashboard');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [modalType, setModalType] = useState('');
-  const [formData, setFormData] = useState({});
-
-  const isLoading = loading || usersLoading || doctorsLoading || appointmentsLoading || servicesLoading;
-  const userName = user?.firstName || user?.first_name || user?.username || 'User';
-  const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  const isAdmin = user?.role === 'admin';
-  const ITEMS_PER_PAGE = 10;
-
-  useEffect(() => {
-    dispatch(fetchDashboardStats());
-    dispatch(fetchAllAppointments());
-    dispatch(fetchAllUsers());
-    dispatch(fetchAllDoctors());
-    dispatch(fetchAllServices());
-  }, [dispatch]);
-
-  const handleLogout = async () => {
-    await dispatch(logoutUser());
-    navigate('/login', { replace: true });
-  };
-
-  const menuItems = [
-    { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
-    ...(isAdmin ? [{ id: 'users', icon: 'users', label: 'Users' }] : []),
-    { id: 'doctors', icon: 'doctor', label: 'Doctors' },
-    { id: 'services', icon: 'services', label: 'Services' },
-    { id: 'appointments', icon: 'calendar', label: 'Book' },
-  ];
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (modalType === 'user') {
-        if (editingItem) {
-          await dispatch(updateUser({ id: editingItem.id, data: formData })).unwrap();
-          toast.success('User updated successfully');
-        } else {
-          await dispatch(createUser(formData)).unwrap();
-          toast.success('User created successfully');
-        }
-        dispatch(fetchAllUsers());
-      } else if (modalType === 'doctor') {
-        if (editingItem) {
-          await dispatch(updateDoctor({ id: editingItem.id, data: formData })).unwrap();
-          toast.success('Doctor updated successfully');
-        } else {
-          const result = await dispatch(createDoctor(formData)).unwrap();
-          dispatch(fetchAllDoctors());
-          if (result.password) {
-            toast.success(
-              <div>
-                <p className="font-semibold">Doctor created!</p>
-                <p className="text-sm opacity-90">Password: {result.password}</p>
-              </div>
-            );
-          } else {
-            toast.success('Doctor created successfully');
-          }
-        }
-      } else if (modalType === 'service') {
-        if (editingItem) {
-          await dispatch(updateService({ id: editingItem.id, data: formData })).unwrap();
-          toast.success('Service updated successfully');
-        } else {
-          await dispatch(createService(formData)).unwrap();
-          toast.success('Service created successfully');
-        }
-        dispatch(fetchAllServices());
-      }
-      setShowModal(false);
-      setEditingItem(null);
-      setFormData({});
-    } catch (error) {
-      toast.error(error?.message || 'Something went wrong');
-    }
-  };
-
-  const handleDelete = async (type, id) => {
-    if (!window.confirm(`Delete this ${type}?`)) return;
-    try {
-      if (type === 'user') {
-        await dispatch(deleteUser(id)).unwrap();
-        dispatch(fetchAllUsers());
-      } else if (type === 'doctor') {
-        await dispatch(deleteDoctor(id)).unwrap();
-        dispatch(fetchAllDoctors());
-      } else if (type === 'service') {
-        await dispatch(deleteService(id)).unwrap();
-        dispatch(fetchAllServices());
-      }
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted`);
-    } catch (error) {
-      toast.error(`Error deleting: ${error?.message || error}`);
-    }
-  };
-
-  const openModal = (type, item = null) => {
-    setModalType(type);
-    setEditingItem(item);
-    if (item) {
-      if (type === 'user') {
-        setFormData({ first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || '', phone: item.phone || '', role: item.role || 'patient' });
-      } else if (type === 'doctor') {
-        setFormData({ name: item.name || '', email: item.email || '', phone: item.phone || '' });
-      } else if (type === 'service') {
-        setFormData({ name: item.name || '', description: item.description || '', duration: item.duration || '', price: item.price || '' });
-      }
-    } else {
-      setFormData({});
-    }
-    setSearchTerm('');
-    setCurrentPage(1);
-    setShowModal(true);
-  };
-
-  const filteredUsers = users.filter(u => 
-    (u.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (u.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const filteredDoctors = doctors.filter(d =>
-    (d.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (d.specialty || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const filteredServices = services.filter(s =>
-    (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (s.description || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const filteredAppointments = appointments.filter(apt =>
-    searchTerm === '' ||
-    (apt.patient_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (apt.doctor_name || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { appointments, users, doctors, services } = useSelector((state) => state.admin);
+  const role = user?.role;
 
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
   const completedCount = appointments.filter(a => a.status === 'completed').length;
-  const confirmedCount = appointments.filter(a => a.status === 'confirmed').length;
-  const cancelledCount = appointments.filter(a => a.status === 'cancelled').length;
 
   const appointmentStatusData = [
     { name: 'Pending', value: pendingCount, color: '#f59e0b' },
-    { name: 'Confirmed', value: confirmedCount, color: '#3b82f6' },
     { name: 'Completed', value: completedCount, color: '#10b981' },
-    { name: 'Cancelled', value: cancelledCount, color: '#ef4444' },
   ].filter(d => d.value > 0);
 
   const getWeeklyData = () => {
@@ -211,77 +62,76 @@ const AdminDashboard = () => {
     return weekData;
   };
 
-  const weeklyData = getWeeklyData();
-  const specialtyData = doctors.reduce((acc, doctor) => {
-    const specialty = doctor.specialty || 'General';
-    const existing = acc.find(item => item.name === specialty);
-    if (existing) existing.count += 1;
-    else acc.push({ name: specialty, count: 1 });
-    return acc;
-  }, []);
-
-  const renderDashboard = () => (
+  return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center mb-3">
-            <NavIcon name="users" className="w-5 h-5 text-teal-600" />
-          </div>
-          <p className="text-3xl font-bold text-gray-900">{users.length}</p>
-          <p className="text-sm text-gray-500">Total Users</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
-            <NavIcon name="doctor" className="w-5 h-5 text-emerald-600" />
-          </div>
-          <p className="text-3xl font-bold text-emerald-600">{doctors.length}</p>
-          <p className="text-sm text-gray-500">Doctors</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
-            <NavIcon name="calendar" className="w-5 h-5 text-blue-600" />
-          </div>
-          <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
-          <p className="text-sm text-gray-500">Appointments</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center mb-3">
-            <NavIcon name="services" className="w-5 h-5 text-violet-600" />
-          </div>
-          <p className="text-3xl font-bold text-violet-600">{services.length}</p>
-          <p className="text-sm text-gray-500">Services</p>
-        </div>
+        {(role === 'admin' || role === 'receptionist') && (
+          <>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center mb-3">
+                <NavIcon name="users" className="w-5 h-5 text-teal-600" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{users.length}</p>
+              <p className="text-sm text-gray-500">Total Users</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
+                <NavIcon name="doctor" className="w-5 h-5 text-emerald-600" />
+              </div>
+              <p className="text-3xl font-bold text-emerald-600">{doctors.length}</p>
+              <p className="text-sm text-gray-500">Doctors</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+                <NavIcon name="calendar" className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
+              <p className="text-sm text-gray-500">Appointments</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center mb-3">
+                <NavIcon name="services" className="w-5 h-5 text-violet-600" />
+              </div>
+              <p className="text-3xl font-bold text-violet-600">{services.length}</p>
+              <p className="text-sm text-gray-500">Services</p>
+            </div>
+          </>
+        )}
+        {(role === 'doctor' || role === 'patient') && (
+          <>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+                <NavIcon name="calendar" className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
+              <p className="text-sm text-gray-500">Total Appointments</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center mb-3">
+                <NavIcon name="calendar" className="w-5 h-5 text-amber-600" />
+              </div>
+              <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
+              <p className="text-sm text-gray-500">Pending</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
+                <NavIcon name="check" className="w-5 h-5 text-emerald-600" />
+              </div>
+              <p className="text-3xl font-bold text-emerald-600">{completedCount}</p>
+              <p className="text-sm text-gray-500">Completed</p>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">Appointments by Status</h3>
-          </div>
-          <div className="p-6">
-            {appointmentStatusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={appointmentStatusData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
-                    {appointmentStatusData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip />
-                  <PieChart.Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500">No data</div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">This Week</h3>
           </div>
           <div className="p-6">
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={weeklyData}>
+            <ResponsiveContainer width="100%" height={250}>
+              <AreaChart data={getWeeklyData()}>
                 <defs>
                   <linearGradient id="colorWeek" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8}/>
@@ -300,35 +150,14 @@ const AdminDashboard = () => {
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">Doctors by Specialty</h3>
-          </div>
-          <div className="p-6">
-            {specialtyData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={specialtyData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis type="number" tick={{ fontSize: 12 }} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#10b981" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500">No data</div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">Recent Appointments</h3>
           </div>
-          <div className="p-4">
+          <div className="p-4 max-h-72 overflow-y-auto">
             {appointments.length === 0 ? (
-              <div className="h-64 flex items-center justify-center text-gray-500">No appointments</div>
+              <div className="h-48 flex items-center justify-center text-gray-500">No appointments</div>
             ) : (
-              <div className="space-y-3 max-h-72 overflow-y-auto">
-                {appointments.slice(0, 8).map((apt) => (
+              <div className="space-y-3">
+                {appointments.slice(0, 6).map((apt) => (
                   <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                     <div>
                       <p className="font-medium text-gray-900">{apt.patient_name}</p>
@@ -349,13 +178,23 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+};
 
-  const renderUsers = () => (
+const UsersManagement = ({ openModal, handleDelete, isAdmin }) => {
+  const { users, usersLoading } = useSelector((state) => state.admin);
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredUsers = users.filter(u => 
+    (u.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+          <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
         {isAdmin && (
           <button onClick={() => openModal('user')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
@@ -364,7 +203,7 @@ const AdminDashboard = () => {
         )}
       </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {isLoading ? <LoadingSpinner /> : filteredUsers.length === 0 ? (
+        {usersLoading ? <LoadingSpinner /> : filteredUsers.length === 0 ? (
           <div className="p-12 text-center text-gray-500">No users found</div>
         ) : (
           <table className="w-full">
@@ -373,7 +212,6 @@ const AdminDashboard = () => {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
@@ -388,7 +226,6 @@ const AdminDashboard = () => {
                   </td>
                   <td className="px-6 py-4 text-gray-600">{u.email}</td>
                   <td className="px-6 py-4"><span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium capitalize text-gray-700">{u.role}</span></td>
-                  <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>{u.is_active ? 'Active' : 'Inactive'}</span></td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <button onClick={() => openModal('user', u)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
@@ -403,13 +240,22 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+};
 
-  const renderDoctors = () => (
+const DoctorsManagement = ({ openModal, handleDelete }) => {
+  const { doctors, doctorsLoading } = useSelector((state) => state.admin);
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredDoctors = doctors.filter(d =>
+    (d.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (d.specialty || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+          <input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
         <button onClick={() => openModal('doctor')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
           <NavIcon name="plus" className="w-5 h-5" /> Add Doctor
@@ -453,13 +299,22 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+};
 
-  const renderServices = () => (
+const ServicesManagement = ({ openModal, handleDelete }) => {
+  const { services, servicesLoading } = useSelector((state) => state.admin);
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredServices = services.filter(s =>
+    (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search services..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+          <input type="text" placeholder="Search services..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
         <button onClick={() => openModal('service')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
           <NavIcon name="plus" className="w-5 h-5" /> Add Service
@@ -475,7 +330,6 @@ const AdminDashboard = () => {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
@@ -488,7 +342,6 @@ const AdminDashboard = () => {
                   </td>
                   <td className="px-6 py-4 text-gray-700">{s.duration} min</td>
                   <td className="px-6 py-4 text-emerald-600 font-semibold">₦{s.price?.toLocaleString()}</td>
-                  <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${s.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>{s.is_active ? 'Active' : 'Inactive'}</span></td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <button onClick={() => openModal('service', s)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
@@ -503,13 +356,23 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+};
 
-  const renderAppointments = () => (
+const AppointmentsManagement = () => {
+  const { appointments, appointmentsLoading } = useSelector((state) => state.admin);
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredAppointments = appointments.filter(apt =>
+    searchTerm === '' ||
+    (apt.patient_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (apt.doctor_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search appointments..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+          <input type="text" placeholder="Search appointments..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
       </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -549,31 +412,198 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+};
 
-  const renderContent = () => {
-    switch (activeMenu) {
-      case 'users': return renderUsers();
-      case 'doctors': return renderDoctors();
-      case 'services': return renderServices();
-      case 'appointments': return renderAppointments();
-      default: return renderDashboard();
+const ProfileView = ({ user, userName, userInitials }) => {
+  return (
+    <div className="max-w-2xl">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-8 text-white text-center">
+          <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+            {userInitials}
+          </div>
+          <h2 className="text-2xl font-bold">{userName}</h2>
+          <p className="opacity-80">{user?.email}</p>
+          <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm capitalize">{user?.role}</span>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="flex justify-between items-center py-3 border-b border-gray-100">
+            <span className="text-gray-500">Email</span>
+            <span className="font-medium">{user?.email}</span>
+          </div>
+          <div className="flex justify-between items-center py-3 border-b border-gray-100">
+            <span className="text-gray-500">Phone</span>
+            <span className="font-medium">{user?.phone || 'Not set'}</span>
+          </div>
+          <div className="flex justify-between items-center py-3">
+            <span className="text-gray-500">Role</span>
+            <span className="font-medium capitalize">{user?.role}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MainDashboardWrapper = () => {
+  const { user } = useSelector((state) => state.auth);
+  const role = user?.role;
+
+  return <MainDashboard />;
+};
+
+const AdminDashboard = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { user } = useSelector((state) => state.auth);
+  const { appointments, users, doctors, services, loading, usersLoading, doctorsLoading, appointmentsLoading, servicesLoading } = useSelector((state) => state.admin);
+
+  const [activeMenu, setActiveMenu] = useState('dashboard');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [modalType, setModalType] = useState('');
+  const [formData, setFormData] = useState({});
+
+  const isLoading = loading || usersLoading || doctorsLoading || appointmentsLoading || servicesLoading;
+  const userName = user?.firstName || user?.first_name || user?.username || 'User';
+  const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const isAdmin = user?.role === 'admin';
+  const isReceptionist = user?.role === 'receptionist';
+  const isStaff = isAdmin || isReceptionist;
+
+  useEffect(() => {
+    dispatch(fetchDashboardStats());
+    dispatch(fetchAllAppointments());
+    dispatch(fetchAllUsers());
+    dispatch(fetchAllDoctors());
+    dispatch(fetchAllServices());
+  }, [dispatch]);
+
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    navigate('/login', { replace: true });
+  };
+
+  const menuItems = [
+    { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
+    { id: 'users', icon: 'users', label: 'Users', roles: ['admin'] },
+    { id: 'doctors', icon: 'doctor', label: 'Doctors', roles: ['admin', 'receptionist'] },
+    { id: 'services', icon: 'services', label: 'Services', roles: ['admin', 'receptionist'] },
+    { id: 'appointments', icon: 'calendar', label: 'Appointments', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
+    { id: 'profile', icon: 'profile', label: 'My Profile', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
+  ];
+
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(user?.role));
+
+  const openModal = (type, item = null) => {
+    setModalType(type);
+    setEditingItem(item);
+    if (item) {
+      if (type === 'user') {
+        setFormData({ first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || '', phone: item.phone || '', role: item.role || 'patient' });
+      } else if (type === 'doctor') {
+        setFormData({ name: item.name || '', email: item.email || '', phone: item.phone || '' });
+      } else if (type === 'service') {
+        setFormData({ name: item.name || '', description: item.description || '', duration: item.duration || '', price: item.price || '' });
+      }
+    } else {
+      setFormData({});
+    }
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (modalType === 'user') {
+        if (editingItem) {
+          await dispatch(updateUser({ id: editingItem.id, data: formData })).unwrap();
+          toast.success('User updated');
+        } else {
+          await dispatch(createUser(formData)).unwrap();
+          toast.success('User created');
+        }
+        dispatch(fetchAllUsers());
+      } else if (modalType === 'doctor') {
+        if (editingItem) {
+          await dispatch(updateDoctor({ id: editingItem.id, data: formData })).unwrap();
+          toast.success('Doctor updated');
+        } else {
+          const result = await dispatch(createDoctor(formData)).unwrap();
+          dispatch(fetchAllDoctors());
+          if (result.password) {
+            toast.success(<div><p>Doctor created!</p><p className="text-sm">Password: {result.password}</p></div>);
+          } else {
+            toast.success('Doctor created');
+          }
+        }
+      } else if (modalType === 'service') {
+        if (editingItem) {
+          await dispatch(updateService({ id: editingItem.id, data: formData })).unwrap();
+          toast.success('Service updated');
+        } else {
+          await dispatch(createService(formData)).unwrap();
+          toast.success('Service created');
+        }
+        dispatch(fetchAllServices());
+      }
+      setShowModal(false);
+      setEditingItem(null);
+      setFormData({});
+    } catch (error) {
+      toast.error(error?.message || 'Error');
+    }
+  };
+
+  const handleDelete = async (type, id) => {
+    if (!window.confirm(`Delete this ${type}?`)) return;
+    try {
+      if (type === 'user') {
+        await dispatch(deleteUser(id)).unwrap();
+        dispatch(fetchAllUsers());
+      } else if (type === 'doctor') {
+        await dispatch(deleteDoctor(id)).unwrap();
+        dispatch(fetchAllDoctors());
+      } else if (type === 'service') {
+        await dispatch(deleteService(id)).unwrap();
+        dispatch(fetchAllServices());
+      }
+      toast.success(`${type} deleted`);
+    } catch (error) {
+      toast.error(`Error: ${error?.message || error}`);
     }
   };
 
   const getPageTitle = () => {
+    const titles = {
+      dashboard: 'Dashboard',
+      users: 'User Management',
+      doctors: 'Doctor Management',
+      services: 'Service Management',
+      appointments: 'Appointments',
+      profile: 'My Profile',
+    };
+    return titles[activeMenu] || 'Dashboard';
+  };
+
+  const renderContent = () => {
     switch (activeMenu) {
-      case 'users': return 'User Management';
-      case 'doctors': return 'Doctor Management';
-      case 'services': return 'Service Management';
-      case 'appointments': return 'Appointments';
-      default: return 'Dashboard';
+      case 'users': return <UsersManagement openModal={openModal} handleDelete={handleDelete} isAdmin={isAdmin} />;
+      case 'doctors': return <DoctorsManagement openModal={openModal} handleDelete={handleDelete} />;
+      case 'services': return <ServicesManagement openModal={openModal} handleDelete={handleDelete} />;
+      case 'appointments': return <AppointmentsManagement />;
+      case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} />;
+      default: return <MainDashboard />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 flex">
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col w-64 transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -581,15 +611,18 @@ const AdminDashboard = () => {
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
               </svg>
             </div>
-            {!sidebarCollapsed && <span className="text-xl font-bold text-gray-900">MedBook Pro</span>}
+            <div>
+              <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
+              <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+            </div>
           </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveMenu(item.id)}
+              onClick={() => { setActiveMenu(item.id); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeMenu === item.id
                   ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg'
@@ -597,7 +630,7 @@ const AdminDashboard = () => {
               }`}
             >
               <NavIcon name={item.icon} className="w-5 h-5" />
-              {!sidebarCollapsed && <span>{item.label}</span>}
+              <span>{item.label}</span>
             </button>
           ))}
         </nav>
@@ -608,7 +641,7 @@ const AdminDashboard = () => {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 transition-all"
           >
             <NavIcon name="logout" className="w-5 h-5" />
-            {!sidebarCollapsed && <span>Logout</span>}
+            <span>Logout</span>
           </button>
         </div>
       </aside>
@@ -630,26 +663,24 @@ const AdminDashboard = () => {
                 </button>
                 <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <button onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100">
-                    <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">{userInitials}</div>
-                    <span className="hidden sm:block text-sm font-medium text-gray-700">{userName}</span>
-                  </button>
-                  {profileDropdownOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                        <div className="px-4 py-2 border-b border-gray-100">
-                          <p className="text-sm font-medium text-gray-900">{userName}</p>
-                          <p className="text-xs text-gray-500">{user?.email}</p>
-                        </div>
-                        <Link to="/" onClick={() => setProfileDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Home</Link>
-                        <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50">Logout</button>
+              <div className="relative">
+                <button onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100">
+                  <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">{userInitials}</div>
+                  <span className="hidden sm:block text-sm font-medium text-gray-700">{userName}</span>
+                </button>
+                {profileDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">{userName}</p>
+                        <p className="text-xs text-gray-500">{user?.email}</p>
                       </div>
-                    </>
-                  )}
-                </div>
+                      <button onClick={() => { setActiveMenu('profile'); setProfileDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</button>
+                      <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50">Logout</button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -681,7 +712,7 @@ const AdminDashboard = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
-              <h2 className="text-xl font-bold text-white">{editingItem ? 'Edit' : 'Add'} {modalType.charAt(0).toUpperCase() + modalType.slice(1)}</h2>
+              <h2 className="text-xl font-bold text-white">{editingItem ? 'Edit' : 'Add'} {modalType}</h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {modalType === 'user' && (
@@ -700,16 +731,13 @@ const AdminDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required={!editingItem} />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
-                  </div>
                   {isAdmin && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                       <select value={formData.role || 'patient'} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
                         <option value="patient">Patient</option>
                         <option value="receptionist">Receptionist</option>
+                        <option value="doctor">Doctor</option>
                         <option value="admin">Admin</option>
                       </select>
                     </div>
@@ -720,18 +748,11 @@ const AdminDashboard = () => {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="John Smith" required />
+                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="doctor@clinic.com" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
-                  </div>
-                  <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
-                    <p className="text-sm text-teal-700"><strong>Note:</strong> Doctor can complete their profile after login.</p>
+                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
                   </div>
                 </>
               )}
@@ -740,10 +761,6 @@ const AdminDashboard = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
                     <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea value={formData.description || ''} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full h-20 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>

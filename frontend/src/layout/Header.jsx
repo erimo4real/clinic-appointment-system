@@ -247,12 +247,12 @@ const Header = ({ user: propUser, onLogout }) => {
               </>
             )}
             
-            {isAuthenticated && (user?.role === 'admin' || user?.role === 'receptionist') && (
+            {isAuthenticated && (
               <Link 
-                to="/admin" 
+                to="/dashboard" 
                 className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
               >
-                Admin Panel
+                Dashboard
               </Link>
             )}
           </div>
@@ -311,15 +311,13 @@ const Header = ({ user: propUser, onLogout }) => {
               <hr className="my-2" />
               {isAuthenticated ? (
                 <>
-                  {user?.role === 'admin' && (
-                    <Link 
-                      to="/admin" 
-                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium text-center"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Admin Panel
-                    </Link>
-                  )}
+                  <Link 
+                    to="/dashboard" 
+                    className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium text-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
                   <Link 
                     to="/profile" 
                     className="px-3 py-2 text-gray-600 rounded-lg text-sm font-medium"

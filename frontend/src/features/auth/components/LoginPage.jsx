@@ -48,14 +48,7 @@ const LoginPage = () => {
         }
       }
       
-      const userRole = result.payload?.user?.role;
-      if (userRole === 'admin') {
-        navigate('/admin');
-      } else if (userRole === 'doctor') {
-        navigate('/profile');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     }
   };
 
