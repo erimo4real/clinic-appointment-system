@@ -6,11 +6,15 @@ const API_URL = process.env.REACT_APP_API_URL
 
 const getToken = () => {
   const cookies = document.cookie.split(';');
+  let token = null;
   for (let cookie of cookies) {
     const [name, value] = cookie.trim().split('=');
-    if (name === 'token' && value) return value;
+    if ((name === 'token' || name === 'auth_token') && value) {
+      token = value;
+      break;
+    }
   }
-  return null;
+  return token;
 };
 
 const api = axios.create({
