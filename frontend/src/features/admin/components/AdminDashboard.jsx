@@ -434,8 +434,8 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast }) => 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateProfile(formData);
-      dispatch(fetchCurrentUser());
+      const result = await updateProfile(formData);
+      await dispatch(fetchCurrentUser()).unwrap();
       setIsEditing(false);
       toast.success('Profile updated successfully');
     } catch (error) {
