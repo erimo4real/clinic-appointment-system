@@ -422,7 +422,7 @@ const AppointmentsManagement = () => {
   );
 };
 
-const ProfileView = ({ user, userName, userInitials, updateProfile, toast }) => {
+const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispatch }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: user?.firstName || '',
@@ -432,8 +432,8 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast }) => 
     date_of_birth: user?.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
   });
   const [saving, setSaving] = useState(false);
-  const [profileImage, setProfileImage] = useState(user?.profileImage || null);
   const [imagePreview, setImagePreview] = useState(user?.profileImage || null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     setFormData({
@@ -443,17 +443,25 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast }) => 
       address: user?.address || '',
       date_of_birth: user?.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
     });
-    setProfileImage(user?.profileImage || null);
     setImagePreview(user?.profileImage || null);
   }, [user]);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         setImagePreview(reader.result);
-        setProfileImage(reader.result);
+        setUploadingImage(true);
+        try {
+          await updateProfile({ profileImage: reader.result });
+          toast.success('Profile image updated');
+        } catch (error) {
+          toast.error('Failed to update profile image');
+          setImagePreview(user?.profileImage || null);
+        } finally {
+          setUploadingImage(false);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -462,11 +470,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast }) => 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const dataToSend = { ...formData };
-      if (profileImage && profileImage.startsWith('data:')) {
-        dataToSend.profileImage = profileImage;
-      }
-      await updateProfile(dataToSend);
+      await updateProfile(formData);
       setIsEditing(false);
       toast.success('Profile updated successfully');
     } catch (error) {
@@ -489,19 +493,28 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast }) => 
                   {userInitials}
                 </div>
               )}
-              {isEditing && (
-                <label className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg cursor-pointer hover:bg-gray-100">
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+              <label className={`absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg cursor-pointer hover:bg-gray-100 ${uploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={uploadingImage} />
+                {uploadingImage ? (
+                  <svg className="w-5 h-5 text-teal-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
                   <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                </label>
-              )}
+                )}
+              </label>
             </div>
             <div className="text-center md:text-left text-white">
               <h2 className="text-2xl font-bold">{userName}</h2>
               <p className="opacity-80">{user?.email}</p>
+              <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm capitalize">{user?.role}</span>
+            </div>
+          </div>
+        </div>
               <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm capitalize">{user?.role}</span>
             </div>
           </div>
@@ -754,7 +767,7 @@ const AdminDashboard = () => {
       case 'doctors': return <DoctorsManagement openModal={openModal} handleDelete={handleDelete} />;
       case 'services': return <ServicesManagement openModal={openModal} handleDelete={handleDelete} />;
       case 'appointments': return <AppointmentsManagement />;
-      case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} updateProfile={(data) => dispatch(updateProfile(data)).unwrap()} toast={toast} />;
+      case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} updateProfile={(data) => dispatch(updateProfile(data)).unwrap()} toast={toast} dispatch={dispatch} />;
       default: return <MainDashboard />;
     }
   };
