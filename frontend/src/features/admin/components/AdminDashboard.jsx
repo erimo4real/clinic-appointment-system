@@ -414,7 +414,7 @@ const AppointmentsManagement = () => {
   );
 };
 
-const ProfileView = ({ user, userName, userInitials, updateProfile }) => {
+const ProfileView = ({ user, userName, userInitials, updateProfile, toast }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: user?.firstName || '',
@@ -666,7 +666,7 @@ const AdminDashboard = () => {
       case 'doctors': return <DoctorsManagement openModal={openModal} handleDelete={handleDelete} />;
       case 'services': return <ServicesManagement openModal={openModal} handleDelete={handleDelete} />;
       case 'appointments': return <AppointmentsManagement />;
-      case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} updateProfile={(data) => dispatch(updateProfile(data)).unwrap()} />;
+      case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} updateProfile={(data) => dispatch(updateProfile(data)).unwrap()} toast={toast} />;
       default: return <MainDashboard />;
     }
   };
