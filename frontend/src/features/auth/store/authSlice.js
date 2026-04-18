@@ -29,12 +29,12 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
 export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, { rejectWithValue }) => {
   try {
     const response = await api.get('/auth/me');
-    return response.data;
-  } catch (error) {
-    if (error.response?.status === 401 || error.__authError) {
+    if (!response.data || !response.data.email) {
       return rejectWithValue(null);
     }
-    return rejectWithValue(error.response?.data?.message || 'Session expired');
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(null);
   }
 });
 
@@ -123,7 +123,7 @@ const authSlice = createSlice({
           state.isAuthenticated = false;
         }
       })
-      .addCase(fetchCurrentUser.rejected, (state) => {
+      .addCase(fetchCurrentUser.rejected, (state, action) => {
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;

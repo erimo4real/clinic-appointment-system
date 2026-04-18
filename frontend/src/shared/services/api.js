@@ -34,9 +34,6 @@ api.interceptors.response.use(
   (error) => {
     const url = error.config?.url || '';
     if (error.response?.status === 401) {
-      if (url === '/auth/me' || url.includes('/auth/me')) {
-        return Promise.resolve({ data: null });
-      }
       return Promise.resolve({ data: null, __authError: true });
     }
     return Promise.reject(error);
