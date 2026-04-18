@@ -122,6 +122,12 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+
+  /** URL to user's profile image */
+  profileImage: {
+    type: String,
+    default: null
+  },
   
   // ==========================================
   // TIMESTAMPS

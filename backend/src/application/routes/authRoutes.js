@@ -193,7 +193,7 @@ router.get('/me', auth, async (req, res) => {
  */
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { first_name, last_name, phone } = req.body;
+    const { first_name, last_name, phone, address, date_of_birth, profileImage } = req.body;
     
     // Find and update the user
     const user = await User.findById(req.user._id);
@@ -205,6 +205,9 @@ router.put('/profile', auth, async (req, res) => {
     if (first_name) user.firstName = first_name;
     if (last_name) user.lastName = last_name;
     if (phone) user.phone = phone;
+    if (address) user.address = address;
+    if (date_of_birth) user.dateOfBirth = date_of_birth;
+    if (profileImage) user.profileImage = profileImage;
 
     await user.save();
     
@@ -217,6 +220,9 @@ router.put('/profile', auth, async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         phone: user.phone,
+        address: user.address,
+        dateOfBirth: user.dateOfBirth,
+        profileImage: user.profileImage,
         role: user.role
       }
     });

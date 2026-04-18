@@ -455,6 +455,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
         setUploadingImage(true);
         try {
           await updateProfile({ profileImage: reader.result });
+          dispatch(fetchCurrentUser());
           toast.success('Profile image updated');
         } catch (error) {
           toast.error('Failed to update profile image');
