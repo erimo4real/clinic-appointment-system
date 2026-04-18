@@ -256,10 +256,6 @@ router.put('/profile', auth, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 /**
  * POST /api/auth/forgot-password
