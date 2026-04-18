@@ -8,7 +8,7 @@ const getToken = () => {
   const cookies = document.cookie.split(';');
   for (let cookie of cookies) {
     const [name, value] = cookie.trim().split('=');
-    if (name === 'token') return value;
+    if (name === 'token' && value) return value;
   }
   return null;
 };
@@ -23,7 +23,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = getToken();
-  if (token) {
+  if (token && token.length > 0) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
