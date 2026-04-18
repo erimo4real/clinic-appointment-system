@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDoctors, fetchAllServices, createUser, updateUser, deleteUser, createDoctor, updateDoctor, deleteDoctor, createService, updateService, deleteService } from '../store/adminSlice';
-import { logoutUser, updateProfile } from '../../auth/store/authSlice';
+import { logoutUser, updateProfile, fetchCurrentUser } from '../../auth/store/authSlice';
 import { fetchAllAppointments as fetchAppointments, fetchMyAppointments } from '../../appointments/store/appointmentSlice';
 import { useToast } from '../../../components/ui/Toast';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
@@ -435,6 +435,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast }) => 
     setSaving(true);
     try {
       await updateProfile(formData);
+      dispatch(fetchCurrentUser());
       setIsEditing(false);
       toast.success('Profile updated successfully');
     } catch (error) {
