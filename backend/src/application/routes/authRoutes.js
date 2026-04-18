@@ -171,7 +171,15 @@ router.post('/login', validateLogin, async (req, res) => {
 router.get('/me', auth, async (req, res) => {
   try {
     const user = await AuthService.getCurrentUser(req.user._id);
-    res.json(user);
+    
+    // If user is a doctor, also fetch their doctor profile
+    let doctorProfile = null;
+    if (user.role === 'doctor') {
+      const Doctor = require('../../domain/entities/Doctor');
+      doctorProfile = await Doctor.findOne({ user: user._id }).populate('user', 'firstName lastName email');
+    }
+    
+    res.json({ ...user.toObject(), doctorProfile });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -193,7 +201,7 @@ router.get('/me', auth, async (req, res) => {
  */
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { first_name, last_name, phone, address, date_of_birth, profileImage } = req.body;
+    const { first_name, last_name, phone, address, date_of_birth, profileImage, specialty, qualification, experience, consultationFee, bio, isAvailable } = req.body;
     
     // Find and update the user
     const user = await User.findById(req.user._id);
@@ -211,6 +219,23 @@ router.put('/profile', auth, async (req, res) => {
 
     await user.save();
     
+    // If user is a doctor, also update their doctor profile
+    let doctorProfile = null;
+    if (user.role === 'doctor') {
+      const Doctor = require('../../domain/entities/Doctor');
+      const doctor = await Doctor.findOne({ user: user._id });
+      if (doctor) {
+        if (specialty) doctor.specialty = specialty;
+        if (qualification) doctor.qualification = qualification;
+        if (experience !== undefined) doctor.experience = experience;
+        if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
+        if (bio !== undefined) doctor.bio = bio;
+        if (isAvailable !== undefined) doctor.isAvailable = isAvailable;
+        await doctor.save();
+        doctorProfile = doctor;
+      }
+    }
+    
     res.json({
       message: 'Profile updated successfully',
       user: {
@@ -223,9 +248,14 @@ router.put('/profile', auth, async (req, res) => {
         address: user.address,
         dateOfBirth: user.dateOfBirth,
         profileImage: user.profileImage,
-        role: user.role
+        role: user.role,
+        doctorProfile
       }
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

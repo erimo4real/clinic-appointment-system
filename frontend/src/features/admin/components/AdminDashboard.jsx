@@ -430,6 +430,12 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
     phone: user?.phone || '',
     address: user?.address || '',
     date_of_birth: user?.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
+    specialty: user?.doctorProfile?.specialty || '',
+    qualification: user?.doctorProfile?.qualification || '',
+    experience: user?.doctorProfile?.experience || '',
+    consultationFee: user?.doctorProfile?.consultationFee || '',
+    bio: user?.doctorProfile?.bio || '',
+    isAvailable: user?.doctorProfile?.isAvailable !== false,
   });
   const [saving, setSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState(user?.profileImage || null);
@@ -442,6 +448,12 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
       phone: user?.phone || '',
       address: user?.address || '',
       date_of_birth: user?.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
+      specialty: user?.doctorProfile?.specialty || '',
+      qualification: user?.doctorProfile?.qualification || '',
+      experience: user?.doctorProfile?.experience || '',
+      consultationFee: user?.doctorProfile?.consultationFee || '',
+      bio: user?.doctorProfile?.bio || '',
+      isAvailable: user?.doctorProfile?.isAvailable !== false,
     });
     setImagePreview(user?.profileImage || null);
   }, [user]);
@@ -552,6 +564,63 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                 <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                 <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} rows={2} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter address" />
               </div>
+              
+              {user?.role === 'doctor' && (
+                <>
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    <h4 className="text-md font-semibold text-gray-900 mb-3">Doctor Information</h4>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                    <select value={formData.specialty || ''} onChange={(e) => setFormData({ ...formData, specialty: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                      <option value="">Select Specialty</option>
+                      <option value="General Medicine">General Medicine</option>
+                      <option value="Cardiology">Cardiology</option>
+                      <option value="Neurology">Neurology</option>
+                      <option value="Orthopedics">Orthopedics</option>
+                      <option value="Pediatrics">Pediatrics</option>
+                      <option value="Dermatology">Dermatology</option>
+                      <option value="Ophthalmology">Ophthalmology</option>
+                      <option value="ENT">ENT</option>
+                      <option value="Gynecology">Gynecology</option>
+                      <option value="Psychiatry">Psychiatry</option>
+                      <option value="Oncology">Oncology</option>
+                      <option value="Gastroenterology">Gastroenterology</option>
+                      <option value="Pulmonology">Pulmonology</option>
+                      <option value="Urology">Urology</option>
+                      <option value="Nephrology">Nephrology</option>
+                      <option value="Endocrinology">Endocrinology</option>
+                      <option value="Rheumatology">Rheumatology</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
+                      <input type="text" value={formData.qualification || ''} onChange={(e) => setFormData({ ...formData, qualification: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. MBBS, MD" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Experience (years)</label>
+                      <input type="number" value={formData.experience || ''} onChange={(e) => setFormData({ ...formData, experience: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" min="0" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Consultation Fee (₦)</label>
+                      <input type="number" value={formData.consultationFee || ''} onChange={(e) => setFormData({ ...formData, consultationFee: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" min="0" />
+                    </div>
+                    <div className="flex items-center pt-6">
+                      <input type="checkbox" id="isAvailable" checked={formData.isAvailable} onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })} className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
+                      <label htmlFor="isAvailable" className="ml-2 text-sm text-gray-700">Available for appointments</label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                    <textarea value={formData.bio || ''} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Brief description about yourself..." />
+                  </div>
+                </>
+              )}
+              
               <div className="flex gap-3 pt-2">
                 <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-colors font-medium disabled:opacity-50">
                   {saving ? 'Saving...' : 'Save Changes'}
@@ -579,10 +648,46 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                 <span className="text-gray-500">Address</span>
                 <span className="font-medium">{user?.address || 'Not set'}</span>
               </div>
-              <div className="flex justify-between items-center py-3">
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
                 <span className="text-gray-500">Role</span>
                 <span className="font-medium capitalize">{user?.role}</span>
               </div>
+              
+              {user?.role === 'doctor' && user?.doctorProfile && (
+                <>
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    <h4 className="text-md font-semibold text-gray-900 mb-3">Doctor Information</h4>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-500">Specialty</span>
+                    <span className="font-medium">{user.doctorProfile.specialty || 'Not set'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-500">Qualification</span>
+                    <span className="font-medium">{user.doctorProfile.qualification || 'Not set'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-500">Experience</span>
+                    <span className="font-medium">{user.doctorProfile.experience ? `${user.doctorProfile.experience} years` : 'Not set'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-500">Consultation Fee</span>
+                    <span className="font-medium text-teal-600">₦{user.doctorProfile.consultationFee?.toLocaleString() || 'Not set'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-500">Status</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.doctorProfile.isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {user.doctorProfile.isAvailable ? 'Available' : 'Unavailable'}
+                    </span>
+                  </div>
+                  {user.doctorProfile.bio && (
+                    <div className="py-3">
+                      <span className="text-gray-500 text-sm">Bio</span>
+                      <p className="font-medium mt-1">{user.doctorProfile.bio}</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
