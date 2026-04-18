@@ -515,10 +515,6 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
             </div>
           </div>
         </div>
-              <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm capitalize">{user?.role}</span>
-            </div>
-          </div>
-        </div>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
