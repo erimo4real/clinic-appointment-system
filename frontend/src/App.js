@@ -20,27 +20,9 @@ const LoadingScreen = () => (
   </div>
 );
 
-const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
-  
-  if (loading) return <LoadingScreen />;
-  if (isAuthenticated && user) return <Navigate to="/dashboard" replace />;
-  
-  return children;
-};
-
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
-  
-  if (loading) return <LoadingScreen />;
-  if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
-  
-  return children;
-};
-
 const App = () => {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading, isAuthenticated, user } = useSelector((state) => state.auth);
   const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
@@ -55,16 +37,16 @@ const App = () => {
     <ThemeProvider>
       <ToastProvider>
         <Routes>
-          {/* Public Routes */}
+          {/* Public Routes - no auth check needed */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/doctors" element={<DoctorsPage />} />
-          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          <Route path="/login" element={isAuthenticated && user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+          <Route path="/register" element={isAuthenticated && user ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
           <Route path="/booking" element={<BookingPage />} />
 
           {/* All Logged-in Users - Same Dashboard */}
-          <Route path="/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={!isAuthenticated || !user ? <Navigate to="/login" replace /> : <AdminDashboard />} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
