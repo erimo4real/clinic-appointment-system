@@ -31,6 +31,9 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
     const response = await api.get('/auth/me');
     return response.data;
   } catch (error) {
+    if (error.response?.status === 401 || error.__authError) {
+      return rejectWithValue(null);
+    }
     return rejectWithValue(error.response?.data?.message || 'Session expired');
   }
 });
@@ -112,8 +115,13 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
-        state.isAuthenticated = true;
+        if (action.payload && action.payload.email) {
+          state.user = action.payload;
+          state.isAuthenticated = true;
+        } else {
+          state.user = null;
+          state.isAuthenticated = false;
+        }
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
         state.loading = false;

@@ -21,10 +21,10 @@ const LoadingScreen = () => (
 );
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
   
   if (loading) return <LoadingScreen />;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated && user) return <Navigate to="/dashboard" replace />;
   
   return children;
 };
@@ -33,7 +33,7 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
   
   if (loading) return <LoadingScreen />;
-  if (!isAuthenticated && !user) return <Navigate to="/login" replace />;
+  if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
   
   return children;
 };
