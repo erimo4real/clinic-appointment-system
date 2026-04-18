@@ -271,6 +271,7 @@ const DoctorsManagement = ({ openModal, handleDelete }) => {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fee</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
@@ -279,12 +280,19 @@ const DoctorsManagement = ({ openModal, handleDelete }) => {
                 <tr key={d.id} className="hover:bg-teal-50/30">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">{(d.name || 'D')[0]}</div>
-                      <span className="font-medium text-gray-900">Dr. {d.name}</span>
+                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">{(d.first_name || d.user?.firstName || 'D')[0]}</div>
+                      <span className="font-medium text-gray-900">Dr. {d.first_name || d.last_name ? `${d.first_name || ''} ${d.last_name || ''}`.trim() : d.name || 'Doctor'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4"><span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">{d.specialty || 'General'}</span></td>
-                  <td className="px-6 py-4 text-emerald-600 font-semibold">₦{d.consultation_fee?.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-emerald-600 font-semibold">₦{d.consultation_fee || d.consultationFee?.toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    {d.isAvailable ? (
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Available</span>
+                    ) : (
+                      <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Unavailable</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
@@ -573,12 +581,22 @@ const AdminDashboard = () => {
       if (type === 'user') {
         setFormData({ first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || '', phone: item.phone || '', role: item.role || 'patient' });
       } else if (type === 'doctor') {
-        setFormData({ name: item.name || '', email: item.email || '', phone: item.phone || '' });
+        setFormData({ 
+          first_name: item.first_name || item.user?.firstName || '',
+          last_name: item.last_name || item.user?.lastName || '',
+          email: item.email || item.user?.email || '',
+          specialty: item.specialty || '',
+          qualification: item.qualification || '',
+          experience: item.experience || '',
+          consultationFee: item.consultationFee || '',
+          bio: item.bio || '',
+          isAvailable: item.isAvailable !== false
+        });
       } else if (type === 'service') {
         setFormData({ name: item.name || '', description: item.description || '', duration: item.duration || '', price: item.price || '' });
       }
     } else {
-      setFormData({});
+      setFormData({ isAvailable: true });
     }
     setShowModal(true);
   };
@@ -818,13 +836,65 @@ const AdminDashboard = () => {
               )}
               {modalType === 'doctor' && (
                 <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                      <input type="text" value={formData.first_name || ''} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                      <input type="text" value={formData.last_name || ''} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required />
+                    <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required={!editingItem} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                    <select value={formData.specialty || ''} onChange={(e) => setFormData({ ...formData, specialty: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required>
+                      <option value="">Select Specialty</option>
+                      <option value="General Medicine">General Medicine</option>
+                      <option value="Cardiology">Cardiology</option>
+                      <option value="Neurology">Neurology</option>
+                      <option value="Orthopedics">Orthopedics</option>
+                      <option value="Pediatrics">Pediatrics</option>
+                      <option value="Dermatology">Dermatology</option>
+                      <option value="Ophthalmology">Ophthalmology</option>
+                      <option value="ENT">ENT</option>
+                      <option value="Gynecology">Gynecology</option>
+                      <option value="Psychiatry">Psychiatry</option>
+                      <option value="Oncology">Oncology</option>
+                      <option value="Gastroenterology">Gastroenterology</option>
+                      <option value="Pulmonology">Pulmonology</option>
+                      <option value="Urology">Urology</option>
+                      <option value="Nephrology">Nephrology</option>
+                      <option value="Endocrinology">Endocrinology</option>
+                      <option value="Rheumatology">Rheumatology</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
+                      <input type="text" value={formData.qualification || ''} onChange={(e) => setFormData({ ...formData, qualification: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. MBBS, MD, MS" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+                      <input type="number" value={formData.experience || ''} onChange={(e) => setFormData({ ...formData, experience: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" min="0" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Consultation Fee (₦)</label>
+                    <input type="number" value={formData.consultationFee || ''} onChange={(e) => setFormData({ ...formData, consultationFee: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" required min="0" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio / Description</label>
+                    <textarea value={formData.bio || ''} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Brief description about the doctor..." />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="isAvailable" checked={formData.isAvailable !== false} onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })} className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
+                    <label htmlFor="isAvailable" className="text-sm text-gray-700">Available for appointments</label>
                   </div>
                 </>
               )}
