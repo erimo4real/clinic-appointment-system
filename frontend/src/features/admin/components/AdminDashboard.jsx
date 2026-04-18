@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDoctors, fetchAllServices, createUser, updateUser, deleteUser, createDoctor, updateDoctor, deleteDoctor, createService, updateService, deleteService } from '../store/adminSlice';
-import { logoutUser } from '../../auth/store/authSlice';
+import { logoutUser, updateProfile } from '../../auth/store/authSlice';
 import { fetchAllAppointments as fetchAppointments, fetchMyAppointments } from '../../appointments/store/appointmentSlice';
 import { useToast } from '../../../components/ui/Toast';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
@@ -414,7 +414,36 @@ const AppointmentsManagement = () => {
   );
 };
 
-const ProfileView = ({ user, userName, userInitials }) => {
+const ProfileView = ({ user, userName, userInitials, updateProfile }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    first_name: user?.firstName || '',
+    last_name: user?.lastName || '',
+    phone: user?.phone || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setFormData({
+      first_name: user?.firstName || '',
+      last_name: user?.lastName || '',
+      phone: user?.phone || '',
+    });
+  }, [user]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateProfile(formData);
+      setIsEditing(false);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error(error?.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -426,19 +455,57 @@ const ProfileView = ({ user, userName, userInitials }) => {
           <p className="opacity-80">{user?.email}</p>
           <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm capitalize">{user?.role}</span>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <span className="text-gray-500">Email</span>
-            <span className="font-medium">{user?.email}</span>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
+            {!isEditing && (
+              <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium">
+                Edit Profile
+              </button>
+            )}
           </div>
-          <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <span className="text-gray-500">Phone</span>
-            <span className="font-medium">{user?.phone || 'Not set'}</span>
-          </div>
-          <div className="flex justify-between items-center py-3">
-            <span className="text-gray-500">Role</span>
-            <span className="font-medium capitalize">{user?.role}</span>
-          </div>
+          
+          {isEditing ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <input type="text" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input type="text" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter phone number" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-colors font-medium disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Email</span>
+                <span className="font-medium">{user?.email}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Phone</span>
+                <span className="font-medium">{user?.phone || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between items-center py-3">
+                <span className="text-gray-500">Role</span>
+                <span className="font-medium capitalize">{user?.role}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -599,7 +666,7 @@ const AdminDashboard = () => {
       case 'doctors': return <DoctorsManagement openModal={openModal} handleDelete={handleDelete} />;
       case 'services': return <ServicesManagement openModal={openModal} handleDelete={handleDelete} />;
       case 'appointments': return <AppointmentsManagement />;
-      case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} />;
+      case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} updateProfile={(data) => dispatch(updateProfile(data)).unwrap()} />;
       default: return <MainDashboard />;
     }
   };
