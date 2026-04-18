@@ -565,7 +565,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                 <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} rows={2} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter address" />
               </div>
               
-              {user?.role === 'doctor' && (
+{user?.role === 'doctor' && (
                 <>
                   <div className="border-t border-gray-200 pt-4 mt-4">
                     <h4 className="text-md font-semibold text-gray-900 mb-3">Doctor Information</h4>
