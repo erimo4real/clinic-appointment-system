@@ -90,7 +90,7 @@ router.post('/register', validateRegister, async (req, res) => {
     
     // Send welcome email
     const { subject, html } = emailTemplates.welcomeEmail(result.user);
-    sendEmail(result.user.email, subject, html).catch(err => console.log('Email send failed:', err.message));
+    sendEmail(result.user.email, subject, html).catch(() => {});
     
     // Return user data
     res.status(201).json({ 

@@ -166,7 +166,7 @@ router.post('/', async (req, res) => {
           service_name: service.name,
         };
         const { subject, html } = emailTemplates.appointmentConfirmation(emailData);
-        sendEmail(req.user.email, subject, html).catch(err => console.log('Email send failed:', err.message));
+        sendEmail(req.user.email, subject, html).catch(() => {});
       }
     }
     
@@ -234,7 +234,7 @@ router.delete('/:id', auth, async (req, res) => {
           doctor_name: doctor.user ? `${doctor.user.firstName} ${doctor.user.lastName}` : doctor.specialty,
         };
         const { subject, html } = emailTemplates.appointmentCancelled(emailData);
-        sendEmail(user.email, subject, html).catch(err => console.log('Email send failed:', err.message));
+        sendEmail(user.email, subject, html).catch(() => {});
       }
     }
     

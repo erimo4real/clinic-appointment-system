@@ -6,7 +6,6 @@ const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 const paystackRequest = (method, endpoint, data = null) => {
   return new Promise((resolve, reject) => {
     if (!PAYSTACK_SECRET) {
-      console.log('Paystack not configured - would call:', method, endpoint);
       resolve({ status: true, data: { reference: 'mock_' + Date.now() } });
       return;
     }
@@ -52,7 +51,6 @@ const initializePayment = async (email, amount, appointmentId) => {
     });
     return response;
   } catch (error) {
-    console.error('Paystack init error:', error);
     return { status: false, message: error.message };
   }
 };
@@ -62,7 +60,6 @@ const verifyPayment = async (reference) => {
     const response = await paystackRequest('GET', `/transaction/verify/${reference}`);
     return response;
   } catch (error) {
-    console.error('Paystack verify error:', error);
     return { status: false, message: error.message };
   }
 };
@@ -76,7 +73,6 @@ const chargeAuthorization = async (email, amount, authorizationCode) => {
     });
     return response;
   } catch (error) {
-    console.error('Paystack charge error:', error);
     return { status: false, message: error.message };
   }
 };

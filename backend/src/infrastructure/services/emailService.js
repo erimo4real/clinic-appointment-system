@@ -11,8 +11,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (to, subject, html) => {
   try {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.log('Email not configured - would send to:', to, 'Subject:', subject);
-      return { success: true, message: 'Email service not configured' };
+      return { success: false, message: 'Email service not configured' };
     }
     
     await transporter.sendMail({
@@ -23,7 +22,6 @@ const sendEmail = async (to, subject, html) => {
     });
     return { success: true };
   } catch (error) {
-    console.error('Email error:', error);
     return { success: false, error: error.message };
   }
 };

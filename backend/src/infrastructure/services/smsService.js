@@ -7,8 +7,7 @@ const client = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
 const sendSMS = async (to, message) => {
   try {
     if (!client) {
-      console.log('SMS not configured - would send to:', to, 'Message:', message);
-      return { success: true, message: 'SMS service not configured' };
+      return { success: false, message: 'SMS service not configured' };
     }
 
     const formattedNumber = to.startsWith('+') ? to : `+234${to.slice(1)}`;
@@ -21,7 +20,6 @@ const sendSMS = async (to, message) => {
     
     return { success: true };
   } catch (error) {
-    console.error('SMS error:', error);
     return { success: false, error: error.message };
   }
 };

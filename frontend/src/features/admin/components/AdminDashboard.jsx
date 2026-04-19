@@ -36,17 +36,13 @@ const LoadingSpinner = () => (
 );
 
 const MainDashboard = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { appointments, users, doctors, services } = useSelector((state) => state.admin);
   const role = user?.role;
 
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
   const completedCount = appointments.filter(a => a.status === 'completed').length;
-
-  const appointmentStatusData = [
-    { name: 'Pending', value: pendingCount, color: '#f59e0b' },
-    { name: 'Completed', value: completedCount, color: '#10b981' },
-  ].filter(d => d.value > 0);
+  const cancelledCount = appointments.filter(a => a.status === 'cancelled').length;
 
   const getWeeklyData = () => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -62,108 +58,115 @@ const MainDashboard = () => {
     return weekData;
   };
 
+  const todayAppointments = appointments.filter(a => a.date === new Date().toISOString().split('T')[0]);
+  const pendingAppts = appointments.filter(a => a.status === 'pending');
+  const completedAppts = appointments.filter(a => a.status === 'completed');
+
+  const StatCard = ({ title, value, icon, color, gradient, subtitle, trend }) => (
+    <div className="group bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+      <div className="flex items-start justify-between">
+        <div className={`w-12 h-12 rounded-2xl ${gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+          <NavIcon name={icon} className="w-6 h-6 text-white" />
+        </div>
+        {trend && (
+          <span className={`text-xs font-medium px-2 py-1 rounded-full ${trend > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+            {trend > 0 ? '+' : ''}{trend}%
+          </span>
+        )}
+      </div>
+      <div className="mt-4">
+        <p className="text-3xl font-bold text-gray-900 tracking-tight">{value}</p>
+        <p className="text-sm text-gray-500 mt-1">{title}</p>
+        {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+          <p className="text-gray-500 mt-1">Welcome back! Here's what's happening today.</p>
+        </div>
+        <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
+          <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+          Live
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {(role === 'admin' || role === 'receptionist') && (
           <>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center mb-3">
-                <NavIcon name="users" className="w-5 h-5 text-teal-600" />
-              </div>
-              <p className="text-3xl font-bold text-gray-900">{users.length}</p>
-              <p className="text-sm text-gray-500">Total Users</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
-                <NavIcon name="doctor" className="w-5 h-5 text-emerald-600" />
-              </div>
-              <p className="text-3xl font-bold text-emerald-600">{doctors.length}</p>
-              <p className="text-sm text-gray-500">Doctors</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
-                <NavIcon name="calendar" className="w-5 h-5 text-blue-600" />
-              </div>
-              <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
-              <p className="text-sm text-gray-500">Appointments</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center mb-3">
-                <NavIcon name="services" className="w-5 h-5 text-violet-600" />
-              </div>
-              <p className="text-3xl font-bold text-violet-600">{services.length}</p>
-              <p className="text-sm text-gray-500">Services</p>
-            </div>
+            <StatCard title="Total Users" value={users.length} icon="users" gradient="bg-gradient-to-br from-teal-500 to-teal-600" subtitle="Registered accounts" />
+            <StatCard title="Doctors" value={doctors.length} icon="doctor" gradient="bg-gradient-to-br from-emerald-500 to-emerald-600" subtitle="Active staff" />
+            <StatCard title="Appointments" value={appointments.length} icon="calendar" gradient="bg-gradient-to-br from-blue-500 to-blue-600" subtitle="Total scheduled" />
+            <StatCard title="Services" value={services.length} icon="services" gradient="bg-gradient-to-br from-violet-500 to-violet-600" subtitle="Available" />
           </>
         )}
         {(role === 'doctor' || role === 'patient') && (
           <>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
-                <NavIcon name="calendar" className="w-5 h-5 text-blue-600" />
-              </div>
-              <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
-              <p className="text-sm text-gray-500">Total Appointments</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center mb-3">
-                <NavIcon name="calendar" className="w-5 h-5 text-amber-600" />
-              </div>
-              <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
-              <p className="text-sm text-gray-500">Pending</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
-                <NavIcon name="check" className="w-5 h-5 text-emerald-600" />
-              </div>
-              <p className="text-3xl font-bold text-emerald-600">{completedCount}</p>
-              <p className="text-sm text-gray-500">Completed</p>
-            </div>
+            <StatCard title="Today's Appointments" value={todayAppointments.length} icon="calendar" gradient="bg-gradient-to-br from-blue-500 to-blue-600" />
+            <StatCard title="Pending" value={pendingCount} icon="calendar" gradient="bg-gradient-to-br from-amber-500 to-amber-600" subtitle="Awaiting action" />
+            <StatCard title="Completed" value={completedCount} icon="check" gradient="bg-gradient-to-br from-emerald-500 to-emerald-600" subtitle="This month" />
           </>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">This Week</h3>
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">Appointment Trends</h3>
+            <span className="text-xs text-gray-400">Last 7 days</span>
           </div>
           <div className="p-6">
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={getWeeklyData()}>
                 <defs>
                   <linearGradient id="colorWeek" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8}/>
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Area type="monotone" dataKey="appointments" stroke="#14b8a6" fillOpacity={1} fill="url(#colorWeek)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  formatter={(value) => [value, 'Appointments']}
+                />
+                <Area type="monotone" dataKey="appointments" stroke="#14b8a6" strokeWidth={2} fillOpacity={1} fill="url(#colorWeek)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">Recent Appointments</h3>
+            <span className="text-xs text-gray-400">{appointments.length} total</span>
           </div>
-          <div className="p-4 max-h-72 overflow-y-auto">
+          <div className="p-4 max-h-80 overflow-y-auto">
             {appointments.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-gray-500">No appointments</div>
+              <div className="h-48 flex flex-col items-center justify-center text-gray-400">
+                <NavIcon name="calendar" className="w-12 h-12 mb-3 text-gray-200" />
+                <p className="text-sm">No appointments yet</p>
+                <p className="text-xs mt-1">Schedule your first appointment</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {appointments.slice(0, 6).map((apt) => (
-                  <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                    <div>
-                      <p className="font-medium text-gray-900">{apt.patient_name}</p>
-                      <p className="text-sm text-gray-500">Dr. {apt.doctor_name}</p>
+                  <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                        {(apt.patient_name || 'P')[0]}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">{apt.patient_name}</p>
+                        <p className="text-xs text-gray-500">Dr. {apt.doctor_name} • {apt.date}</p>
+                      </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       apt.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
                       apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                       apt.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
@@ -174,6 +177,24 @@ const MainDashboard = () => {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-5 text-white">
+          <h4 className="font-semibold text-teal-100 text-sm">Pending Appointments</h4>
+          <p className="text-3xl font-bold mt-2">{pendingCount}</p>
+          <p className="text-teal-100 text-sm mt-1">Awaiting confirmation</p>
+        </div>
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white">
+          <h4 className="font-semibold text-emerald-100 text-sm">Completed</h4>
+          <p className="text-3xl font-bold mt-2">{completedCount}</p>
+          <p className="text-emerald-100 text-sm mt-1">This month</p>
+        </div>
+        <div className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl p-5 text-white">
+          <h4 className="font-semibold text-rose-100 text-sm">Cancelled</h4>
+          <p className="text-3xl font-bold mt-2">{cancelledCount}</p>
+          <p className="text-rose-100 text-sm mt-1">No show/cancelled</p>
         </div>
       </div>
     </div>
@@ -189,6 +210,13 @@ const UsersManagement = ({ openModal, handleDelete, isAdmin }) => {
     (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const roleColors = {
+    admin: 'bg-purple-100 text-purple-700',
+    doctor: 'bg-emerald-100 text-emerald-700',
+    receptionist: 'bg-blue-100 text-blue-700',
+    patient: 'bg-amber-100 text-amber-700',
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -197,39 +225,63 @@ const UsersManagement = ({ openModal, handleDelete, isAdmin }) => {
           <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
         {isAdmin && (
-          <button onClick={() => openModal('user')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
+          <button onClick={() => openModal('user')} className="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-sm hover:shadow transition-all">
             <NavIcon name="plus" className="w-5 h-5" /> Add User
           </button>
         )}
       </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {usersLoading ? <LoadingSpinner /> : filteredUsers.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">No users found</div>
+          <div className="p-16 flex flex-col items-center justify-center text-gray-400">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <NavIcon name="users" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No users found</p>
+            <p className="text-sm text-gray-400 mt-1">Try adjusting your search</p>
+          </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-teal-50/30">
+            <tbody className="divide-y divide-gray-50">
+              {filteredUsers.map((u, idx) => (
+                <tr key={u.id} className={`hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">{(u.first_name || 'U')[0]}{(u.last_name || '')[0]}</div>
-                      <span className="font-medium text-gray-900">{u.first_name} {u.last_name}</span>
+                      <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center text-white text-sm font-semibold shadow-sm">{(u.first_name || 'U')[0]}{(u.last_name || '')[0]}</div>
+                      <div>
+                        <p className="font-medium text-gray-900">{u.first_name} {u.last_name}</p>
+                        <p className="text-xs text-gray-400">@{u.username}</p>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{u.email}</td>
-                  <td className="px-6 py-4"><span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium capitalize text-gray-700">{u.role}</span></td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <button onClick={() => openModal('user', u)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
-                      {isAdmin && <button onClick={() => handleDelete('user', u.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>}
+                    <p className="text-sm text-gray-600">{u.email}</p>
+                    <p className="text-xs text-gray-400">{u.phone || 'No phone'}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize ${roleColors[u.role] || 'bg-gray-100 text-gray-700'}`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openModal('user', u)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                        <NavIcon name="edit" className="w-4 h-4" />
+                      </button>
+                      {isAdmin && <button onClick={() => handleDelete('user', u.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
+                        <NavIcon name="trash" className="w-4 h-4" />
+                      </button>}
                     </div>
                   </td>
                 </tr>
@@ -250,6 +302,8 @@ const DoctorsManagement = ({ openModal, handleDelete }) => {
     (d.specialty || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const doctorName = (d) => d.first_name || d.last_name ? `${d.first_name || ''} ${d.last_name || ''}`.trim() : d.name || 'Doctor';
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -257,50 +311,77 @@ const DoctorsManagement = ({ openModal, handleDelete }) => {
           <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
-        <button onClick={() => openModal('doctor')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
+        <button onClick={() => openModal('doctor')} className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-sm hover:shadow transition-all">
           <NavIcon name="plus" className="w-5 h-5" /> Add Doctor
         </button>
       </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {doctorsLoading ? <LoadingSpinner /> : filteredDoctors.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">No doctors found</div>
+          <div className="p-16 flex flex-col items-center justify-center text-gray-400">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <NavIcon name="doctor" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No doctors found</p>
+            <p className="text-sm text-gray-400 mt-1">Add your first doctor to get started</p>
+          </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fee</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Doctor</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Specialty</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Consultation</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredDoctors.map((d) => (
-                <tr key={d.id} className="hover:bg-teal-50/30">
+            <tbody className="divide-y divide-gray-50">
+              {filteredDoctors.map((d, idx) => (
+                <tr key={d.id} className={`hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {d.profileImage ? (
-                        <img src={d.profileImage} alt="Doctor" className="w-10 h-10 rounded-full object-cover" />
+                        <img src={d.profileImage} alt="Doctor" className="w-11 h-11 rounded-xl object-cover shadow-sm" />
                       ) : (
-                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">{(d.first_name || d.user?.firstName || 'D')[0]}</div>
+                        <div className="w-11 h-11 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center text-white text-sm font-semibold shadow-sm">
+                          {(d.first_name || d.user?.firstName || 'D')[0]}
+                        </div>
                       )}
-                      <span className="font-medium text-gray-900">Dr. {d.first_name || d.last_name ? `${d.first_name || ''} ${d.last_name || ''}`.trim() : d.name || 'Doctor'}</span>
+                      <div>
+                        <p className="font-medium text-gray-900">Dr. {doctorName(d)}</p>
+                        <p className="text-xs text-gray-400">{d.qualification || 'No qualification'}</p>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4"><span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">{d.specialty || 'General'}</span></td>
-                  <td className="px-6 py-4 text-emerald-600 font-semibold">₦{d.consultation_fee || d.consultationFee?.toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium">
+                      {d.specialty || 'General Medicine'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-semibold text-emerald-600">₦{(d.consultation_fee || d.consultationFee || 5000).toLocaleString()}</p>
+                  </td>
                   <td className="px-6 py-4">
                     {d.isAvailable ? (
-                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Available</span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium">
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                        Available
+                      </span>
                     ) : (
-                      <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Unavailable</span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-lg text-xs font-medium">
+                        <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
+                        Unavailable
+                      </span>
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete('doctor', d.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openModal('doctor', d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                        <NavIcon name="edit" className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete('doctor', d.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
+                        <NavIcon name="trash" className="w-4 h-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -328,36 +409,53 @@ const ServicesManagement = ({ openModal, handleDelete }) => {
           <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input type="text" placeholder="Search services..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
-        <button onClick={() => openModal('service')} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2">
+        <button onClick={() => openModal('service')} className="bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-sm hover:shadow transition-all">
           <NavIcon name="plus" className="w-5 h-5" /> Add Service
         </button>
       </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {servicesLoading ? <LoadingSpinner /> : filteredServices.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">No services found</div>
+          <div className="p-16 flex flex-col items-center justify-center text-gray-400">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <NavIcon name="services" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No services found</p>
+            <p className="text-sm text-gray-400 mt-1">Add clinic services to offer</p>
+          </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredServices.map((s) => (
-                <tr key={s.id} className="hover:bg-teal-50/30">
+            <tbody className="divide-y divide-gray-50">
+              {filteredServices.map((s, idx) => (
+                <tr key={s.id} className={`hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                   <td className="px-6 py-4">
                     <p className="font-medium text-gray-900">{s.name}</p>
                     <p className="text-sm text-gray-500 truncate max-w-xs">{s.description}</p>
                   </td>
-                  <td className="px-6 py-4 text-gray-700">{s.duration} min</td>
-                  <td className="px-6 py-4 text-emerald-600 font-semibold">₦{s.price?.toLocaleString()}</td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <button onClick={() => openModal('service', s)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><NavIcon name="edit" className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete('service', s.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><NavIcon name="trash" className="w-4 h-4" /></button>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">
+                      <NavIcon name="calendar" className="w-3 h-3" />
+                      {s.duration} min
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-semibold text-violet-600">₦{(s.price || 0).toLocaleString()}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openModal('service', s)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                        <NavIcon name="edit" className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete('service', s.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
+                        <NavIcon name="trash" className="w-4 h-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -379,6 +477,13 @@ const AppointmentsManagement = () => {
     (apt.doctor_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const statusStyles = {
+    completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    pending: 'bg-amber-50 text-amber-700 border-amber-200',
+    cancelled: 'bg-rose-50 text-rose-700 border-rose-200',
+    confirmed: 'bg-blue-50 text-blue-700 border-blue-200',
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -386,35 +491,55 @@ const AppointmentsManagement = () => {
           <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input type="text" placeholder="Search appointments..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
         </div>
+        <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
+          {filteredAppointments.length} appointment{filteredAppointments.length !== 1 ? 's' : ''}
+        </div>
       </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {appointmentsLoading ? <LoadingSpinner /> : filteredAppointments.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">No appointments found</div>
+          <div className="p-16 flex flex-col items-center justify-center text-gray-400">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <NavIcon name="calendar" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No appointments found</p>
+            <p className="text-sm text-gray-400 mt-1">Schedule appointments to see them here</p>
+          </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Patient</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Patient</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Doctor</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredAppointments.map((apt) => (
-                <tr key={apt.id} className="hover:bg-teal-50/30">
-                  <td className="px-6 py-4 font-medium text-gray-900">{apt.patient_name}</td>
-                  <td className="px-6 py-4 text-gray-700">Dr. {apt.doctor_name}</td>
-                  <td className="px-6 py-4 text-gray-700">{apt.service_name}</td>
-                  <td className="px-6 py-4 text-gray-700">{apt.date}</td>
+            <tbody className="divide-y divide-gray-50">
+              {filteredAppointments.map((apt, idx) => (
+                <tr key={apt.id} className={`hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      apt.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
-                      apt.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                      apt.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
-                      'bg-blue-100 text-blue-700'
-                    }`}>{apt.status}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white text-xs font-semibold">
+                        {(apt.patient_name || 'P')[0]}
+                      </div>
+                      <p className="font-medium text-gray-900">{apt.patient_name}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-gray-700">Dr. {apt.doctor_name}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-gray-700">{apt.service_name}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm text-gray-700">{apt.date}</p>
+                    <p className="text-xs text-gray-400">{apt.start_time}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${statusStyles[apt.status] || 'bg-gray-100 text-gray-700'}`}>
+                      {apt.status}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -737,26 +862,6 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                 <span className="font-medium">{user?.address || 'Not set'}</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-gray-500">Role</span>
-                <span className="font-medium capitalize">{user?.role}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-gray-500">Phone</span>
-                <span className="font-medium">{user?.phone || 'Not set'}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-gray-500">Date of Birth</span>
-                <span className="font-medium">{user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : 'Not set'}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-gray-500">Address</span>
-                <span className="font-medium">{user?.address || 'Not set'}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-gray-500">Role</span>
-                <span className="font-medium capitalize">{user?.role}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
                 <span className="text-gray-500">Account Created</span>
                 <span className="font-medium">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Not set'}</span>
               </div>
@@ -860,12 +965,13 @@ const AdminDashboard = () => {
   const isStaff = isAdmin || isReceptionist;
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     dispatch(fetchDashboardStats());
     dispatch(fetchAllAppointments());
     dispatch(fetchAllUsers());
     dispatch(fetchAllDoctors());
     dispatch(fetchAllServices());
-  }, [dispatch]);
+  }, [dispatch, isAuthenticated]);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
@@ -1035,19 +1141,22 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-2">
           {filteredMenuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => { setActiveMenu(item.id); setMobileMenuOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 activeMenu === item.id
-                  ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-teal-50 hover:text-teal-700'
+                  ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25'
+                  : 'text-gray-600 hover:bg-teal-50 hover:text-teal-700 hover:shadow-sm'
               }`}
             >
               <NavIcon name={item.icon} className="w-5 h-5" />
               <span>{item.label}</span>
+              {activeMenu === item.id && (
+                <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full" />
+              )}
             </button>
           ))}
         </nav>
@@ -1071,18 +1180,21 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30">
-          <div className="px-4 sm:px-6 py-4">
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30">
+          <div className="px-4 sm:px-6 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+                <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
                   <NavIcon name="menu" className="w-6 h-6" />
                 </button>
-                <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
+                  <p className="text-xs text-gray-500 hidden sm:block">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
               </div>
               <div className="relative">
-                <button onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100">
-                  <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">{userInitials}</div>
+                <button onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm">{userInitials}</div>
                   <span className="hidden sm:block text-sm font-medium text-gray-700">{userName}</span>
                 </button>
                 {profileDropdownOpen && (
@@ -1126,12 +1238,16 @@ const AdminDashboard = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
-              <h2 className="text-xl font-bold text-white">{editingItem ? 'Edit' : 'Add'} {modalType}</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative px-6 py-5 bg-gradient-to-r from-teal-500 to-teal-600">
+              <button onClick={() => setShowModal(false)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors">
+                <NavIcon name="close" className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold text-white pr-8">{editingItem ? 'Edit' : 'Add'} {modalType === 'user' ? 'User' : modalType === 'doctor' ? 'Doctor' : 'Service'}</h2>
+              <p className="text-teal-100 text-sm mt-1">{editingItem ? 'Update existing record' : 'Fill in the details below'}</p>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
               {modalType === 'user' && (
                 <>
                   <div className="grid grid-cols-2 gap-4">

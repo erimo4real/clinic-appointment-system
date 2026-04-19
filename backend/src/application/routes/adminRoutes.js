@@ -136,7 +136,6 @@ router.post('/sync-doctors', requireAdmin, async (req, res) => {
         
         await doctor.save();
         results.created++;
-        console.log(`Created doctor profile for user: ${user.email}`);
       } catch (err) {
         results.errors.push({ email: user.email, error: err.message });
       }
@@ -341,7 +340,6 @@ router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
 
     res.json(formatted);
   } catch (error) {
-    console.error('Error fetching doctors:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -366,8 +364,6 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     if (!name || !email) {
       return res.status(400).json({ message: 'Name and email are required' });
     }
-    
-    console.log('Creating doctor:', { name, email, phone });
     
     const nameParts = String(name).trim().split(' ');
     const firstName = nameParts[0] || '';
@@ -400,9 +396,7 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
         role: 'doctor',
       });
       
-      console.log('Saving user...');
       await user.save();
-      console.log('User saved:', user._id);
     } else if (user.role !== 'doctor') {
       user.role = 'doctor';
       user.firstName = firstName || user.firstName;
@@ -410,14 +404,12 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
       await user.save();
     }
     
-    console.log('Checking for existing doctor profile...');
     let doctor = await Doctor.findOne({ user: user._id });
     
     if (doctor) {
       return res.status(400).json({ message: 'Doctor profile already exists for this user' });
     }
     
-    console.log('Creating doctor profile...');
     doctor = new Doctor({
       user: user._id,
       specialty: 'General Medicine',
@@ -430,27 +422,14 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
     });
     
     await doctor.save();
-    console.log('Doctor saved successfully:', doctor._id, 'User ID:', user._id);
     
-    // Send welcome email to the new doctor
     if (isNewUser && user.email) {
       const emailContent = emailTemplates.doctorCreated({
         name: `${user.firstName} ${user.lastName}`.trim(),
         email: user.email,
         password: finalPassword,
       });
-      
-      sendEmail(user.email, emailContent.subject, emailContent.html)
-        .then(result => {
-          if (result.success) {
-            console.log('Welcome email sent to doctor:', user.email);
-          } else {
-            console.log('Failed to send welcome email:', result.error);
-          }
-        })
-        .catch(err => {
-          console.log('Error sending welcome email:', err.message);
-        });
+      sendEmail(user.email, emailContent.subject, emailContent.html).catch(() => {});
     }
     
     res.status(201).json({
@@ -466,7 +445,6 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
         : 'Doctor profile created for existing user.',
     });
   } catch (error) {
-    console.error('Error creating doctor:', error);
     res.status(500).json({ message: error.message || 'Failed to create doctor' });
   }
 });
