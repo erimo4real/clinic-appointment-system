@@ -36,9 +36,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const url = error.config?.url || '';
-    if (error.response?.status === 401) {
-      return Promise.resolve({ data: null, __authError: true });
+    const status = error.response?.status;
+    if (status === 401 || status === 403) {
+      return Promise.resolve({ data: null });
     }
     return Promise.reject(error);
   }
