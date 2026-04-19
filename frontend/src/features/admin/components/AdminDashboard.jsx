@@ -33,6 +33,10 @@ const NavIcon = ({ name, className }) => {
     folder: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />,
     currency: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0-1v-1m0 1h-2.599M5.316 11.383a9 9 0 011.828 0M5.316 11.383l-.707.707m0 0l.707.707m-.707-.707l-.707-.707m.707.707l.707.707" />,
     document: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+    clock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    flask: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />,
+    badge: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />,
+    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
@@ -1513,6 +1517,362 @@ const InvoicesPage = () => {
   );
 };
 
+const LabResultsPage = () => {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ patient_name: '', test_type: '', results: '', file: null });
+  const toast = useToast();
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        const res = await api.get('/lab-results');
+        setResults(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResults();
+  }, []);
+
+  const handleUpload = async () => {
+    try {
+      await api.post('/lab-results', formData);
+      toast.success('Lab result uploaded');
+      setShowModal(false);
+      const res = await api.get('/lab-results');
+      setResults(res.data || []);
+    } catch (error) {
+      toast.error('Failed to upload');
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Lab Results</h2>
+            <p className="text-gray-500 text-sm">Upload and view lab reports</p>
+          </div>
+          <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600">
+            Upload Result
+          </button>
+        </div>
+
+        {results.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="flask" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No lab results</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {results.map((r) => (
+              <div key={r.id} className="p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-violet-600 rounded-lg flex items-center justify-center text-white">
+                    <NavIcon name="flask" className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{r.patient_name}</p>
+                    <p className="text-xs text-gray-500">{r.test_type} • {r.date}</p>
+                  </div>
+                </div>
+                <p className="mt-2 text-sm text-gray-600">{r.results}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold mb-4">Upload Lab Result</h3>
+            <input type="text" placeholder="Patient Name" value={formData.patient_name} onChange={(e) => setFormData({...formData, patient_name: e.target.value})} className="w-full mb-3 px-4 py-2 border rounded-xl" />
+            <input type="text" placeholder="Test Type (e.g. Blood Test)" value={formData.test_type} onChange={(e) => setFormData({...formData, test_type: e.target.value})} className="w-full mb-3 px-4 py-2 border rounded-xl" />
+            <textarea placeholder="Results" value={formData.results} onChange={(e) => setFormData({...formData, results: e.target.value})} className="w-full mb-3 px-4 py-2 border rounded-xl" rows={3} />
+            <div className="flex gap-3">
+              <button onClick={handleUpload} className="flex-1 py-2 bg-teal-500 text-white rounded-xl">Upload</button>
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-100 rounded-xl">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const WaitlistPage = () => {
+  const [waitlist, setWaitlist] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWaitlist = async () => {
+      try {
+        const res = await api.get('/waitlist');
+        setWaitlist(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWaitlist();
+  }, []);
+
+  const handleRemove = async (id) => {
+    try {
+      await api.delete(`/waitlist/${id}`);
+      setWaitlist(waitlist.filter(w => w.id !== id));
+    } catch (error) {}
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Waitlist</h2>
+        <p className="text-gray-500 text-sm mb-6">Patients waiting for available slots</p>
+
+        {waitlist.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="clock" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No one on waitlist</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {waitlist.map((w) => (
+              <div key={w.id} className="p-4 bg-gray-50 rounded-xl flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900">{w.patient_name}</p>
+                  <p className="text-sm text-gray-500">{w.preferred_date} • {w.service}</p>
+                </div>
+                <button onClick={() => handleRemove(w.id)} className="text-rose-600 hover:bg-rose-50 px-3 py-1 rounded-lg text-sm">Remove</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const StaffManagementPage = () => {
+  const [staff, setStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ email: '', role: 'receptionist', firstName: '', lastName: '' });
+  const toast = useToast();
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const res = await api.get('/users?role=receptionist');
+        setStaff(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStaff();
+  }, []);
+
+  const handleInvite = async () => {
+    try {
+      await api.post('/auth/invite-staff', formData);
+      toast.success('Invitation sent');
+      setShowModal(false);
+      setFormData({ email: '', role: 'receptionist', firstName: '', lastName: '' });
+    } catch (error) {
+      toast.error('Failed to send invite');
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Staff Management</h2>
+            <p className="text-gray-500 text-sm">Manage clinic staff</p>
+          </div>
+          <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600">Add Staff</button>
+        </div>
+
+        {staff.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="badge" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No staff members</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {staff.map((s) => (
+              <div key={s.id} className="p-4 bg-gray-50 rounded-xl flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold">
+                  {(s.first_name || s.email || 'S')[0]}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">{s.first_name} {s.last_name}</p>
+                  <p className="text-xs text-gray-500 capitalize">{s.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold mb-4">Invite Staff</h3>
+            <input type="text" placeholder="First Name" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} className="w-full mb-3 px-4 py-2 border rounded-xl" />
+            <input type="text" placeholder="Last Name" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} className="w-full mb-3 px-4 py-2 border rounded-xl" />
+            <input type="email" placeholder="Email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full mb-3 px-4 py-2 border rounded-xl" />
+            <select value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})} className="w-full mb-4 px-4 py-2 border rounded-xl">
+              <option value="receptionist">Receptionist</option>
+              <option value="admin">Admin</option>
+            </select>
+            <div className="flex gap-3">
+              <button onClick={handleInvite} className="flex-1 py-2 bg-teal-500 text-white rounded-xl">Send Invite</button>
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-100 rounded-xl">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const NotificationsPage = ({ user }) => {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await api.get('/notifications');
+        setNotifications(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  const markAsRead = async (id) => {
+    try {
+      await api.put(`/notifications/${id}`, { read: true });
+      setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (error) {}
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Notifications</h2>
+        <p className="text-gray-500 text-sm mb-6">Your recent notifications</p>
+
+        {notifications.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="bell" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No notifications</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {notifications.map((n) => (
+              <div key={n.id} onClick={() => markAsRead(n.id)} className={`p-4 rounded-xl cursor-pointer ${n.read ? 'bg-gray-50' : 'bg-teal-50 border-l-4 border-teal-500'}`}>
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-gray-900">{n.title}</p>
+                  <span className="text-xs text-gray-500">{n.time}</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">{n.message}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const FeedbackPage = ({ user }) => {
+  const [submitted, setSubmitted] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const toast = useToast();
+
+  const handleSubmit = async () => {
+    try {
+      await api.post('/feedback', { rating, comment, userId: user?.id });
+      toast.success('Thank you for your feedback!');
+      setSubmitted(true);
+    } catch (error) {
+      toast.error('Failed to submit feedback');
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <NavIcon name="check" className="w-8 h-8 text-emerald-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Thank You!</h2>
+          <p className="text-gray-500 mt-2">Your feedback has been submitted</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Rate Your Visit</h2>
+        <p className="text-gray-500 text-sm mb-6">Help us improve our service</p>
+
+        <div className="mb-6">
+          <p className="text-sm font-medium text-gray-700 mb-2">Rating</p>
+          <div className="flex gap-2">
+            {[1,2,3,4,5].map((star) => (
+              <button key={star} onClick={() => setRating(star)} className="p-2">
+                <NavIcon name="star" className={`w-8 h-8 ${rating >= star ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <p className="text-sm font-medium text-gray-700 mb-2">Comments (Optional)</p>
+          <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={4} placeholder="Tell us about your experience..." className="w-full px-4 py-3 border border-gray-200 rounded-xl" />
+        </div>
+
+        <button onClick={handleSubmit} className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-medium">
+          Submit Feedback
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispatch }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
@@ -2075,22 +2435,32 @@ const AdminDashboard = () => {
     { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
     { id: 'book', icon: 'plus', label: 'Book Appointment', roles: ['patient'] },
     { id: 'book-appointment', icon: 'plus', label: 'New Appointment', roles: ['admin', 'receptionist'] },
+    { id: 'waitlist', icon: 'clock', label: 'Waitlist', roles: ['admin', 'receptionist'] },
     { id: 'prescriptions', icon: 'plus', label: 'Write Prescription', roles: ['doctor'] },
     { id: 'my-patients', icon: 'users', label: 'My Patients', roles: ['doctor'] },
     { id: 'schedule', icon: 'calendar', label: 'My Schedule', roles: ['doctor'] },
     { id: 'medical-records', icon: 'folder', label: 'Medical Records', roles: ['admin', 'receptionist', 'doctor'] },
+    { id: 'lab-results', icon: 'flask', label: 'Lab Results', roles: ['admin', 'receptionist', 'doctor'] },
     { id: 'payments', icon: 'currency', label: 'Payments', roles: ['admin', 'receptionist'] },
     { id: 'invoices', icon: 'document', label: 'Invoices', roles: ['admin', 'receptionist'] },
     { id: 'prescriptions', icon: 'shield', label: 'Prescriptions', roles: ['patient'] },
+    { id: 'feedback', icon: 'star', label: 'Feedback', roles: ['patient'] },
     { id: 'users', icon: 'users', label: 'Users', roles: ['admin'] },
     { id: 'doctors', icon: 'doctor', label: 'Doctors', roles: ['admin', 'receptionist'] },
     { id: 'patients', icon: 'users', label: 'Patients', roles: ['admin', 'receptionist'] },
+    { id: 'staff', icon: 'badge', label: 'Staff', roles: ['admin'] },
     { id: 'services', icon: 'services', label: 'Services', roles: ['admin', 'receptionist'] },
     { id: 'appointments', icon: 'calendar', label: 'Appointments', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
+    { id: 'notifications', icon: 'bell', label: 'Notifications', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
     { id: 'reports', icon: 'chart', label: 'Reports', roles: ['admin'] },
     { id: 'settings', icon: 'settings', label: 'Settings', roles: ['admin'] },
     { id: 'profile', icon: 'profile', label: 'My Profile', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
   ];
+
+  const clockIcon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />;
+  const flaskIcon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />;
+  const badgeIcon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />;
+  const starIcon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />;
 
   const chartIcon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v6m2-10h2a2 2 0 012 2v2m-4-6V5a2 2 0 00-2-2h-2" />;
   const settingsIcon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.3-.92 1.273-1.317 2.053-.658l1.092.873c.67.537 1.432 1.05 2.07 1.05 1.795 0 3.454-2.155 3.454-4.04a4.325 4.325 0 00-4.04-4.278c-.92-.3-1.317 1.273-.658 2.053l-.873 1.092c-.537.67-1.05 1.432-1.05 2.07 0 1.795-2.155 3.454-4.04 3.454-.638 0-1.252-.16-1.8-.443m-6.338 4.855c.3.92 1.273 1.317 2.053.658l1.092-.873c.67-.537 1.432-1.05 2.07-1.05 1.795 0 3.454 2.155 3.454 4.04 0 .864-.293 1.65-.79 2.258" />;
@@ -2233,8 +2603,13 @@ const AdminDashboard = () => {
       case 'reports': return isAdmin ? <ReportsPage /> : <MainDashboard />;
       case 'settings': return isAdmin ? <SettingsPage /> : <MainDashboard />;
       case 'medical-records': return isAdmin || isReceptionist || role === 'doctor' ? <MedicalRecordsPage user={user} /> : <MainDashboard />;
+      case 'lab-results': return isAdmin || isReceptionist || role === 'doctor' ? <LabResultsPage /> : <MainDashboard />;
       case 'payments': return isAdmin || isReceptionist ? <PaymentsPage /> : <MainDashboard />;
       case 'invoices': return isAdmin || isReceptionist ? <InvoicesPage /> : <MainDashboard />;
+      case 'waitlist': return isAdmin || isReceptionist ? <WaitlistPage /> : <MainDashboard />;
+      case 'staff': return isAdmin ? <StaffManagementPage /> : <MainDashboard />;
+      case 'notifications': return <NotificationsPage user={user} />;
+      case 'feedback': return user?.role === 'patient' ? <FeedbackPage user={user} /> : <MainDashboard />;
       case 'prescriptions': return user?.role === 'doctor' ? <WritePrescriptionPage user={user} /> : <PrescriptionsPage user={user} />;
       case 'my-patients': return <MyPatientsPage user={user} />;
       case 'schedule': return <DoctorSchedulePage user={user} />;
