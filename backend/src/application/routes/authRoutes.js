@@ -282,11 +282,6 @@ router.put('/profile', auth, async (req, res) => {
         doctorProfile
       }
     });
-        profileImage: user.profileImage,
-        role: user.role,
-        doctorProfile
-      }
-    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
