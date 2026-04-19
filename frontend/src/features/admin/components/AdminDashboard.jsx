@@ -679,7 +679,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                             <>
                               <input type="time" value={formData.working_hours?.[day]?.start || '09:00'} onChange={(e) => setFormData({ ...formData, working_hours: { ...formData.working_hours, [day]: { ...formData.working_hours?.[day], start: e.target.value } } })} className="text-xs px-1 py-1 border border-gray-200 rounded" />
                               <span className="text-xs">-</span>
-                              <input type="time" value={formData.working_hours?.[day]?.end || '17:00'} onChange={(e) => setFormData({ ...formData, working_hours: { ...formData.working_hours, [day]: { ...formData.working_hours?.[day], end: e.target.value } })} className="text-xs px-1 py-1 border border-gray-200 rounded" />
+                              <input type="time" value={formData.working_hours?.[day]?.end || '17:00'} onChange={(e) => setFormData({ ...formData, working_hours: { ...formData.working_hours, [day]: { ...formData.working_hours?.[day], end: e.target.value } } })} className="text-xs px-1 py-1 border border-gray-200 rounded" />
                             </>
                           )}
                         </div>
