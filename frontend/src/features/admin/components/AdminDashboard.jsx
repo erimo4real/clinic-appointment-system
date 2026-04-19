@@ -795,6 +795,7 @@ const PrescriptionsPage = ({ user }) => {
 
 const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispatch }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState('personal');
   const [formData, setFormData] = useState({
     username: user?.username || '',
     first_name: user?.firstName || '',
@@ -818,6 +819,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
   const [saving, setSaving] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
   const [imagePreview, setImagePreview] = useState(user?.profileImage || null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -880,41 +882,109 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
     }
   };
 
+  const handlePasswordChange = async () => {
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (passwordForm.new_password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await api.put('/auth/change-password', passwordForm);
+      toast.success('Password changed successfully');
+      setShowPasswordModal(false);
+      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to change password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const roleColors = {
+    admin: 'from-purple-500 to-purple-600',
+    doctor: 'from-emerald-500 to-emerald-600',
+    receptionist: 'from-blue-500 to-blue-600',
+    patient: 'from-teal-500 to-teal-600',
+  };
+
+  const tabs = [
+    { id: 'personal', label: 'Personal Info', icon: 'profile' },
+    { id: 'medical', label: 'Medical Info', icon: 'medical' },
+    { id: 'security', label: 'Security', icon: 'shield' },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-8">
+        <div className={`bg-gradient-to-r ${roleColors[user?.role] || 'from-teal-500 to-teal-600'} px-6 py-8`}>
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative">
               {imagePreview ? (
-                <img src={imagePreview} alt="Profile" className="w-32 h-32 rounded-full object-cover border-4 border-white" />
+                <img src={imagePreview} alt="Profile" className="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-lg" />
               ) : (
-                <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center text-4xl font-bold text-white border-4 border-white">
+                <div className="w-32 h-32 bg-white/20 rounded-2xl flex items-center justify-center text-4xl font-bold text-white border-4 border-white">
                   {userInitials}
                 </div>
               )}
-              <label className={`absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg cursor-pointer hover:bg-gray-100 ${uploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
+              <label className={`absolute -bottom-1 -right-1 bg-white p-2 rounded-full shadow-lg cursor-pointer hover:bg-gray-100 ${uploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={uploadingImage} />
                 {uploadingImage ? (
-                  <svg className="w-5 h-5 text-teal-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-teal-600 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 )}
               </label>
             </div>
-            <div className="text-center md:text-left text-white">
+            <div className="text-center md:text-left text-white flex-1">
               <h2 className="text-2xl font-bold">{userName}</h2>
               <p className="opacity-80">{user?.email}</p>
               <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm capitalize">{user?.role}</span>
             </div>
+            <div className="flex gap-2">
+              {!isEditing && (
+                <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium flex items-center gap-2">
+                  <NavIcon name="edit" className="w-4 h-4" />
+                  Edit Profile
+                </button>
+              )}
+            </div>
           </div>
         </div>
+        
+        <div className="border-b border-gray-100">
+          <div className="flex overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === 'security') {
+                    setShowPasswordModal(true);
+                  } else {
+                    setActiveTab(tab.id);
+                  }
+                }}
+                className={`px-6 py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-teal-500 text-teal-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
@@ -1173,6 +1243,67 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
           )}
         </div>
       </div>
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900">
+              <button onClick={() => setShowPasswordModal(false)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors">
+                <NavIcon name="close" className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold text-white">Change Password</h2>
+              <p className="text-gray-300 text-sm mt-1">Ensure your account stays secure</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.current_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                  placeholder="Enter current password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.new_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                  placeholder="Enter new password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirm_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                  placeholder="Confirm new password"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handlePasswordChange}
+                  disabled={changingPassword || !passwordForm.current_password || !passwordForm.new_password || !passwordForm.confirm_password}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-medium disabled:opacity-50 hover:from-teal-600 hover:to-teal-700 transition-all"
+                >
+                  {changingPassword ? 'Changing...' : 'Change Password'}
+                </button>
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1387,7 +1518,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {filteredMenuItems.map((item) => (
             <button
               key={item.id}
@@ -1399,9 +1530,9 @@ const AdminDashboard = () => {
               }`}
             >
               <NavIcon name={item.icon} className="w-5 h-5" />
-              <span>{item.label}</span>
+              <span className="flex-1 text-left">{item.label}</span>
               {activeMenu === item.id && (
-                <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full" />
+                <div className="w-1.5 h-1.5 bg-white rounded-full" />
               )}
             </button>
           ))}
