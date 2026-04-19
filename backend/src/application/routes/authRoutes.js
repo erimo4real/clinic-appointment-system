@@ -179,7 +179,7 @@ router.get('/me', auth, async (req, res) => {
       doctorProfile = await Doctor.findOne({ user: user._id }).populate('user', 'firstName lastName email');
     }
     
-    res.json({ ...user.toObject(), doctorProfile });
+    res.json({ ...user.toObject(), gender: user.gender, doctorProfile });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -201,7 +201,7 @@ router.get('/me', auth, async (req, res) => {
  */
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { first_name, last_name, phone, address, date_of_birth, profileImage, specialty, qualification, experience, consultationFee, bio, isAvailable } = req.body;
+    const { first_name, last_name, email, phone, address, date_of_birth, gender, profileImage, specialty, qualification, experience, consultationFee, bio, isAvailable } = req.body;
     
     // Find and update the user
     const user = await User.findById(req.user._id);
@@ -212,9 +212,11 @@ router.put('/profile', auth, async (req, res) => {
     // Only update fields that are provided
     if (first_name) user.firstName = first_name;
     if (last_name) user.lastName = last_name;
+    if (email) user.email = email;
     if (phone) user.phone = phone;
     if (address) user.address = address;
     if (date_of_birth) user.dateOfBirth = date_of_birth;
+    if (gender) user.gender = gender;
     if (profileImage) user.profileImage = profileImage;
 
     await user.save();

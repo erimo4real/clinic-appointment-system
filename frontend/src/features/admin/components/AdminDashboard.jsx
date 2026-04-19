@@ -428,9 +428,11 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
     username: user?.username || '',
     first_name: user?.firstName || '',
     last_name: user?.lastName || '',
+    email: user?.email || '',
     phone: user?.phone || '',
     address: user?.address || '',
     date_of_birth: user?.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
+    gender: user?.gender || '',
     specialty: user?.doctorProfile?.specialty || '',
     qualification: user?.doctorProfile?.qualification || '',
     experience: user?.doctorProfile?.experience || '',
@@ -558,10 +560,15 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                   <input type="text" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                   <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter phone number" />
                 </div>
-              </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
                   <input type="date" value={formData.date_of_birth} onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
