@@ -129,17 +129,22 @@ const DoctorsPage = () => {
   }, []);
 
   const getDoctorName = (doctor) => {
-    if (doctor.user) {
-      const firstName = doctor.user.firstName || doctor.firstName || '';
-      const lastName = doctor.user.lastName || doctor.lastName || '';
-      const name = `${firstName} ${lastName}`.trim();
-      return name ? `Dr. ${name}` : 'Doctor';
-    }
-    return doctor.fullName || doctor.name || 'Doctor';
+    // Handle various API response structures
+    const firstName = doctor?.user?.firstName || doctor?.firstName || doctor?.first_name || '';
+    const lastName = doctor?.user?.lastName || doctor?.lastName || doctor?.last_name || '';
+    const name = `${firstName} ${lastName}`.trim();
+    return name ? `Dr. ${name}` : doctor?.fullName || doctor?.name || 'Doctor';
   };
   
   const getDoctorImage = (doctor) => {
-    return doctor.profileImage || doctor.user?.profileImage || null;
+    // Check multiple possible locations for profile image
+    const img = doctor?.profileImage 
+      || doctor?.user?.profileImage 
+      || doctor?.user?.profileimage
+      || doctor?.profile_image
+      || doctor?.user?.profile_image
+      || null;
+    return img;
   };
 
   const filteredDoctors = selectedSpecialty
