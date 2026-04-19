@@ -5,6 +5,7 @@ import { fetchDashboardStats, fetchAllAppointments, fetchAllUsers, fetchAllDocto
 import { logoutUser, updateProfile, fetchCurrentUser } from '../../auth/store/authSlice';
 import { fetchAllAppointments as fetchAppointments, fetchMyAppointments } from '../../appointments/store/appointmentSlice';
 import { useToast } from '../../../components/ui/Toast';
+import api from '../../../shared/services/api';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 const NavIcon = ({ name, className }) => {
@@ -23,6 +24,7 @@ const NavIcon = ({ name, className }) => {
     trash: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />,
     search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
     shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+    prescription: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />,
     profile: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
     home: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />,
   };
@@ -104,7 +106,14 @@ const MainDashboard = () => {
             <StatCard title="Services" value={services.length} icon="services" gradient="bg-gradient-to-br from-violet-500 to-violet-600" subtitle="Available" />
           </>
         )}
-        {(role === 'doctor' || role === 'patient') && (
+        {role === 'patient' && (
+          <>
+            <StatCard title="My Appointments" value={appointments.length} icon="calendar" gradient="bg-gradient-to-br from-blue-500 to-blue-600" />
+            <StatCard title="Pending" value={pendingCount} icon="calendar" gradient="bg-gradient-to-br from-amber-500 to-amber-600" subtitle="Awaiting confirmation" />
+            <StatCard title="Completed" value={completedCount} icon="check" gradient="bg-gradient-to-br from-emerald-500 to-emerald-600" subtitle="Seen by doctor" />
+          </>
+        )}
+        {role === 'doctor' && (
           <>
             <StatCard title="Today's Appointments" value={todayAppointments.length} icon="calendar" gradient="bg-gradient-to-br from-blue-500 to-blue-600" />
             <StatCard title="Pending" value={pendingCount} icon="calendar" gradient="bg-gradient-to-br from-amber-500 to-amber-600" subtitle="Awaiting action" />
@@ -197,6 +206,20 @@ const MainDashboard = () => {
           <p className="text-rose-100 text-sm mt-1">No show/cancelled</p>
         </div>
       </div>
+
+      {role === 'patient' && (
+        <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-6 text-white">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-bold">Need to see a doctor?</h3>
+              <p className="text-teal-100 mt-1">Book an appointment with one of our specialists</p>
+            </div>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('navigateToMenu', { detail: 'book' }))} className="px-6 py-3 bg-white text-teal-600 rounded-xl font-medium hover:bg-teal-50 transition-colors">
+              Book Appointment
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -545,6 +568,225 @@ const AppointmentsManagement = () => {
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const BookAppointmentPage = ({ user, onBookComplete }) => {
+  const [doctors, setDoctors] = useState([]);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [notes, setNotes] = useState('');
+  const [booking, setBooking] = useState(false);
+  const toast = useToast();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [doctorsRes, servicesRes] = await Promise.all([
+          api.get('/doctors'),
+          api.get('/services')
+        ]);
+        setDoctors(doctorsRes.data || []);
+        setServices(servicesRes.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleBook = async () => {
+    if (!selectedDoctor || !selectedService || !selectedDate || !selectedTime) {
+      return;
+    }
+    setBooking(true);
+    try {
+      await api.post('/appointments', {
+        doctor_id: selectedDoctor.id,
+        service_id: selectedService.id,
+        date: selectedDate,
+        start_time: selectedTime,
+        notes
+      });
+      toast.success('Appointment booked successfully!');
+      onBookComplete?.();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to book appointment');
+    } finally {
+      setBooking(false);
+    }
+  };
+
+  const availableDoctors = doctors.filter(d => d.isAvailable);
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Book Appointment</h2>
+        <p className="text-gray-500 text-sm mb-6">Schedule a visit with one of our specialists</p>
+
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Doctor</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {availableDoctors.map((doc) => (
+                <button
+                  key={doc.id}
+                  onClick={() => setSelectedDoctor(doc)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    selectedDoctor?.id === doc.id
+                      ? 'border-teal-500 bg-teal-50'
+                      : 'border-gray-200 hover:border-teal-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {doc.profileImage ? (
+                      <img src={doc.profileImage} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center text-white font-semibold">
+                        {(doc.first_name || doc.name || 'D')[0]}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-gray-900">Dr. {doc.first_name || doc.last_name || doc.name}</p>
+                      <p className="text-xs text-gray-500">{doc.specialty}</p>
+                      <p className="text-sm text-emerald-600 font-medium">₦{(doc.consultation_fee || doc.consultationFee || 5000).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {availableDoctors.length === 0 && (
+              <p className="text-gray-500 text-center py-8">No doctors available</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Service</label>
+            <select
+              value={selectedService?.id || ''}
+              onChange={(e) => setSelectedService(services.find(s => s.id === e.target.value) || null)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="">Select a service</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>{s.name} - ₦{s.price?.toLocaleString()}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+              <select
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+              >
+                <option value="">Select time</option>
+                {['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Describe your symptoms or reason for visit..."
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+            />
+          </div>
+
+          <button
+            onClick={handleBook}
+            disabled={booking || !selectedDoctor || !selectedService || !selectedDate || !selectedTime}
+            className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-medium disabled:opacity-50 hover:from-teal-600 hover:to-teal-700 transition-all"
+          >
+            {booking ? 'Booking...' : `Book Appointment - ₦${(selectedDoctor?.consultation_fee || selectedDoctor?.consultationFee || 0).toLocaleString()}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PrescriptionsPage = ({ user }) => {
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      try {
+        const res = await api.get('/appointments/prescriptions');
+        setPrescriptions(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPrescriptions();
+  }, []);
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">My Prescriptions</h2>
+        <p className="text-gray-500 text-sm mb-6">View your prescriptions from appointments</p>
+
+        {prescriptions.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="shield" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No prescriptions yet</p>
+            <p className="text-sm text-gray-400 mt-1">Prescriptions will appear after your appointments</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {prescriptions.map((rx) => (
+              <div key={rx.id} className="p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-medium text-gray-900">Dr. {rx.doctor_name}</p>
+                    <p className="text-xs text-gray-500">{rx.date}</p>
+                  </div>
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+                    Completed
+                  </span>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <p className="text-sm text-gray-700 whitespace-pre-line">{rx.prescription || 'No prescription details'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
@@ -980,6 +1222,8 @@ const AdminDashboard = () => {
 
   const menuItems = [
     { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
+    { id: 'book', icon: 'plus', label: 'Book Appointment', roles: ['patient'] },
+    { id: 'prescriptions', icon: 'shield', label: 'Prescriptions', roles: ['patient', 'doctor'] },
     { id: 'users', icon: 'users', label: 'Users', roles: ['admin'] },
     { id: 'doctors', icon: 'doctor', label: 'Doctors', roles: ['admin', 'receptionist'] },
     { id: 'services', icon: 'services', label: 'Services', roles: ['admin', 'receptionist'] },
@@ -1119,6 +1363,8 @@ const AdminDashboard = () => {
       case 'services': return <ServicesManagement openModal={openModal} handleDelete={handleDelete} />;
       case 'appointments': return <AppointmentsManagement />;
       case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} updateProfile={(data) => dispatch(updateProfile(data)).unwrap()} toast={toast} dispatch={dispatch} />;
+      case 'book': return <BookAppointmentPage user={user} onBookComplete={() => setActiveMenu('appointments')} />;
+      case 'prescriptions': return <PrescriptionsPage user={user} />;
       default: return <MainDashboard />;
     }
   };
