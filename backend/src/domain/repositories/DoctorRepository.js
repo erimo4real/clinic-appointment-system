@@ -26,7 +26,7 @@ class DoctorRepository {
    */
   async findById(id) {
     return await Doctor.findById(id)
-      .populate('user', 'firstName lastName email phone')
+      .populate('user', 'firstName lastName email phone profileImage')
       .populate('services');
   }
 
@@ -44,7 +44,7 @@ class DoctorRepository {
    */
   async findAll(filters = {}) {
     return await Doctor.find(filters)
-      .populate('user', 'firstName lastName email phone')
+      .populate('user', 'firstName lastName email phone profileImage')
       .populate('services');
   }
 

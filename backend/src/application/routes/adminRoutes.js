@@ -308,7 +308,7 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
 router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
   try {
     const doctors = await Doctor.find()
-      .populate('user', 'firstName lastName email phone')
+      .populate('user', 'firstName lastName email phone profileImage')
       .sort({ createdAt: -1 });
 
     const formatted = doctors.map(d => {
@@ -322,8 +322,11 @@ router.get('/doctors', requireAdminOrReceptionist, async (req, res) => {
       return {
         id: d._id,
         name: d.user ? `${d.user.firstName} ${d.user.lastName}` : 'Unknown',
+        first_name: d.user?.firstName,
+        last_name: d.user?.lastName,
         email: d.user?.email,
         phone: d.user?.phone,
+        profileImage: d.user?.profileImage,
         specialty: d.specialty,
         qualification: d.qualification,
         experience: d.experience || 0,
