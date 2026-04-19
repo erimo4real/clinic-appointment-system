@@ -59,11 +59,6 @@ const RegisterPage = () => {
                 <p className="text-red-600 text-sm">{error}</p>
               </div>
             )}
-                  </svg>
-                  <p className="text-red-600 text-sm">{error}</p>
-                </div>
-              </div>
-            )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
