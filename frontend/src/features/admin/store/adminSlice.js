@@ -205,28 +205,8 @@ const adminSlice = createSlice({
         state.doctorsLoading = false;
         state.doctors = action.payload || [];
       })
-      .addCase(fetchAllServices.fulfilled, (state, action) => {
-        state.servicesLoading = false;
-        state.services = action.payload || [];
-      })
-      .addCase(fetchAllAppointments.fulfilled, (state, action) => {
-        state.appointmentsLoading = false;
-        state.appointments = action.payload || [];
-      })
       .addCase(fetchAllDoctors.rejected, (state, action) => {
         state.doctorsLoading = false;
-        state.error = action.payload?.message;
-      })
-      
-      .addCase(fetchAllAppointments.pending, (state) => {
-        state.appointmentsLoading = true;
-      })
-      .addCase(fetchAllAppointments.fulfilled, (state, action) => {
-        state.appointmentsLoading = false;
-        state.appointments = action.payload;
-      })
-      .addCase(fetchAllAppointments.rejected, (state, action) => {
-        state.appointmentsLoading = false;
         state.error = action.payload?.message;
       })
       
