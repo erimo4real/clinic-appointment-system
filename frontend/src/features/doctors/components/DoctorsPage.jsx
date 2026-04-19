@@ -130,12 +130,16 @@ const DoctorsPage = () => {
 
   const getDoctorName = (doctor) => {
     if (doctor.user) {
-      const firstName = doctor.user.firstName || '';
-      const lastName = doctor.user.lastName || '';
+      const firstName = doctor.user.firstName || doctor.firstName || '';
+      const lastName = doctor.user.lastName || doctor.lastName || '';
       const name = `${firstName} ${lastName}`.trim();
       return name ? `Dr. ${name}` : 'Doctor';
     }
     return doctor.fullName || doctor.name || 'Doctor';
+  };
+  
+  const getDoctorImage = (doctor) => {
+    return doctor.profileImage || doctor.user?.profileImage || null;
   };
 
   const filteredDoctors = selectedSpecialty
@@ -225,7 +229,7 @@ const DoctorsPage = () => {
                   </button>
                   <div className="bg-gradient-to-br from-teal-100 to-blue-100 p-8 flex items-center justify-center">
                     <OptimizedImage 
-                      src={doctor.profileImage}
+                      src={getDoctorImage(doctor)}
                       alt={getDoctorName(doctor)}
                       className="w-32 h-32 border-4 border-white shadow-lg"
                       fallbackSrc={null}

@@ -280,7 +280,11 @@ const DoctorsManagement = ({ openModal, handleDelete }) => {
                 <tr key={d.id} className="hover:bg-teal-50/30">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">{(d.first_name || d.user?.firstName || 'D')[0]}</div>
+                      {d.profileImage ? (
+                        <img src={d.profileImage} alt="Doctor" className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">{(d.first_name || d.user?.firstName || 'D')[0]}</div>
+                      )}
                       <span className="font-medium text-gray-900">Dr. {d.first_name || d.last_name ? `${d.first_name || ''} ${d.last_name || ''}`.trim() : d.name || 'Doctor'}</span>
                     </div>
                   </td>
