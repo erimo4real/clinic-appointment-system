@@ -113,6 +113,7 @@ const DoctorsPage = () => {
       try {
         const response = await fetch(API_URL + '/api/doctors');
         const doctorsData = await response.json();
+        console.log('Doctors API response:', doctorsData);
         const data = Array.isArray(doctorsData) ? doctorsData : [];
         setDoctors(data);
         

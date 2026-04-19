@@ -53,7 +53,7 @@ class DoctorRepository {
    */
   async findAvailable() {
     return await Doctor.find({ isAvailable: true })
-      .populate('user', 'firstName lastName email phone')
+      .populate('user', 'firstName lastName email phone profileImage')
       .populate('services');
   }
 
