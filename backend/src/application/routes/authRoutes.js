@@ -179,7 +179,15 @@ router.get('/me', auth, async (req, res) => {
       doctorProfile = await Doctor.findOne({ user: user._id }).populate('user', 'firstName lastName email');
     }
     
-    res.json({ ...user.toObject(), gender: user.gender, doctorProfile });
+    res.json({ 
+      ...user.toObject(), 
+      gender: user.gender,
+      emergencyContactName: user.emergencyContactName,
+      emergencyContactPhone: user.emergencyContactPhone,
+      emergencyContactRelationship: user.emergencyContactRelationship,
+      lastLoginAt: user.lastLoginAt,
+      doctorProfile 
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -201,12 +209,22 @@ router.get('/me', auth, async (req, res) => {
  */
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { first_name, last_name, email, phone, address, date_of_birth, gender, profileImage, specialty, qualification, experience, consultationFee, bio, isAvailable } = req.body;
+    const { first_name, last_name, email, phone, address, date_of_birth, gender, profileImage, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, current_password, new_password, specialty, qualification, experience, consultationFee, bio, isAvailable, working_hours } = req.body;
     
     // Find and update the user
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Handle password change
+    if (current_password && new_password) {
+      const bcrypt = require('bcryptjs');
+      const isMatch = await bcrypt.compare(current_password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+      user.password = new_password;
     }
 
     // Only update fields that are provided
@@ -218,6 +236,9 @@ router.put('/profile', auth, async (req, res) => {
     if (date_of_birth) user.dateOfBirth = date_of_birth;
     if (gender) user.gender = gender;
     if (profileImage) user.profileImage = profileImage;
+    if (emergency_contact_name) user.emergencyContactName = emergency_contact_name;
+    if (emergency_contact_phone) user.emergencyContactPhone = emergency_contact_phone;
+    if (emergency_contact_relationship) user.emergencyContactRelationship = emergency_contact_relationship;
 
     await user.save();
     
@@ -233,6 +254,7 @@ router.put('/profile', auth, async (req, res) => {
         if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
         if (bio !== undefined) doctor.bio = bio;
         if (isAvailable !== undefined) doctor.isAvailable = isAvailable;
+        if (working_hours) doctor.schedule = working_hours;
         await doctor.save();
         doctorProfile = doctor;
       }
@@ -249,6 +271,17 @@ router.put('/profile', auth, async (req, res) => {
         phone: user.phone,
         address: user.address,
         dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        profileImage: user.profileImage,
+        emergencyContactName: user.emergencyContactName,
+        emergencyContactPhone: user.emergencyContactPhone,
+        emergencyContactRelationship: user.emergencyContactRelationship,
+        createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
+        role: user.role,
+        doctorProfile
+      }
+    });
         profileImage: user.profileImage,
         role: user.role,
         doctorProfile

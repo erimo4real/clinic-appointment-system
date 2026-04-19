@@ -124,6 +124,30 @@ const userSchema = new mongoose.Schema({
     default: null
   },
 
+  /** Emergency contact name */
+  emergencyContactName: {
+    type: String,
+    trim: true
+  },
+
+  /** Emergency contact phone */
+  emergencyContactPhone: {
+    type: String,
+    trim: true
+  },
+
+  /** Emergency contact relationship */
+  emergencyContactRelationship: {
+    type: String,
+    trim: true
+  },
+
+  /** Last login timestamp */
+  lastLoginAt: {
+    type: Date,
+    default: null
+  },
+
   /** Whether user account is active */
   isActive: {
     type: Boolean,

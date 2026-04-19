@@ -101,6 +101,10 @@ class AuthService {
       throw new Error('Invalid credentials');
     }
 
+    // Update last login timestamp
+    user.lastLoginAt = new Date();
+    await user.save();
+
     // Generate authentication tokens
     const token = this.generateToken(user._id);
     const refreshToken = this.generateRefreshToken(user._id);

@@ -433,14 +433,20 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
     address: user?.address || '',
     date_of_birth: user?.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
     gender: user?.gender || '',
+    emergency_contact_name: user?.emergencyContactName || '',
+    emergency_contact_phone: user?.emergencyContactPhone || '',
+    emergency_contact_relationship: user?.emergencyContactRelationship || '',
     specialty: user?.doctorProfile?.specialty || '',
     qualification: user?.doctorProfile?.qualification || '',
     experience: user?.doctorProfile?.experience || '',
     consultationFee: user?.doctorProfile?.consultationFee || '',
     bio: user?.doctorProfile?.bio || '',
     isAvailable: user?.doctorProfile?.isAvailable !== false,
+    working_hours: user?.doctorProfile?.schedule || {},
   });
   const [saving, setSaving] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [imagePreview, setImagePreview] = useState(user?.profileImage || null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -449,15 +455,21 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
       username: user?.username || '',
       first_name: user?.firstName || '',
       last_name: user?.lastName || '',
+      email: user?.email || '',
       phone: user?.phone || '',
       address: user?.address || '',
       date_of_birth: user?.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
+      gender: user?.gender || '',
+      emergency_contact_name: user?.emergencyContactName || '',
+      emergency_contact_phone: user?.emergencyContactPhone || '',
+      emergency_contact_relationship: user?.emergencyContactRelationship || '',
       specialty: user?.doctorProfile?.specialty || '',
       qualification: user?.doctorProfile?.qualification || '',
       experience: user?.doctorProfile?.experience || '',
       consultationFee: user?.doctorProfile?.consultationFee || '',
       bio: user?.doctorProfile?.bio || '',
       isAvailable: user?.doctorProfile?.isAvailable !== false,
+      working_hours: user?.doctorProfile?.schedule || {},
     });
     setImagePreview(user?.profileImage || null);
   }, [user]);
@@ -574,10 +586,34 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                   <input type="date" value={formData.date_of_birth} onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} rows={2} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter address" />
-              </div>
+<div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} rows={2} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter address" />
+                </div>
+                
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h4 className="text-md font-semibold text-gray-900 mb-3">Emergency Contact</h4>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" value={formData.emergency_contact_name} onChange={(e) => setFormData({ ...formData, emergency_contact_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Contact name" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input type="tel" value={formData.emergency_contact_phone} onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="+234..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Relationship</label>
+                    <input type="text" value={formData.emergency_contact_relationship} onChange={(e) => setFormData({ ...formData, emergency_contact_relationship: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g. Spouse, Parent" />
+                  </div>
+                </div>
+                
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <button type="button" onClick={() => setShowPasswordModal(true)} className="text-teal-600 hover:text-teal-700 text-sm font-medium">
+                    Change Password
+                  </button>
+                </div>
               
               {user?.role === 'doctor' && (
                 <>
@@ -632,6 +668,24 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                     <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                     <textarea value={formData.bio || ''} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Brief description about yourself..." />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Working Hours</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                        <div key={day} className="flex items-center gap-2 p-2 border border-gray-200 rounded-lg">
+                          <input type="checkbox" id={`${day}_available`} checked={formData.working_hours?.[day]?.available !== false} onChange={(e) => setFormData({ ...formData, working_hours: { ...formData.working_hours, [day]: { ...formData.working_hours?.[day], available: e.target.checked } } })} className="w-4 h-4 text-teal-600 rounded" />
+                          <label htmlFor={`${day}_available`} className="text-sm w-20">{day}</label>
+                          {formData.working_hours?.[day]?.available !== false && (
+                            <>
+                              <input type="time" value={formData.working_hours?.[day]?.start || '09:00'} onChange={(e) => setFormData({ ...formData, working_hours: { ...formData.working_hours, [day]: { ...formData.working_hours?.[day], start: e.target.value } } })} className="text-xs px-1 py-1 border border-gray-200 rounded" />
+                              <span className="text-xs">-</span>
+                              <input type="time" value={formData.working_hours?.[day]?.end || '17:00'} onChange={(e) => setFormData({ ...formData, working_hours: { ...formData.working_hours, [day]: { ...formData.working_hours?.[day], end: e.target.value } })} className="text-xs px-1 py-1 border border-gray-200 rounded" />
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </>
               )}
               
@@ -645,7 +699,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+    <div className="space-y-4">
               <div className="flex justify-between items-center py-3 border-b border-gray-100">
                 <span className="text-gray-500">Username</span>
                 <span className="font-medium">{user?.username || 'Not set'}</span>
@@ -653,6 +707,34 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
               <div className="flex justify-between items-center py-3 border-b border-gray-100">
                 <span className="text-gray-500">Email</span>
                 <span className="font-medium">{user?.email}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">First Name</span>
+                <span className="font-medium">{user?.firstName || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Last Name</span>
+                <span className="font-medium">{user?.lastName || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Phone</span>
+                <span className="font-medium">{user?.phone || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Date of Birth</span>
+                <span className="font-medium">{user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : 'Not set'}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Gender</span>
+                <span className="font-medium capitalize">{user?.gender || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Address</span>
+                <span className="font-medium">{user?.address || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Role</span>
+                <span className="font-medium capitalize">{user?.role}</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-gray-100">
                 <span className="text-gray-500">Phone</span>
@@ -670,6 +752,36 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                 <span className="text-gray-500">Role</span>
                 <span className="font-medium capitalize">{user?.role}</span>
               </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Account Created</span>
+                <span className="font-medium">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Not set'}</span>
+              </div>
+              {user?.lastLoginAt && (
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span className="text-gray-500">Last Login</span>
+                  <span className="font-medium">{new Date(user.lastLoginAt).toLocaleString()}</span>
+                </div>
+              )}
+              
+              {(user?.emergencyContactName || user?.emergencyContactPhone) && (
+                <>
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    <h4 className="text-md font-semibold text-gray-900 mb-3">Emergency Contact</h4>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-500">Name</span>
+                    <span className="font-medium">{user?.emergencyContactName || 'Not set'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-500">Phone</span>
+                    <span className="font-medium">{user?.emergencyContactPhone || 'Not set'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-500">Relationship</span>
+                    <span className="font-medium">{user?.emergencyContactRelationship || 'Not set'}</span>
+                  </div>
+                </>
+              )}
               
               {user?.role === 'doctor' && user?.doctorProfile && (
                 <>
