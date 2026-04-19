@@ -425,6 +425,7 @@ const AppointmentsManagement = () => {
 const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispatch }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
+    username: user?.username || '',
     first_name: user?.firstName || '',
     last_name: user?.lastName || '',
     phone: user?.phone || '',
@@ -443,6 +444,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
 
   useEffect(() => {
     setFormData({
+      username: user?.username || '',
       first_name: user?.firstName || '',
       last_name: user?.lastName || '',
       phone: user?.phone || '',
@@ -542,19 +544,24 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                  <input type="text" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                  <input type="text" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                  <input type="text" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <input type="text" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input type="text" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                   <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter phone number" />
                 </div>
+              </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
                   <input type="date" value={formData.date_of_birth} onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
@@ -565,7 +572,7 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
                 <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} rows={2} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter address" />
               </div>
               
-{user?.role === 'doctor' && (
+              {user?.role === 'doctor' && (
                 <>
                   <div className="border-t border-gray-200 pt-4 mt-4">
                     <h4 className="text-md font-semibold text-gray-900 mb-3">Doctor Information</h4>
@@ -632,6 +639,10 @@ const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispa
             </div>
           ) : (
             <div className="space-y-4">
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-gray-500">Username</span>
+                <span className="font-medium">{user?.username || 'Not set'}</span>
+              </div>
               <div className="flex justify-between items-center py-3 border-b border-gray-100">
                 <span className="text-gray-500">Email</span>
                 <span className="font-medium">{user?.email}</span>
