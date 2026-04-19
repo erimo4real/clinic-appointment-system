@@ -140,11 +140,16 @@ const DoctorsPage = () => {
     // Check multiple possible locations for profile image
     const img = doctor?.profileImage 
       || doctor?.user?.profileImage 
-      || doctor?.user?.profileimage
       || doctor?.profile_image
       || doctor?.user?.profile_image
       || null;
     return img;
+  };
+  
+  const getDoctorInitials = (doctor) => {
+    const first = doctor?.user?.firstName || doctor?.firstName || doctor?.first_name || '';
+    const last = doctor?.user?.lastName || doctor?.lastName || doctor?.last_name || '';
+    return (first[0] || last[0] || 'D').toUpperCase();
   };
 
   const filteredDoctors = selectedSpecialty
@@ -233,13 +238,17 @@ const DoctorsPage = () => {
                     <NavIcon name="heart" className="w-5 h-5" />
                   </button>
                   <div className="bg-gradient-to-br from-teal-100 to-blue-100 p-8 flex items-center justify-center">
-                    <OptimizedImage 
-                      src={getDoctorImage(doctor)}
-                      alt={getDoctorName(doctor)}
-                      className="w-32 h-32 border-4 border-white shadow-lg"
-                      fallbackSrc={null}
-                      priority={false}
-                    />
+                    {getDoctorImage(doctor) ? (
+                      <img 
+                        src={getDoctorImage(doctor)}
+                        alt={getDoctorName(doctor)}
+                        className="w-32 h-32 border-4 border-white shadow-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 border-4 border-white shadow-lg rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-2xl font-bold">
+                        {getDoctorInitials(doctor)}
+                      </div>
+                    )}
                   </div>
                   <div className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">{getDoctorName(doctor)}</h3>
