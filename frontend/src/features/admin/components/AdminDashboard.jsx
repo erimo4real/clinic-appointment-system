@@ -30,6 +30,9 @@ const NavIcon = ({ name, className }) => {
     home: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />,
     chart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />,
     settings: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.3-.92 1.273-1.317 2.053-.658l1.092.873c.67.537 1.432 1.05 2.07 1.05 1.795 0 3.454-2.155 3.454-4.04a4.325 4.325 0 00-4.04-4.278c-.92-.3-1.317 1.273-.658 2.053l-.873 1.092c-.537.67-1.05 1.432-1.05 2.07 0 1.795-2.155 3.454-4.04 3.454-.638 0-1.252-.16-1.8-.443m-6.338 4.855c.3.92 1.273 1.317 2.053.658l1.092-.873c.67-.537 1.432-1.05 2.07-1.05 1.795 0 3.454 2.155 3.454 4.04 0 .864-.293 1.65-.79 2.258" />,
+    folder: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />,
+    currency: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0-1v-1m0 1h-2.599M5.316 11.383a9 9 0 011.828 0M5.316 11.383l-.707.707m0 0l.707.707m-.707-.707l-.707-.707m.707.707l.707.707" />,
+    document: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
@@ -1217,6 +1220,299 @@ const SettingsPage = () => {
   );
 };
 
+const MedicalRecordsPage = ({ user }) => {
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ allergies: '', conditions: '', medications: '', notes: '' });
+  const toast = useToast();
+
+  useEffect(() => {
+    const fetchRecords = async () => {
+      try {
+        const res = await api.get('/medical-records');
+        setRecords(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRecords();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      if (selectedPatient?.id) {
+        await api.put(`/medical-records/${selectedPatient.id}`, formData);
+        toast.success('Medical record updated');
+      } else {
+        await api.post('/medical-records', formData);
+        toast.success('Medical record created');
+      }
+      setShowModal(false);
+      const res = await api.get('/medical-records');
+      setRecords(res.data || []);
+    } catch (error) {
+      toast.error('Failed to save record');
+    }
+  };
+
+  const openRecord = (record) => {
+    setSelectedPatient(record);
+    setFormData({
+      allergies: record?.allergies || '',
+      conditions: record?.conditions || '',
+      medications: record?.medications || '',
+      notes: record?.notes || ''
+    });
+    setShowModal(true);
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Medical Records</h2>
+            <p className="text-gray-500 text-sm">Patient medical history and health info</p>
+          </div>
+        </div>
+
+        {records.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="folder" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No medical records</p>
+            <p className="text-sm text-gray-400 mt-1">Records will appear after appointments</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {records.map((record) => (
+              <div key={record.id} className="p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center text-white font-semibold">
+                    {(record.patient_name || 'P')[0]}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{record.patient_name}</p>
+                    <p className="text-xs text-gray-500">Last visit: {record.last_visit || 'N/A'}</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  {record.allergies && <p className="text-rose-600"><span className="font-medium">Allergies:</span> {record.allergies}</p>}
+                  {record.conditions && <p className="text-amber-600"><span className="font-medium">Conditions:</span> {record.conditions}</p>}
+                  {record.medications && <p className="text-blue-600"><span className="font-medium">Medications:</span> {record.medications}</p>}
+                </div>
+                <button onClick={() => openRecord(record)} className="mt-3 text-sm text-teal-600 hover:text-teal-700 font-medium">
+                  View/Edit →
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-rose-500 to-rose-600 px-6 py-4">
+              <button onClick={() => setShowModal(false)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-lg text-white/80 hover:text-white">
+                <NavIcon name="close" className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold text-white">Medical Record</h2>
+              <p className="text-rose-100 text-sm">{selectedPatient?.patient_name}</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                <textarea value={formData.allergies} onChange={(e) => setFormData({...formData, allergies: e.target.value})} rows={2} placeholder="List any allergies..." className="w-full px-4 py-2.5 border border-gray-200 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Medical Conditions</label>
+                <textarea value={formData.conditions} onChange={(e) => setFormData({...formData, conditions: e.target.value})} rows={2} placeholder="Diabetes, Hypertension, etc..." className="w-full px-4 py-2.5 border border-gray-200 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Current Medications</label>
+                <textarea value={formData.medications} onChange={(e) => setFormData({...formData, medications: e.target.value})} rows={2} placeholder="Current medications..." className="w-full px-4 py-2.5 border border-gray-200 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} rows={3} placeholder="Additional notes..." className="w-full px-4 py-2.5 border border-gray-200 rounded-xl" />
+              </div>
+              <button onClick={handleSave} className="w-full py-3 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-xl font-medium">
+                Save Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PaymentsPage = () => {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        const res = await api.get('/payments');
+        setPayments(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayments();
+  }, []);
+
+  const filteredPayments = filter === 'all' ? payments : payments.filter(p => p.status === filter);
+  const totalAmount = filteredPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const paidAmount = filteredPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
+  const pendingAmount = filteredPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-5 text-white">
+          <p className="text-white/80 text-sm">Total Transactions</p>
+          <p className="text-3xl font-bold mt-1">₦{totalAmount.toLocaleString()}</p>
+        </div>
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white">
+          <p className="text-white/80 text-sm">Paid</p>
+          <p className="text-3xl font-bold mt-1">₦{paidAmount.toLocaleString()}</p>
+        </div>
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-5 text-white">
+          <p className="text-white/80 text-sm">Pending</p>
+          <p className="text-3xl font-bold mt-1">₦{pendingAmount.toLocaleString()}</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Payment History</h2>
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-4 py-2 border border-gray-200 rounded-xl">
+            <option value="all">All Payments</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+
+        {filteredPayments.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="currency" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No payments found</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Patient</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Service</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredPayments.map((payment) => (
+                  <tr key={payment.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{payment.patient_name}</td>
+                    <td className="px-4 py-3 text-gray-600">{payment.service_name}</td>
+                    <td className="px-4 py-3 font-medium text-emerald-600">₦{(payment.amount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-500">{payment.date}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        payment.status === 'paid' ? 'bg-emerald-100 text-emerald-700' :
+                        payment.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                        'bg-rose-100 text-rose-700'
+                      }`}>
+                        {payment.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const InvoicesPage = () => {
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const res = await api.get('/invoices');
+        setInvoices(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInvoices();
+  }, []);
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Invoices</h2>
+        <p className="text-gray-500 text-sm mb-6">Billing and invoices</p>
+
+        {invoices.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="document" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No invoices yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {invoices.map((invoice) => (
+              <div key={invoice.id} className="p-4 bg-gray-50 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold">
+                    #
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">INV-{invoice.id?.slice(-6)}</p>
+                    <p className="text-sm text-gray-500">{invoice.patient_name} • {invoice.date}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-gray-900">₦{(invoice.amount || 0).toLocaleString()}</p>
+                  <p className={`text-xs ${invoice.paid ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {invoice.paid ? 'Paid' : 'Pending'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispatch }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
@@ -1782,6 +2078,9 @@ const AdminDashboard = () => {
     { id: 'prescriptions', icon: 'plus', label: 'Write Prescription', roles: ['doctor'] },
     { id: 'my-patients', icon: 'users', label: 'My Patients', roles: ['doctor'] },
     { id: 'schedule', icon: 'calendar', label: 'My Schedule', roles: ['doctor'] },
+    { id: 'medical-records', icon: 'folder', label: 'Medical Records', roles: ['admin', 'receptionist', 'doctor'] },
+    { id: 'payments', icon: 'currency', label: 'Payments', roles: ['admin', 'receptionist'] },
+    { id: 'invoices', icon: 'document', label: 'Invoices', roles: ['admin', 'receptionist'] },
     { id: 'prescriptions', icon: 'shield', label: 'Prescriptions', roles: ['patient'] },
     { id: 'users', icon: 'users', label: 'Users', roles: ['admin'] },
     { id: 'doctors', icon: 'doctor', label: 'Doctors', roles: ['admin', 'receptionist'] },
@@ -1933,6 +2232,9 @@ const AdminDashboard = () => {
       case 'book-appointment': return <BookAppointmentPage user={user} onBookComplete={() => setActiveMenu('appointments')} />;
       case 'reports': return isAdmin ? <ReportsPage /> : <MainDashboard />;
       case 'settings': return isAdmin ? <SettingsPage /> : <MainDashboard />;
+      case 'medical-records': return isAdmin || isReceptionist || role === 'doctor' ? <MedicalRecordsPage user={user} /> : <MainDashboard />;
+      case 'payments': return isAdmin || isReceptionist ? <PaymentsPage /> : <MainDashboard />;
+      case 'invoices': return isAdmin || isReceptionist ? <InvoicesPage /> : <MainDashboard />;
       case 'prescriptions': return user?.role === 'doctor' ? <WritePrescriptionPage user={user} /> : <PrescriptionsPage user={user} />;
       case 'my-patients': return <MyPatientsPage user={user} />;
       case 'schedule': return <DoctorSchedulePage user={user} />;
