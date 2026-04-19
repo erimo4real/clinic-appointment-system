@@ -259,15 +259,15 @@ const LandingPage = () => {
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {doctors.slice(0, 4).map((doctor, i) => (
                 <div key={doctor.id || doctor._id || i} className="bg-white rounded-2xl p-6 text-center border border-gray-100 hover:shadow-lg hover:border-teal-100 transition-all">
-                  <div className="w-24 h-24 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    {doctor.profileImage ? (
-                      <img src={doctor.profileImage} alt={`Dr. ${doctor.user?.firstName}`} className="w-full h-full object-cover rounded-full" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                    {doctor.profileImage || doctor.user?.profileImage ? (
+                      <img src={doctor.profileImage || doctor.user?.profileImage} alt={`Dr. ${doctor.user?.firstName || doctor.firstName}`} className="w-full h-full object-cover" />
                     ) : (
                       <NavIcon name="user" className="w-12 h-12 text-teal-600" />
                     )}
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    Dr. {doctor.user?.firstName || ''} {doctor.user?.lastName || ''}
+                    Dr. {doctor.user?.firstName || doctor.firstName || ''} {doctor.user?.lastName || doctor.lastName || ''}
                   </h3>
                   <p className="text-teal-600 font-medium">{doctor.specialty}</p>
                   {doctor.experience && (
