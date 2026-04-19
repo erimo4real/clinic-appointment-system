@@ -14,6 +14,7 @@ const NavIcon = ({ name, className }) => {
     users: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
     doctor: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />,
     calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+    medical: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
     services: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />,
     plus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />,
     logout: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />,
@@ -115,9 +116,10 @@ const MainDashboard = () => {
         )}
         {role === 'doctor' && (
           <>
-            <StatCard title="Today's Appointments" value={todayAppointments.length} icon="calendar" gradient="bg-gradient-to-br from-blue-500 to-blue-600" />
-            <StatCard title="Pending" value={pendingCount} icon="calendar" gradient="bg-gradient-to-br from-amber-500 to-amber-600" subtitle="Awaiting action" />
+            <StatCard title="Today's Patients" value={todayAppointments.length} icon="calendar" gradient="bg-gradient-to-br from-blue-500 to-blue-600" subtitle="Scheduled today" />
+            <StatCard title="Pending Consults" value={pendingCount} icon="calendar" gradient="bg-gradient-to-br from-amber-500 to-amber-600" subtitle="Awaiting you" />
             <StatCard title="Completed" value={completedCount} icon="check" gradient="bg-gradient-to-br from-emerald-500 to-emerald-600" subtitle="This month" />
+            <StatCard title="Patients" value={doctors.length} icon="users" gradient="bg-gradient-to-br from-violet-500 to-violet-600" subtitle="Total seen" />
           </>
         )}
       </div>
@@ -793,6 +795,258 @@ const PrescriptionsPage = ({ user }) => {
   );
 };
 
+const MyPatientsPage = ({ user }) => {
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const res = await api.get('/appointments/patients');
+        setPatients(res.data || []);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user?.role === 'doctor') {
+      fetchPatients();
+    }
+  }, [user?.role]);
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">My Patients</h2>
+        <p className="text-gray-500 text-sm mb-6">Patients you've treated</p>
+
+        {patients.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="users" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No patients yet</p>
+            <p className="text-sm text-gray-400 mt-1">Patients will appear after appointments</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {patients.map((patient) => (
+              <div key={patient.id} className="p-4 bg-gray-50 rounded-xl flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center text-white font-semibold">
+                  {(patient.patient_name || 'P')[0]}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{patient.patient_name}</p>
+                  <p className="text-xs text-gray-500">{patient.date}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const DoctorSchedulePage = ({ user }) => {
+  const [schedule, setSchedule] = useState({});
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  useEffect(() => {
+    setSchedule(user?.doctorProfile?.schedule || {});
+  }, [user?.doctorProfile?.schedule]);
+
+  const handleToggleDay = (day) => {
+    setSchedule(prev => ({
+      ...prev,
+      [day]: prev[day]?.available === false ? { available: true, start: '09:00', end: '17:00' } : { available: false }
+    }));
+  };
+
+  const handleTimeChange = (day, field, value) => {
+    setSchedule(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value }
+    }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put('/auth/profile', { working_hours: schedule });
+      toast.success('Schedule updated');
+    } catch (error) {
+      toast.error('Failed to update schedule');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">My Schedule</h2>
+        <p className="text-gray-500 text-sm mb-6">Set your availability for each day</p>
+
+        <div className="space-y-3">
+          {days.map((day) => (
+            <div key={day} className={`p-4 rounded-xl border ${schedule[day]?.available ? 'bg-gray-50 border-gray-200' : 'bg-gray-50/50 border-gray-100'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={schedule[day]?.available !== false}
+                    onChange={() => handleToggleDay(day)}
+                    className="w-5 h-5 text-teal-600 rounded"
+                  />
+                  <span className="font-medium text-gray-900">{day}</span>
+                </div>
+                {schedule[day]?.available !== false && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={schedule[day]?.start || '09:00'}
+                      onChange={(e) => handleTimeChange(day, 'start', e.target.value)}
+                      className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                    />
+                    <span className="text-gray-400">to</span>
+                    <input
+                      type="time"
+                      value={schedule[day]?.end || '17:00'}
+                      onChange={(e) => handleTimeChange(day, 'end', e.target.value)}
+                      className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="mt-6 w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-medium disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Schedule'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const WritePrescriptionPage = ({ user }) => {
+  const [appointments, setAppointments] = useState([]);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [prescription, setPrescription] = useState('');
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const res = await api.get('/appointments?status=completed');
+        setAppointments(res.data || []);
+      } catch (error) {
+      }
+    };
+    if (user?.role === 'doctor') {
+      fetchAppointments();
+    }
+  }, [user?.role]);
+
+  const handleSavePrescription = async () => {
+    if (!selectedAppointment || !prescription) return;
+    setSaving(true);
+    try {
+      await api.put(`/appointments/${selectedAppointment.id}`, {
+        prescription,
+        status: 'completed'
+      });
+      toast.success('Prescription saved');
+      setSelectedAppointment(null);
+      setPrescription('');
+    } catch (error) {
+      toast.error('Failed to save prescription');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const completedAppointments = appointments.filter(a => !a.prescription);
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Write Prescription</h2>
+        <p className="text-gray-500 text-sm mb-6">Select an appointment to write prescription</p>
+
+        {completedAppointments.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="medical" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No appointments pending</p>
+            <p className="text-sm text-gray-400 mt-1">All completed appointments have prescriptions</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3 mb-6">
+              {completedAppointments.map((apt) => (
+                <button
+                  key={apt.id}
+                  onClick={() => {
+                    setSelectedAppointment(apt);
+                    setPrescription(apt.prescription || '');
+                  }}
+                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                    selectedAppointment?.id === apt.id
+                      ? 'border-teal-500 bg-teal-50'
+                      : 'border-gray-200 hover:border-teal-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">{apt.patient_name}</p>
+                      <p className="text-sm text-gray-500">{apt.date} at {apt.start_time}</p>
+                    </div>
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">Pending</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {selectedAppointment && (
+              <div className="border-t border-gray-200 pt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Prescription Details</label>
+                <textarea
+                  value={prescription}
+                  onChange={(e) => setPrescription(e.target.value)}
+                  rows={6}
+                  placeholder="Enter prescription details, medications, dosage, instructions..."
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                />
+                <button
+                  onClick={handleSavePrescription}
+                  disabled={saving || !prescription}
+                  className="mt-4 w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-medium disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save Prescription'}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispatch }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
@@ -1354,7 +1608,10 @@ const AdminDashboard = () => {
   const menuItems = [
     { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
     { id: 'book', icon: 'plus', label: 'Book Appointment', roles: ['patient'] },
-    { id: 'prescriptions', icon: 'shield', label: 'Prescriptions', roles: ['patient', 'doctor'] },
+    { id: 'prescriptions', icon: 'plus', label: 'Write Prescription', roles: ['doctor'] },
+    { id: 'my-patients', icon: 'users', label: 'My Patients', roles: ['doctor'] },
+    { id: 'schedule', icon: 'calendar', label: 'My Schedule', roles: ['doctor'] },
+    { id: 'prescriptions', icon: 'shield', label: 'Prescriptions', roles: ['patient'] },
     { id: 'users', icon: 'users', label: 'Users', roles: ['admin'] },
     { id: 'doctors', icon: 'doctor', label: 'Doctors', roles: ['admin', 'receptionist'] },
     { id: 'services', icon: 'services', label: 'Services', roles: ['admin', 'receptionist'] },
@@ -1495,7 +1752,9 @@ const AdminDashboard = () => {
       case 'appointments': return <AppointmentsManagement />;
       case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} updateProfile={(data) => dispatch(updateProfile(data)).unwrap()} toast={toast} dispatch={dispatch} />;
       case 'book': return <BookAppointmentPage user={user} onBookComplete={() => setActiveMenu('appointments')} />;
-      case 'prescriptions': return <PrescriptionsPage user={user} />;
+      case 'prescriptions': return user?.role === 'doctor' ? <WritePrescriptionPage user={user} /> : <PrescriptionsPage user={user} />;
+      case 'my-patients': return <MyPatientsPage user={user} />;
+      case 'schedule': return <DoctorSchedulePage user={user} />;
       default: return <MainDashboard />;
     }
   };
