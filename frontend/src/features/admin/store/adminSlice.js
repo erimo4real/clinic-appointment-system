@@ -179,7 +179,7 @@ const adminSlice = createSlice({
       })
       .addCase(fetchDashboardStats.fulfilled, (state, action) => {
         state.loading = false;
-        state.stats = action.payload;
+        state.stats = action.payload || {};
       })
       .addCase(fetchDashboardStats.rejected, (state, action) => {
         state.loading = false;
@@ -191,7 +191,7 @@ const adminSlice = createSlice({
       })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
         state.usersLoading = false;
-        state.users = action.payload;
+        state.users = action.payload || [];
       })
       .addCase(fetchAllUsers.rejected, (state, action) => {
         state.usersLoading = false;
@@ -201,9 +201,17 @@ const adminSlice = createSlice({
       .addCase(fetchAllDoctors.pending, (state) => {
         state.doctorsLoading = true;
       })
-      .addCase(fetchAllDoctors.fulfilled, (state, action) => {
+.addCase(fetchAllDoctors.fulfilled, (state, action) => {
         state.doctorsLoading = false;
-        state.doctors = action.payload;
+        state.doctors = action.payload || [];
+      })
+      .addCase(fetchAllServices.fulfilled, (state, action) => {
+        state.servicesLoading = false;
+        state.services = action.payload || [];
+      })
+      .addCase(fetchAllAppointments.fulfilled, (state, action) => {
+        state.appointmentsLoading = false;
+        state.appointments = action.payload || [];
       })
       .addCase(fetchAllDoctors.rejected, (state, action) => {
         state.doctorsLoading = false;
