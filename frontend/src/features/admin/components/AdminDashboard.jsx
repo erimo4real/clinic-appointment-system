@@ -28,6 +28,8 @@ const NavIcon = ({ name, className }) => {
     prescription: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />,
     profile: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
     home: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />,
+    chart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />,
+    settings: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.3-.92 1.273-1.317 2.053-.658l1.092.873c.67.537 1.432 1.05 2.07 1.05 1.795 0 3.454-2.155 3.454-4.04a4.325 4.325 0 00-4.04-4.278c-.92-.3-1.317 1.273-.658 2.053l-.873 1.092c-.537.67-1.05 1.432-1.05 2.07 0 1.795-2.155 3.454-4.04 3.454-.638 0-1.252-.16-1.8-.443m-6.338 4.855c.3.92 1.273 1.317 2.053.658l1.092-.873c.67-.537 1.432-1.05 2.07-1.05 1.795 0 3.454 2.155 3.454 4.04 0 .864-.293 1.65-.79 2.258" />,
   };
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
 };
@@ -1047,6 +1049,174 @@ const WritePrescriptionPage = ({ user }) => {
   );
 };
 
+const PatientsListPage = () => {
+  const { appointments } = useSelector((state) => state.admin);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const patients = appointments.reduce((acc, apt) => {
+    if (!acc.find(p => p.patient_name === apt.patient_name)) {
+      acc.push({ name: apt.patient_name, email: apt.patient_email, phone: apt.patient_phone });
+    }
+    return acc;
+  }, []);
+
+  const filteredPatients = patients.filter(p => 
+    (p.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Patients</h2>
+        <p className="text-gray-500 text-sm mb-6">All registered patients</p>
+        
+        <div className="relative flex-1 max-w-md mb-6">
+          <NavIcon name="search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" placeholder="Search patients..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+        </div>
+
+        {filteredPatients.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <NavIcon name="users" className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium">No patients found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredPatients.map((patient, idx) => (
+              <div key={idx} className="p-4 bg-gray-50 rounded-xl flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center text-white font-semibold">
+                  {(patient.name || 'P')[0]}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{patient.name}</p>
+                  <p className="text-xs text-gray-500">{patient.email}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ReportsPage = () => {
+  const { appointments, users, doctors, services } = useSelector((state) => state.admin);
+  const [dateRange, setDateRange] = useState('week');
+  
+  const totalRevenue = appointments.filter(a => a.status === 'completed').length * 5000;
+  const pendingAppts = appointments.filter(a => a.status === 'pending').length;
+  const completedAppts = appointments.filter(a => a.status === 'completed').length;
+  
+  const ReportCard = ({ title, value, subtitle, color }) => (
+    <div className={`bg-gradient-to-br ${color} rounded-2xl p-5 text-white`}>
+      <p className="text-white/80 text-sm">{title}</p>
+      <p className="text-3xl font-bold mt-1">{value}</p>
+      <p className="text-white/70 text-sm mt-1">{subtitle}</p>
+    </div>
+  );
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Reports</h2>
+          <p className="text-gray-500 text-sm">Clinic performance overview</p>
+        </div>
+        <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className="px-4 py-2 border border-gray-200 rounded-xl">
+          <option value="week">Last 7 Days</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
+        </select>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <ReportCard title="Total Users" value={users.length} subtitle="Registered" color="from-teal-500 to-teal-600" />
+        <ReportCard title="Doctors" value={doctors.length} subtitle="Active staff" color="from-emerald-500 to-emerald-600" />
+        <ReportCard title="Completed" value={completedAppts} subtitle="Appointments" color="from-blue-500 to-blue-600" />
+        <ReportCard title="Pending" value={pendingAppts} subtitle="Awaiting" color="from-amber-500 to-amber-600" />
+      </div>
+      
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">Quick Stats</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center p-4 bg-gray-50 rounded-xl">
+            <p className="text-2xl font-bold text-gray-900">{services.length}</p>
+            <p className="text-sm text-gray-500">Services</p>
+          </div>
+          <div className="text-center p-4 bg-gray-50 rounded-xl">
+            <p className="text-2xl font-bold text-gray-900">{appointments.length}</p>
+            <p className="text-sm text-gray-500">Total Appointments</p>
+          </div>
+          <div className="text-center p-4 bg-gray-50 rounded-xl">
+            <p className="text-2xl font-bold text-gray-900">₦{totalRevenue.toLocaleString()}</p>
+            <p className="text-sm text-gray-500">Est. Revenue</p>
+          </div>
+          <div className="text-center p-4 bg-gray-50 rounded-xl">
+            <p className="text-2xl font-bold text-gray-900">{users.length > 0 ? Math.round((completedAppts / users.length) * 100) : 0}%</p>
+            <p className="text-sm text-gray-500">Visit Rate</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SettingsPage = () => {
+  const toast = useToast();
+  const [clinicName, setClinicName] = useState('MedBook Pro');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setTimeout(() => {
+      toast.success('Settings saved');
+      setSaving(false);
+    }, 500);
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Settings</h2>
+        <p className="text-gray-500 text-sm mb-6">Configure clinic settings</p>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
+            <input type="text" value={clinicName} onChange={(e) => setClinicName(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Default Consultation Fee (₦)</label>
+            <input type="number" defaultValue={5000} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Working Hours</label>
+            <div className="grid grid-cols-2 gap-4">
+              <input type="time" defaultValue="09:00" className="px-4 py-2.5 border border-gray-200 rounded-xl" />
+              <input type="time" defaultValue="17:00" className="px-4 py-2.5 border border-gray-200 rounded-xl" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <input type="checkbox" defaultChecked className="w-5 h-5 text-teal-600 rounded" />
+            <label className="text-sm text-gray-700">Enable email notifications</label>
+          </div>
+          <div className="flex items-center gap-3">
+            <input type="checkbox" defaultChecked className="w-5 h-5 text-teal-600 rounded" />
+            <label className="text-sm text-gray-700">Enable SMS notifications</label>
+          </div>
+        </div>
+        
+        <button onClick={handleSave} disabled={saving} className="mt-6 w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-medium disabled:opacity-50">
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ProfileView = ({ user, userName, userInitials, updateProfile, toast, dispatch }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
@@ -1608,16 +1778,23 @@ const AdminDashboard = () => {
   const menuItems = [
     { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
     { id: 'book', icon: 'plus', label: 'Book Appointment', roles: ['patient'] },
+    { id: 'book-appointment', icon: 'plus', label: 'New Appointment', roles: ['admin', 'receptionist'] },
     { id: 'prescriptions', icon: 'plus', label: 'Write Prescription', roles: ['doctor'] },
     { id: 'my-patients', icon: 'users', label: 'My Patients', roles: ['doctor'] },
     { id: 'schedule', icon: 'calendar', label: 'My Schedule', roles: ['doctor'] },
     { id: 'prescriptions', icon: 'shield', label: 'Prescriptions', roles: ['patient'] },
     { id: 'users', icon: 'users', label: 'Users', roles: ['admin'] },
     { id: 'doctors', icon: 'doctor', label: 'Doctors', roles: ['admin', 'receptionist'] },
+    { id: 'patients', icon: 'users', label: 'Patients', roles: ['admin', 'receptionist'] },
     { id: 'services', icon: 'services', label: 'Services', roles: ['admin', 'receptionist'] },
     { id: 'appointments', icon: 'calendar', label: 'Appointments', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
+    { id: 'reports', icon: 'chart', label: 'Reports', roles: ['admin'] },
+    { id: 'settings', icon: 'settings', label: 'Settings', roles: ['admin'] },
     { id: 'profile', icon: 'profile', label: 'My Profile', roles: ['admin', 'receptionist', 'doctor', 'patient'] },
   ];
+
+  const chartIcon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v6m2-10h2a2 2 0 012 2v2m-4-6V5a2 2 0 00-2-2h-2" />;
+  const settingsIcon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.3-.92 1.273-1.317 2.053-.658l1.092.873c.67.537 1.432 1.05 2.07 1.05 1.795 0 3.454-2.155 3.454-4.04a4.325 4.325 0 00-4.04-4.278c-.92-.3-1.317 1.273-.658 2.053l-.873 1.092c-.537.67-1.05 1.432-1.05 2.07 0 1.795-2.155 3.454-4.04 3.454-.638 0-1.252-.16-1.8-.443m-6.338 4.855c.3.92 1.273 1.317 2.053.658l1.092-.873c.67-.537 1.432-1.05 2.07-1.05 1.795 0 3.454 2.155 3.454 4.04 0 .864-.293 1.65-.79 2.258" />;
 
   const filteredMenuItems = menuItems.filter(item => item.roles.includes(user?.role));
 
@@ -1749,9 +1926,13 @@ const AdminDashboard = () => {
       case 'users': return <UsersManagement openModal={openModal} handleDelete={handleDelete} isAdmin={isAdmin} />;
       case 'doctors': return <DoctorsManagement openModal={openModal} handleDelete={handleDelete} />;
       case 'services': return <ServicesManagement openModal={openModal} handleDelete={handleDelete} />;
+      case 'patients': return isAdmin || isReceptionist ? <PatientsListPage /> : <MainDashboard />;
       case 'appointments': return <AppointmentsManagement />;
       case 'profile': return <ProfileView user={user} userName={userName} userInitials={userInitials} updateProfile={(data) => dispatch(updateProfile(data)).unwrap()} toast={toast} dispatch={dispatch} />;
       case 'book': return <BookAppointmentPage user={user} onBookComplete={() => setActiveMenu('appointments')} />;
+      case 'book-appointment': return <BookAppointmentPage user={user} onBookComplete={() => setActiveMenu('appointments')} />;
+      case 'reports': return isAdmin ? <ReportsPage /> : <MainDashboard />;
+      case 'settings': return isAdmin ? <SettingsPage /> : <MainDashboard />;
       case 'prescriptions': return user?.role === 'doctor' ? <WritePrescriptionPage user={user} /> : <PrescriptionsPage user={user} />;
       case 'my-patients': return <MyPatientsPage user={user} />;
       case 'schedule': return <DoctorSchedulePage user={user} />;
