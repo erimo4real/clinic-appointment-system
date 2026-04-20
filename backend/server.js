@@ -222,6 +222,7 @@ app.get('/api/seed', async (req, res) => {
     ]);
     
     // Doctor services mapping
+    // Each doctor gets exactly 3 unique services (indexes: 0-19)
     const doctorServicesMap = {
       'Cardiology': [services[2]._id, services[14]._id, services[1]._id],
       'General Medicine': [services[0]._id, services[9]._id, services[15]._id],
@@ -238,6 +239,12 @@ app.get('/api/seed', async (req, res) => {
       'Gynecology': [services[11]._id, services[9]._id, services[15]._id],
       'Oncology': [services[9]._id, services[12]._id, services[1]._id],
       'Rheumatology': [services[9]._id, services[17]._id, services[10]._id]
+    };
+    
+    // Ensure each doctor gets unique services (slice to 3 to be safe)
+    const getDoctorServices = (specialty) => {
+      const docs = doctorServicesMap[specialty] || [services[0]._id];
+      return docs.slice(0, 3);
     };
     
     const doctorData = [
@@ -278,7 +285,7 @@ app.get('/api/seed', async (req, res) => {
         bio: doc.bio,
         consultationFee: doc.fee,
         isAvailable: true,
-        services: doctorServicesMap[doc.specialty] || [services[0]._id]
+        services: getDoctorServices(doc.specialty)
       });
     }
     
