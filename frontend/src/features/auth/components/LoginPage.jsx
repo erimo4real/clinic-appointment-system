@@ -1,53 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, clearError } from '../store/authSlice';
-import api from '../../../shared/services/api';
-
-const BOOKING_STORAGE_KEY = 'pending_booking_data';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [hasPendingBooking, setHasPendingBooking] = useState(false);
-  const [bookingInfo, setBookingInfo] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    const pendingBooking = localStorage.getItem(BOOKING_STORAGE_KEY);
-    if (pendingBooking) {
-      try {
-        const booking = JSON.parse(pendingBooking);
-        setHasPendingBooking(true);
-        setBookingInfo({
-          doctor: booking.doctor,
-          service: booking.service,
-          date: booking.date,
-          time: booking.start_time,
-        });
-      } catch (e) {
-        localStorage.removeItem(BOOKING_STORAGE_KEY);
-      }
-    }
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await dispatch(login(formData));
     if (login.fulfilled.match(result)) {
-      const pendingBooking = localStorage.getItem(BOOKING_STORAGE_KEY);
-      
-      if (pendingBooking) {
-        try {
-          const bookingData = JSON.parse(pendingBooking);
-          await api.post('/appointments', bookingData);
-          localStorage.removeItem(BOOKING_STORAGE_KEY);
-        } catch (bookingError) {
-          console.error('Failed to create booking:', bookingError);
-        }
-      }
-      
       navigate('/dashboard');
     }
   };
@@ -73,18 +38,7 @@ return (
           
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
-            <p className="text-gray-500 mb-6 text-sm">
-              {hasPendingBooking ? 'Sign in to save your appointment' : 'Sign in to continue'}
-            </p>
-
-            {hasPendingBooking && bookingInfo && (
-              <div className="mb-5 p-4 bg-teal-50 border border-teal-200 rounded-xl">
-                <p className="text-sm text-teal-700 font-medium mb-2">Pending appointment:</p>
-                <p className="text-sm text-teal-600">
-                  {new Date(bookingInfo.date).toLocaleDateString()} at {bookingInfo.time}
-                </p>
-              </div>
-            )}
+            <p className="text-gray-500 mb-6 text-sm">Sign in to continue</p>
           
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
