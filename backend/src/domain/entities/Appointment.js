@@ -27,14 +27,26 @@ const appointmentSchema = new mongoose.Schema({
   // REQUIRED FIELDS
   // ==========================================
   
-  /**
-   * Patient who booked the appointment
-   * Reference to User collection
-   * Optional for guest bookings
-   */
   patient: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User'
+  },
+  
+  guestName: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Guest name cannot exceed 100 characters']
+  },
+  
+  guestEmail: {
+    type: String,
+    trim: true,
+    lowercase: true
+  },
+  
+  guestPhone: {
+    type: String,
+    trim: true
   },
   
   /**

@@ -151,9 +151,19 @@ router.post('/', async (req, res) => {
       patientId = null;
     }
     
-    const appointment = await AppointmentService.createAppointment(req.body, patientId);
+    const appointmentData = {
+      ...req.body,
+    };
     
-    // Send confirmation email only if user is authenticated
+    if (req.body.guestName) {
+      appointmentData.guestName = req.body.guestName;
+      appointmentData.guestEmail = req.body.guestEmail;
+      appointmentData.guestPhone = req.body.guestPhone;
+    }
+    
+    const appointment = await AppointmentService.createAppointment(appointmentData, patientId);
+    
+    // Send confirmation email
     if (req.user?.email) {
       const doctor = await Doctor.findById(req.body.doctor).populate('user');
       const service = await Service.findById(req.body.service);
@@ -167,6 +177,22 @@ router.post('/', async (req, res) => {
         };
         const { subject, html } = emailTemplates.appointmentConfirmation(emailData);
         sendEmail(req.user.email, subject, html).catch(() => {});
+      }
+    }
+    
+    if (req.body.guestEmail) {
+      const doctor = await Doctor.findById(req.body.doctor).populate('user');
+      const service = await Service.findById(req.body.service);
+      
+      if (doctor && service) {
+        const emailData = {
+          date: new Date(req.body.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          start_time: req.body.startTime,
+          doctor_name: doctor.user ? `${doctor.user.firstName} ${doctor.user.lastName}` : doctor.specialty,
+          service_name: service.name,
+        };
+        const { subject, html } = emailTemplates.appointmentConfirmation(emailData);
+        sendEmail(req.body.guestEmail, subject, html).catch(() => {});
       }
     }
     

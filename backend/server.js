@@ -159,7 +159,9 @@ app.get('/api/health', (req, res) => {
 app.get('/api/seed', async (req, res) => {
   try {
     const User = require('./src/domain/entities/User');
+    const Doctor = require('./src/domain/entities/Doctor');
     const Service = require('./src/domain/entities/Service');
+    const Appointment = require('./src/domain/entities/Appointment');
     const bcrypt = require('bcryptjs');
     
     const adminExists = await User.findOne({ email: 'admin@medbookpro.com' });
@@ -167,6 +169,13 @@ app.get('/api/seed', async (req, res) => {
       return res.json({ message: 'Already seeded! Login with admin@medbookpro.com / admin123' });
     }
     
+    // Clear existing data
+    await User.deleteMany({});
+    await Doctor.deleteMany({});
+    await Service.deleteMany({});
+    await Appointment.deleteMany({});
+    
+    // Create admin
     const admin = await User.create({
       username: 'admin',
       email: 'admin@medbookpro.com',
@@ -177,13 +186,132 @@ app.get('/api/seed', async (req, res) => {
       phone: '+1234567890'
     });
     
-    await Service.insertMany([
-      { name: 'General Consultation', description: 'Standard consultation', price: 8000, duration: 30, isActive: true },
-      { name: 'Cardiac Checkup', description: 'Heart health evaluation', price: 25000, duration: 60, isActive: true },
-      { name: 'Pediatric Checkup', description: 'Child health examination', price: 10000, duration: 45, isActive: true },
+    // Create receptionist
+    const receptionist = await User.create({
+      username: 'staff',
+      email: 'staff@medbookpro.com',
+      password: await bcrypt.hash('staff123', 10),
+      firstName: 'Mary',
+      lastName: 'Johnson',
+      role: 'receptionist',
+      phone: '+1234567899'
+    });
+    
+    // Create 20 services
+    const services = await Service.insertMany([
+      { name: 'General Consultation', description: 'Standard consultation with a general practitioner', price: 8000, duration: 30, isActive: true },
+      { name: 'Annual Physical Exam', description: 'Comprehensive yearly health examination', price: 20000, duration: 60, isActive: true },
+      { name: 'Cardiac Checkup', description: 'Complete heart health evaluation', price: 25000, duration: 60, isActive: true },
+      { name: 'Pediatric Checkup', description: 'Health examination for children', price: 10000, duration: 45, isActive: true },
+      { name: 'Dermatology Consultation', description: 'Skin health evaluation', price: 12000, duration: 30, isActive: true },
+      { name: 'Orthopedic Evaluation', description: 'Musculoskeletal assessment', price: 15000, duration: 45, isActive: true },
+      { name: 'Neurology Consultation', description: 'Neurological conditions evaluation', price: 18000, duration: 45, isActive: true },
+      { name: 'Eye Examination', description: 'Vision testing and eye health', price: 10000, duration: 40, isActive: true },
+      { name: 'Mental Health Consultation', description: 'Psychiatric evaluation', price: 17000, duration: 60, isActive: true },
+      { name: 'Blood Test Panel', description: 'Comprehensive blood work', price: 7500, duration: 15, isActive: true },
+      { name: 'X-Ray Imaging', description: 'Diagnostic X-ray imaging', price: 10000, duration: 30, isActive: true },
+      { name: 'Ultrasound Scan', description: 'Non-invasive imaging', price: 18000, duration: 45, isActive: true },
+      { name: 'CT Scan', description: 'Computed tomography imaging', price: 35000, duration: 30, isActive: true },
+      { name: 'MRI Scan', description: 'Magnetic resonance imaging', price: 50000, duration: 60, isActive: true },
+      { name: 'ECG/EKG', description: 'Electrocardiogram test', price: 6000, duration: 20, isActive: true },
+      { name: 'Vaccination', description: 'Various vaccinations', price: 4500, duration: 15, isActive: true },
+      { name: 'Wound Care', description: 'Professional wound treatment', price: 8500, duration: 30, isActive: true },
+      { name: 'Allergy Testing', description: 'Comprehensive allergy screening', price: 15000, duration: 45, isActive: true },
+      { name: 'Diabetes Management', description: 'Comprehensive diabetes care', price: 12000, duration: 40, isActive: true },
+      { name: 'Pre-Surgical Consultation', description: 'Pre-operative assessment', price: 13000, duration: 45, isActive: true }
     ]);
     
-    res.json({ message: 'Seeded! Login: admin@medbookpro.com / admin123' });
+    // Doctor services mapping
+    const doctorServicesMap = {
+      'Cardiology': [services[2]._id, services[14]._id, services[1]._id],
+      'General Medicine': [services[0]._id, services[9]._id, services[15]._id],
+      'Pediatrics': [services[3]._id, services[15]._id, services[17]._id],
+      'Dermatology': [services[4]._id, services[17]._id, services[1]._id],
+      'Orthopedics': [services[5]._id, services[10]._id, services[9]._id],
+      'Neurology': [services[6]._id, services[12]._id, services[9]._id],
+      'Gastroenterology': [services[9]._id, services[11]._id, services[0]._id],
+      'Ophthalmology': [services[7]._id, services[9]._id, services[1]._id],
+      'Psychiatry': [services[8]._id, services[1]._id, services[9]._id],
+      'Pulmonology': [services[9]._id, services[10]._id, services[12]._id],
+      'Endocrinology': [services[18]._id, services[9]._id, services[1]._id],
+      'Urology': [services[9]._id, services[11]._id, services[10]._id],
+      'Gynecology': [services[11]._id, services[9]._id, services[15]._id],
+      'Oncology': [services[9]._id, services[12]._id, services[1]._id],
+      'Rheumatology': [services[9]._id, services[17]._id, services[10]._id]
+    };
+    
+    const doctorData = [
+      { firstName: 'John', lastName: 'Smith', specialty: 'Cardiology', qualification: 'MD, FACC', experience: 15, bio: 'Board-certified cardiologist', fee: 15000 },
+      { firstName: 'Sarah', lastName: 'Jones', specialty: 'General Medicine', qualification: 'MD, MBBS', experience: 10, bio: 'General practitioner', fee: 8000 },
+      { firstName: 'David', lastName: 'Lee', specialty: 'Pediatrics', qualification: 'MD, FAAP', experience: 12, bio: 'Pediatric specialist', fee: 10000 },
+      { firstName: 'Emily', lastName: 'Brown', specialty: 'Dermatology', qualification: 'MD, FAAD', experience: 8, bio: 'Dermatologist', fee: 12000 },
+      { firstName: 'Michael', lastName: 'Wilson', specialty: 'Orthopedics', qualification: 'MD, FAAOS', experience: 20, bio: 'Orthopedic surgeon', fee: 20000 },
+      { firstName: 'Jennifer', lastName: 'Roberts', specialty: 'Neurology', qualification: 'MD, PhD', experience: 14, bio: 'Neurologist', fee: 18000 },
+      { firstName: 'Carlos', lastName: 'Martinez', specialty: 'Gastroenterology', qualification: 'MD, FACG', experience: 11, bio: 'Gastroenterologist', fee: 16000 },
+      { firstName: 'Min-jun', lastName: 'Kim', specialty: 'Ophthalmology', qualification: 'MD, FACS', experience: 9, bio: 'Ophthalmologist', fee: 14000 },
+      { firstName: 'Amanda', lastName: 'Taylor', specialty: 'Psychiatry', qualification: 'MD, FAPA', experience: 13, bio: 'Psychiatrist', fee: 17000 },
+      { firstName: 'Robert', lastName: 'Anderson', specialty: 'Pulmonology', qualification: 'MD, FCCP', experience: 16, bio: 'Pulmonologist', fee: 15500 },
+      { firstName: 'Lisa', lastName: 'Thomas', specialty: 'Endocrinology', qualification: 'MD, FACE', experience: 10, bio: 'Endocrinologist', fee: 14500 },
+      { firstName: 'James', lastName: 'White', specialty: 'Urology', qualification: 'MD, FACS', experience: 18, bio: 'Urologist', fee: 16500 },
+      { firstName: 'Michelle', lastName: 'Harris', specialty: 'Gynecology', qualification: 'MD, FACOG', experience: 12, bio: 'OB/GYN', fee: 13000 },
+      { firstName: 'William', lastName: 'Clark', specialty: 'Oncology', qualification: 'MD, FACP', experience: 22, bio: 'Oncologist', fee: 22000 },
+      { firstName: 'Susan', lastName: 'Lewis', specialty: 'Rheumatology', qualification: 'MD, FACR', experience: 11, bio: 'Rheumatologist', fee: 15000 }
+    ];
+    
+    // Create doctors
+    for (const doc of doctorData) {
+      const user = await User.create({
+        username: doc.firstName.toLowerCase() + doc.lastName.toLowerCase(),
+        email: `dr.${doc.firstName.toLowerCase()}.${doc.lastName.toLowerCase()}@medbookpro.com`,
+        password: await bcrypt.hash('doctor123', 10),
+        firstName: doc.firstName,
+        lastName: doc.lastName,
+        role: 'doctor',
+        phone: '+1234567890'
+      });
+      
+      await Doctor.create({
+        user: user._id,
+        specialty: doc.specialty,
+        qualification: doc.qualification,
+        experience: doc.experience,
+        bio: doc.bio,
+        consultationFee: doc.fee,
+        isAvailable: true,
+        services: doctorServicesMap[doc.specialty] || [services[0]._id]
+      });
+    }
+    
+    // Create 15 patients
+    const patients = ['Alice Johnson', 'Bob Williams', 'Carol Davis', 'Daniel Miller', 'Emma Wilson', 'Frank Moore', 'Grace Taylor', 'Henry Anderson', 'Ivy Thomas', 'Jack Jackson', 'Kate White', 'Leo Harris', 'Mia Martin', 'Noah Garcia', 'Olivia Martinez'];
+    for (let i = 0; i < patients.length; i++) {
+      const name = patients[i].split(' ');
+      await User.create({
+        username: 'patient' + (i + 1),
+        email: `patient${i + 1}@example.com`,
+        password: await bcrypt.hash('patient123', 10),
+        firstName: name[0],
+        lastName: name[1],
+        role: 'patient',
+        phone: '+123456780' + (i + 1)
+      });
+    }
+    
+    res.json({ 
+      message: 'Seeded successfully!',
+      accounts: {
+        admin: 'admin@medbookpro.com / admin123',
+        receptionist: 'staff@medbookpro.com / staff123',
+        doctor: 'dr.john.smith@medbookpro.com / doctor123',
+        patient: 'patient1@example.com / patient123'
+      },
+      counts: {
+        users: 17,
+        doctors: 15,
+        services: 20,
+        patients: 15
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: 'Error: ' + err.message });
   }
