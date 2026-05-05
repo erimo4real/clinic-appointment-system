@@ -1,15 +1,40 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AppBar, Toolbar, IconButton, Typography, InputBase, Box, Avatar, Badge, Menu, MenuItem, Divider, List, ListItem, ListItemText, ListItemIcon, Tooltip, Paper } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import SettingsIcon from '@mui/icons-material/Settings';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
+import PeopleIcon from '@mui/icons-material/People';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../../features/auth/store/authSlice';
 import { useNavigate } from 'react-router-dom';
 import api from '../../shared/services/api';
+
+const searchIcons = {
+  patient: <PeopleIcon sx={{ color: '#4CAF50', fontSize: 20 }} />,
+  doctor: <PeopleIcon sx={{ color: '#1A73E8', fontSize: 20 }} />,
+  appointment: <EventNoteIcon sx={{ color: '#FF9800', fontSize: 20 }} />,
+  service: <MedicalServicesIcon sx={{ color: '#9C27B0', fontSize: 20 }} />,
+};
+
+const groupIcons = {
+  patients: <PeopleIcon sx={{ color: '#4CAF50', fontSize: 16 }} />,
+  doctors: <LocalHospitalIcon sx={{ color: '#1A73E8', fontSize: 16 }} />,
+  appointments: <EventNoteIcon sx={{ color: '#FF9800', fontSize: 16 }} />,
+  services: <MedicalServicesIcon sx={{ color: '#9C27B0', fontSize: 16 }} />,
+};
+
+const groupLabels = {
+  patients: 'Patients',
+  doctors: 'Doctors',
+  appointments: 'Appointments',
+  services: 'Services',
+};
 
 const Navbar = ({ onMenuToggle }) => {
   const { user } = useSelector((state) => state.auth);
@@ -20,6 +45,14 @@ const Navbar = ({ onMenuToggle }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState({ patients: [], doctors: [], appointments: [], services: [] });
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const searchRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -36,6 +69,47 @@ const Navbar = ({ onMenuToggle }) => {
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setSearchOpen(true);
+      }
+      if (e.key === 'Escape' && searchOpen) {
+        setSearchOpen(false);
+        setSearchQuery('');
+        setSearchResults({ patients: [], doctors: [], appointments: [], services: [] });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setSearchResults({ patients: [], doctors: [], appointments: [], services: [] });
+      setSelectedIndex(-1);
+      return;
+    }
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      setSelectedIndex(-1);
+      try {
+        const res = await api.get('/search', { params: { q: searchQuery } });
+        setSearchResults(res.data.results || { patients: [], doctors: [], appointments: [], services: [] });
+      } catch (err) {
+        console.error('Search error:', err);
+      }
+      setSearchLoading(false);
+    }, 300);
+
+    return () => clearTimeout(searchTimeoutRef.current);
+  }, [searchQuery]);
 
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -116,12 +190,39 @@ const Navbar = ({ onMenuToggle }) => {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return notifDate.toLocaleDateString();
+  };
+
+  const allResults = [
+    ...searchResults.patients,
+    ...searchResults.doctors,
+    ...searchResults.appointments,
+    ...searchResults.services,
+  ];
+
+  const handleResultClick = (result) => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    navigate(result.route);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < allResults.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : allResults.length - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0 && selectedIndex < allResults.length) {
+        handleResultClick(allResults[selectedIndex]);
+      }
+    }
   };
 
   return (
@@ -140,9 +241,106 @@ const Navbar = ({ onMenuToggle }) => {
           </Typography>
         </Box>
 
-        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1, backgroundColor: '#fff', borderRadius: 2, px: 2, py: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-          <SearchIcon sx={{ color: '#7B809A', fontSize: 20 }} />
-          <InputBase placeholder="Type here..." sx={{ fontSize: '0.875rem', color: '#344767', width: 200 }} />
+        {/* Global Search */}
+        <Box sx={{ position: 'relative' }} ref={searchRef}>
+          <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1, backgroundColor: '#fff', borderRadius: 2, px: 2, py: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.05)', width: 260, transition: 'all 0.2s', ...(searchOpen ? { width: 380, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } : {}) }}>
+            <SearchIcon sx={{ color: '#7B809A', fontSize: 20 }} />
+            <InputBase
+              inputRef={searchInputRef}
+              placeholder="Search patients, doctors..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+              onKeyDown={handleSearchKeyDown}
+              sx={{ fontSize: '0.875rem', color: '#344767', flex: 1 }}
+            />
+            {searchQuery && (
+              <IconButton size="small" onClick={() => { setSearchQuery(''); setSearchOpen(false); }} sx={{ color: '#aaa' }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
+            <Typography variant="caption" sx={{ color: '#ccc', fontSize: '0.65rem', ml: 0.5, display: { xs: 'none', lg: 'block' } }}>⌘K</Typography>
+          </Box>
+
+          {/* Search Results Dropdown */}
+          {searchOpen && searchQuery.length >= 2 && (
+            <Paper
+              sx={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                left: 0,
+                right: { xs: 0, sm: 'auto' },
+                width: { xs: '100vw', sm: 420 },
+                position: { xs: 'fixed', sm: 'absolute' },
+                left: { xs: 16, sm: 0 },
+                right: { xs: 16, sm: 'auto' },
+                maxWidth: 420,
+                maxHeight: 480,
+                overflow: 'auto',
+                borderRadius: 2,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                zIndex: 1300,
+              }}
+            >
+              {searchLoading ? (
+                <Box sx={{ p: 3, textAlign: 'center', color: '#7B809A' }}>
+                  <Typography variant="body2">Searching...</Typography>
+                </Box>
+              ) : allResults.length === 0 ? (
+                <Box sx={{ p: 3, textAlign: 'center', color: '#7B809A' }}>
+                  <Typography variant="body2">No results for "{searchQuery}"</Typography>
+                </Box>
+              ) : (
+                Object.entries(searchResults).filter(([, items]) => items.length > 0).map(([group, items]) => (
+                  <Box key={group}>
+                    <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
+                      {groupIcons[group]}
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#7B809A', textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                        {groupLabels[group]} ({items.length})
+                      </Typography>
+                    </Box>
+                    <List sx={{ p: 0 }}>
+                      {items.map((item) => {
+                        const globalIdx = allResults.indexOf(item);
+                        return (
+                          <ListItem
+                            key={item.id}
+                            onClick={() => handleResultClick(item)}
+                            sx={{
+                              px: 2,
+                              py: 1,
+                              cursor: 'pointer',
+                              bgcolor: globalIdx === selectedIndex ? '#f0f7ff' : 'transparent',
+                              '&:hover': { bgcolor: '#f5f5f5' },
+                              borderBottom: '1px solid #f8f8f8',
+                            }}
+                            secondaryAction={
+                              <KeyboardArrowRightIcon sx={{ color: '#ccc', fontSize: 18 }} />
+                            }
+                          >
+                            <ListItemIcon sx={{ minWidth: 36 }}>
+                              {searchIcons[item.type]}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.85rem' }}>
+                                  {item.title}
+                                </Typography>
+                              }
+                              secondary={
+                                <Typography variant="caption" sx={{ color: '#7B809A', fontSize: '0.75rem' }}>
+                                  {item.subtitle}
+                                </Typography>
+                              }
+                            />
+                          </ListItem>
+                        );
+                      })}
+                    </List>
+                  </Box>
+                ))
+              )}
+            </Paper>
+          )}
         </Box>
 
         {/* Notifications */}
