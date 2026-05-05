@@ -44,6 +44,48 @@ router.post('/check-conflict', async (req, res) => {
 });
 
 /**
+ * GET /api/appointments/stats
+ * 
+ * Retrieves appointment statistics for the dashboard.
+ * Requires authentication.
+ * 
+ * @route GET /api/appointments/stats
+ * @requires Authentication
+ * @returns {200} Appointment statistics
+ */
+router.get('/stats', auth, async (req, res) => {
+  try {
+    const Appointment = require('../../domain/entities/Appointment');
+    
+    const [total, pending, confirmed, completed, cancelled, todayCount] = await Promise.all([
+      Appointment.countDocuments(),
+      Appointment.countDocuments({ status: 'pending' }),
+      Appointment.countDocuments({ status: 'confirmed' }),
+      Appointment.countDocuments({ status: 'completed' }),
+      Appointment.countDocuments({ status: 'cancelled' }),
+      Appointment.countDocuments({
+        date: new Date().toISOString().split('T')[0],
+      }),
+    ]);
+
+    const completedAppointments = await Appointment.find({ status: 'completed' });
+    const totalRevenue = completedAppointments.reduce((sum, apt) => sum + (apt.totalPrice || apt.price || 0), 0);
+
+    res.json({
+      total,
+      pending,
+      confirmed,
+      completed,
+      cancelled,
+      todayCount,
+      totalRevenue,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
  * GET /api/appointments
  * 
  * Retrieves appointments for the authenticated user.

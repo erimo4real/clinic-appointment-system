@@ -4,7 +4,7 @@ import {
   Card, CardContent, Typography, Box, Avatar, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, InputAdornment, IconButton, Button, Dialog, DialogTitle,
-  DialogContent, DialogActions, CircularProgress, Tooltip, Alert,
+  DialogContent, DialogActions, CircularProgress, Alert, Tooltip,
   Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -17,9 +17,14 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import api from '../../../shared/services/api';
 import { useSelector } from 'react-redux';
 import ImageUploadDialog from '../../../shared/components/ImageUploadDialog';
+import { useToast } from '../../../components/ui/Toast';
+
+const sanitize = (str) => typeof str === 'string' ? str.trim().replace(/[<>]/g, '') : str;
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const PatientsManagementPage = () => {
   const { user } = useSelector((state) => state.auth);
+  const toast = useToast();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -29,8 +34,7 @@ const PatientsManagementPage = () => {
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [imageDialogPatient, setImageDialogPatient] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     username: '', email: '', password: '', firstName: '', lastName: '', phone: '', role: 'patient'
   });
@@ -42,7 +46,7 @@ const PatientsManagementPage = () => {
       const patientList = Array.isArray(res.data) ? res.data.filter(u => u.role === 'patient') : [];
       setPatients(patientList);
     } catch (err) {
-      console.error('Failed to load patients:', err);
+      toast.error('Failed to load patients');
     }
     setLoading(false);
   };
@@ -69,8 +73,7 @@ const PatientsManagementPage = () => {
     setEditMode(false);
     setSelectedPatient(null);
     setFormData({ username: '', email: '', password: '', firstName: '', lastName: '', phone: '', role: 'patient' });
-    setError('');
-    setSuccess('');
+    setFormError('');
     setOpenDialog(true);
   };
 
@@ -86,8 +89,7 @@ const PatientsManagementPage = () => {
       phone: patient.phone || '',
       role: patient.role || 'patient',
     });
-    setError('');
-    setSuccess('');
+    setFormError('');
     setOpenDialog(true);
   };
 
@@ -98,27 +100,49 @@ const PatientsManagementPage = () => {
 
   const handleImageUploadSuccess = async () => {
     await loadPatients();
+    toast.success('Profile photo updated');
+  };
+
+  const validateForm = () => {
+    if (!formData.username.trim()) { setFormError('Username is required'); return false; }
+    if (!formData.email.trim()) { setFormError('Email is required'); return false; }
+    if (!isValidEmail(formData.email)) { setFormError('Invalid email format'); return false; }
+    if (!editMode && !formData.password) { setFormError('Password is required'); return false; }
+    if (formData.password && formData.password.length < 6) { setFormError('Password must be at least 6 characters'); return false; }
+    if (formData.phone && !/^[0-9+\-\s()]+$/.test(formData.phone)) { setFormError('Invalid phone number'); return false; }
+    return true;
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) return;
     setActionLoading(true);
-    setError('');
-    setSuccess('');
+    setFormError('');
     try {
+      const payload = {
+        username: sanitize(formData.username).toLowerCase(),
+        email: sanitize(formData.email).toLowerCase(),
+        firstName: sanitize(formData.firstName),
+        lastName: sanitize(formData.lastName),
+        phone: sanitize(formData.phone),
+        role: formData.role || 'patient',
+      };
+      if (formData.password) payload.password = formData.password;
+
       if (editMode && selectedPatient) {
-        const payload = { ...formData };
-        if (!payload.password) delete payload.password;
+        delete payload.username;
+        delete payload.password;
+        if (formData.password) payload.password = formData.password;
         await api.put(`/admin/users/${selectedPatient._id || selectedPatient.id}`, payload);
-        setSuccess('Patient updated successfully');
+        toast.success('Patient updated successfully');
       } else {
-        if (!formData.password) { setError('Password is required'); setActionLoading(false); return; }
-        await api.post('/admin/users', formData);
-        setSuccess('Patient created successfully');
+        await api.post('/admin/users', payload);
+        toast.success('Patient created successfully');
       }
       await loadPatients();
-      setTimeout(() => setOpenDialog(false), 800);
+      setOpenDialog(false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Operation failed');
+      setFormError(err.response?.data?.message || 'Operation failed');
+      toast.error(err.response?.data?.message || 'Operation failed');
     }
     setActionLoading(false);
   };
@@ -129,10 +153,9 @@ const PatientsManagementPage = () => {
     try {
       await api.delete(`/admin/users/${patient._id || patient.id}`);
       await loadPatients();
-      setSuccess('Patient deleted successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      toast.success('Patient deleted successfully');
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      toast.error(err.response?.data?.message || 'Delete failed');
     }
     setActionLoading(false);
   };
@@ -160,9 +183,6 @@ const PatientsManagementPage = () => {
             </Button>
           )}
         </Box>
-
-        {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{success}</Alert>}
 
         <Box sx={{ mb: 2 }}>
           <TextField
@@ -196,16 +216,7 @@ const PatientsManagementPage = () => {
                   ) : filtered.map((patient) => (
                     <TableRow key={patient._id || patient.id} sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
                       <TableCell sx={{ py: 1.25 }}>
-                        <Box
-                          onClick={() => handleOpenImageUpload(patient)}
-                          sx={{
-                            width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer',
-                            position: 'relative', border: '2px solid',
-                            borderColor: patient.profileImage ? '#4CAF50' : '#e0e0e0',
-                            transition: 'all 0.2s',
-                            '&:hover': { borderColor: '#1A73E8', boxShadow: '0 0 0 3px rgba(26,115,232,0.2)' },
-                          }}
-                        >
+                        <Box onClick={() => handleOpenImageUpload(patient)} sx={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', position: 'relative', border: '2px solid', borderColor: patient.profileImage ? '#4CAF50' : '#e0e0e0', transition: 'all 0.2s', '&:hover': { borderColor: '#1A73E8', boxShadow: '0 0 0 3px rgba(26,115,232,0.2)' } }}>
                           {patient.profileImage ? (
                             <img src={patient.profileImage} alt={getPatientName(patient)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
@@ -217,26 +228,9 @@ const PatientsManagementPage = () => {
                       </TableCell>
                       <TableCell sx={{ py: 1.25 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 36, height: 36, bgcolor: '#4CAF50', fontSize: 13, fontWeight: 600 }}>
-                            {getInitials(patient)}
-                          </Avatar>
+                          <Avatar sx={{ width: 36, height: 36, bgcolor: '#4CAF50', fontSize: 13, fontWeight: 600 }}>{getInitials(patient)}</Avatar>
                           <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.85rem' }}>
-                              {getPatientName(patient)}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: '#7B809A' }}>@{patient.username}</Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={{ py: 1.25 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 36, height: 36, bgcolor: '#4CAF50', fontSize: 13, fontWeight: 600 }}>
-                            {getInitials(patient)}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.85rem' }}>
-                              {getPatientName(patient)}
-                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.85rem' }}>{getPatientName(patient)}</Typography>
                             <Typography variant="caption" sx={{ color: '#7B809A' }}>@{patient.username}</Typography>
                           </Box>
                         </Box>
@@ -257,26 +251,13 @@ const PatientsManagementPage = () => {
                         {patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'N/A'}
                       </TableCell>
                       <TableCell sx={{ py: 1.25 }}>
-                        <Chip label={patient.isActive !== false ? 'Active' : 'Inactive'} size="small"
-                          color={patient.isActive !== false ? 'success' : 'default'} sx={{ fontWeight: 700, fontSize: '0.75rem' }} />
+                        <Chip label={patient.isActive !== false ? 'Active' : 'Inactive'} size="small" color={patient.isActive !== false ? 'success' : 'default'} sx={{ fontWeight: 700, fontSize: '0.75rem' }} />
                       </TableCell>
                       <TableCell sx={{ py: 1.25 }}>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
-                          <Tooltip title="Change Photo">
-                            <IconButton size="small" sx={{ color: '#9C27B0' }} onClick={() => handleOpenImageUpload(patient)}>
-                              <PhotoCameraIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Edit">
-                            <IconButton size="small" sx={{ color: '#1A73E8' }} onClick={() => handleOpenEdit(patient)}>
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton size="small" sx={{ color: '#F44336' }} onClick={() => handleDelete(patient)} disabled={actionLoading}>
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          <Tooltip title="Change Photo"><IconButton size="small" sx={{ color: '#9C27B0' }} onClick={() => handleOpenImageUpload(patient)}><PhotoCameraIcon fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Edit"><IconButton size="small" sx={{ color: '#1A73E8' }} onClick={() => handleOpenEdit(patient)}><EditIcon fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="Delete"><IconButton size="small" sx={{ color: '#F44336' }} onClick={() => handleDelete(patient)} disabled={actionLoading}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -293,6 +274,7 @@ const PatientsManagementPage = () => {
           </DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              {formError && <Alert severity="error" sx={{ borderRadius: 2 }}>{formError}</Alert>}
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField label="First Name" fullWidth value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
                 <TextField label="Last Name" fullWidth value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />

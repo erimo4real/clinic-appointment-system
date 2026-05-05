@@ -71,7 +71,7 @@ const ProfilePage = () => {
           opacity: loaded ? 1 : 0,
           transform: loaded ? 'translateY(0)' : 'translateY(12px)',
           transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0,
+          display: 'flex', flexDirection: 'column',
         }}
       >
         {/* Header */}
@@ -86,7 +86,7 @@ const ProfilePage = () => {
           </Button>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2.5, flex: 1, minHeight: 0, flexWrap: { xs: 'wrap', lg: 'nowrap' } }}>
+        <Box sx={{ display: 'flex', gap: 2.5, flexWrap: { xs: 'wrap', lg: 'nowrap' } }}>
           {/* Left Column - Profile Card */}
           <Card sx={{
             borderRadius: 2, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.06)',

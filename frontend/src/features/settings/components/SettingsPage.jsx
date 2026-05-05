@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateProfile } from '../../auth/store/authSlice';
+import { updateProfile, fetchCurrentUser } from '../../auth/store/authSlice';
 import DashboardLayout from '../../../layout/MaterialDashboard/DashboardLayout';
 import {
   Card, CardContent, Typography, Box, Avatar, TextField, Button,
@@ -13,6 +13,10 @@ import SaveIcon from '@mui/icons-material/Save';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ImageUploadDialog from '../../../shared/components/ImageUploadDialog';
 import api from '../../../shared/services/api';
 
 const SettingsPage = () => {
@@ -24,6 +28,8 @@ const SettingsPage = () => {
   const [profileError, setProfileError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState({
     firstName: '', lastName: '', username: '', email: '', phone: '', address: '', dateOfBirth: '', gender: '',
   });
@@ -89,20 +95,133 @@ const SettingsPage = () => {
     setPasswordLoading(false);
   };
 
+  const handleRemoveImage = async () => {
+    setUploading(true);
+    try {
+      await api.put('/auth/profile', { profileImage: '' });
+      await dispatch(fetchCurrentUser());
+      setProfileSuccess('Profile photo removed');
+      setTimeout(() => setProfileSuccess(''), 4000);
+    } catch (err) {
+      setProfileError('Failed to remove photo');
+    }
+    setUploading(false);
+  };
+
+  const handleImageUploadSuccess = async () => {
+    await dispatch(fetchCurrentUser());
+    setProfileSuccess('Profile photo updated');
+    setTimeout(() => setProfileSuccess(''), 4000);
+  };
+
   if (!user) return null;
 
   const displayName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || profile.username || 'User';
+  const initials = `${(profile.firstName || profile.username || 'U')[0]}${(profile.lastName || '')[0]}`.toUpperCase();
 
   return (
     <DashboardLayout>
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <Box sx={{ mb: 2.5 }}>
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#344767' }}>Settings</Typography>
           <Typography variant="body2" sx={{ color: '#7B809A' }}>Manage your account settings and security</Typography>
         </Box>
 
-        <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Profile Photo Card */}
+          <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.06)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                <Box sx={{
+                  width: 40, height: 40, borderRadius: 2, bgcolor: '#E8F5E9',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <PhotoCameraIcon sx={{ color: '#4CAF50', fontSize: 20 }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767', fontSize: '1.05rem' }}>
+                    Profile Photo
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#7B809A', fontSize: '0.8rem' }}>
+                    Upload or update your profile picture
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider sx={{ mb: 3 }} />
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+                {/* Current Photo Display */}
+                <Box sx={{ position: 'relative', flexShrink: 0 }}>
+                  <Avatar
+                    sx={{
+                      width: 100, height: 100,
+                      background: 'linear-gradient(135deg, #1A73E8, #4285F4)',
+                      fontSize: 36, fontWeight: 600,
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                    }}
+                  >
+                    {user.profileImage ? (
+                      <img src={user.profileImage} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    ) : initials}
+                  </Avatar>
+                  {user.profileImage && (
+                    <Box sx={{
+                      position: 'absolute', bottom: 2, right: 2,
+                      width: 28, height: 28, borderRadius: '50%',
+                      bgcolor: '#4CAF50', border: '2px solid #fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Typography variant="caption" sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 700 }}>✓</Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Photo Actions */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', mb: 0.25 }}>{displayName}</Typography>
+                    <Typography variant="caption" sx={{ color: '#7B809A' }}>
+                      {user.profileImage ? 'Photo uploaded' : 'No photo uploaded'}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<CloudUploadIcon />}
+                      onClick={() => setImageDialogOpen(true)}
+                      sx={{
+                        borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem',
+                        background: 'linear-gradient(135deg, #1A73E8, #4285F4)',
+                        boxShadow: '0 2px 8px rgba(26,115,232,0.3)',
+                      }}
+                    >
+                      {user.profileImage ? 'Change Photo' : 'Upload Photo'}
+                    </Button>
+                    {user.profileImage && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<DeleteForeverIcon />}
+                        color="error"
+                        onClick={handleRemoveImage}
+                        disabled={uploading}
+                        sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
+                      >
+                        {uploading ? <CircularProgress size={16} /> : 'Remove'}
+                      </Button>
+                    )}
+                  </Box>
+                  <Typography variant="caption" sx={{ color: '#9E9E9E' }}>
+                    JPG, PNG, GIF, WebP • Max 5MB
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+
           {/* Profile Edit Card */}
           <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.06)' }}>
             <CardContent sx={{ p: 3 }}>
@@ -115,33 +234,16 @@ const SettingsPage = () => {
                 </Box>
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767', fontSize: '1.05rem' }}>
-                    Edit Profile
+                    Personal Information
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#7B809A', fontSize: '0.8rem' }}>
-                    Update your personal information
+                    Update your personal details
                   </Typography>
                 </Box>
               </Box>
 
               {profileSuccess && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{profileSuccess}</Alert>}
               {profileError && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{profileError}</Alert>}
-
-              <Box sx={{ display: 'flex', gap: 1.5, mb: 2.5, alignItems: 'center' }}>
-                <Avatar sx={{
-                  width: 56, height: 56, background: 'linear-gradient(135deg, #1A73E8, #4285F4)',
-                  fontSize: 20, fontWeight: 600,
-                }}>
-                  {user.profileImage ? (
-                    <img src={user.profileImage} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                  ) : (profile.firstName || profile.username || 'U')[0].toUpperCase()}
-                </Avatar>
-                <Box>
-                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#344767' }}>{displayName}</Typography>
-                  <Typography variant="caption" sx={{ color: '#7B809A', textTransform: 'capitalize' }}>{user.role}</Typography>
-                </Box>
-              </Box>
-
-              <Divider sx={{ mb: 2.5 }} />
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -352,6 +454,17 @@ const SettingsPage = () => {
             </CardContent>
           </Card>
         </Box>
+
+        {/* Image Upload Dialog */}
+        <ImageUploadDialog
+          open={imageDialogOpen}
+          onClose={() => setImageDialogOpen(false)}
+          entity={user}
+          entityId={user?._id || user?.id}
+          updateEndpoint="/auth/profile"
+          onSuccess={handleImageUploadSuccess}
+          entityName={displayName}
+        />
       </Box>
     </DashboardLayout>
   );

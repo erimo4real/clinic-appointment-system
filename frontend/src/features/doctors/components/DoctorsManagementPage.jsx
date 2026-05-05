@@ -17,6 +17,7 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import api from '../../../shared/services/api';
 import { useSelector } from 'react-redux';
 import ImageUploadDialog from '../../../shared/components/ImageUploadDialog';
+import { useToast } from '../../../components/ui/Toast';
 
 const specialties = [
   'General Medicine', 'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics',
@@ -25,8 +26,12 @@ const specialties = [
   'Endocrinology', 'Rheumatology', 'Other'
 ];
 
+const sanitize = (str) => typeof str === 'string' ? str.trim().replace(/[<>]/g, '') : str;
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const DoctorsManagementPage = () => {
   const { user } = useSelector((state) => state.auth);
+  const toast = useToast();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -38,8 +43,7 @@ const DoctorsManagementPage = () => {
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [imageDialogDoctor, setImageDialogDoctor] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', password: '',
     specialty: '', qualification: '', experience: '', consultationFee: '', bio: ''
@@ -67,7 +71,7 @@ const DoctorsManagementPage = () => {
         setRatings(r);
       }
     } catch (err) {
-      setError('Failed to load doctors');
+      toast.error('Failed to load doctors');
     }
     setLoading(false);
   };
@@ -97,8 +101,7 @@ const DoctorsManagementPage = () => {
     setEditMode(false);
     setSelectedDoctor(null);
     setFormData({ name: '', email: '', phone: '', password: '', specialty: '', qualification: '', experience: '', consultationFee: '', bio: '' });
-    setError('');
-    setSuccess('');
+    setFormError('');
     setOpenDialog(true);
   };
 
@@ -116,8 +119,7 @@ const DoctorsManagementPage = () => {
       consultationFee: doctor.consultationFee || doctor.consultation_fee || '',
       bio: doctor.bio || '',
     });
-    setError('');
-    setSuccess('');
+    setFormError('');
     setOpenDialog(true);
   };
 
@@ -128,35 +130,56 @@ const DoctorsManagementPage = () => {
 
   const handleImageUploadSuccess = async () => {
     await loadData();
+    toast.success('Profile photo updated');
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) { setFormError('Name is required'); return false; }
+    if (!formData.email.trim()) { setFormError('Email is required'); return false; }
+    if (!isValidEmail(formData.email)) { setFormError('Invalid email format'); return false; }
+    if (!editMode && !formData.password) { setFormError('Password is required'); return false; }
+    if (formData.password && formData.password.length < 6) { setFormError('Password must be at least 6 characters'); return false; }
+    if (formData.phone && !/^[0-9+\-\s()]+$/.test(formData.phone)) { setFormError('Invalid phone number'); return false; }
+    if (formData.experience && (isNaN(formData.experience) || Number(formData.experience) < 0)) { setFormError('Experience must be a positive number'); return false; }
+    if (formData.consultationFee && (isNaN(formData.consultationFee) || Number(formData.consultationFee) < 0)) { setFormError('Fee must be a positive number'); return false; }
+    return true;
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email) { setError('Name and Email are required'); return; }
-    if (!editMode && !formData.password) { setError('Password is required'); return; }
+    if (!validateForm()) return;
     setActionLoading(true);
-    setError('');
+    setFormError('');
     try {
       if (editMode) {
-        const payload = { ...formData };
-        if (!payload.password) delete payload.password;
-        payload.consultation_fee = parseFloat(payload.consultationFee) || 0;
+        const payload = {
+          name: sanitize(formData.name),
+          email: sanitize(formData.email).toLowerCase(),
+          phone: sanitize(formData.phone),
+          specialty: sanitize(formData.specialty),
+          qualification: sanitize(formData.qualification),
+          experience: formData.experience ? Number(formData.experience) : undefined,
+          consultationFee: formData.consultationFee ? Number(formData.consultationFee) : undefined,
+          bio: sanitize(formData.bio),
+        };
+        if (formData.password) payload.password = formData.password;
         payload.is_available = true;
         await api.put(`/admin/doctors/${selectedDoctor._id || selectedDoctor.id}`, payload);
-        setSuccess('Doctor updated successfully');
+        toast.success('Doctor updated successfully');
       } else {
         const payload = {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
+          name: sanitize(formData.name),
+          email: sanitize(formData.email).toLowerCase(),
+          phone: sanitize(formData.phone),
           password: formData.password,
         };
         await api.post('/admin/doctors', payload);
-        setSuccess('Doctor created successfully');
+        toast.success('Doctor created successfully');
       }
       await loadData();
-      setTimeout(() => setOpenDialog(false), 800);
+      setOpenDialog(false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Operation failed');
+      setFormError(err.response?.data?.message || 'Operation failed');
+      toast.error(err.response?.data?.message || 'Operation failed');
     }
     setActionLoading(false);
   };
@@ -167,10 +190,9 @@ const DoctorsManagementPage = () => {
     try {
       await api.delete(`/admin/doctors/${doctor._id || doctor.id}`);
       await loadData();
-      setSuccess('Doctor deleted successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      toast.success('Doctor deleted successfully');
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      toast.error(err.response?.data?.message || 'Delete failed');
     }
     setActionLoading(false);
   };
@@ -198,9 +220,6 @@ const DoctorsManagementPage = () => {
             </Button>
           )}
         </Box>
-
-        {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{success}</Alert>}
 
         <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
           <TextField
@@ -247,21 +266,7 @@ const DoctorsManagementPage = () => {
                     return (
                       <TableRow key={doctorId} sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
                         <TableCell sx={{ py: 1.25 }}>
-                          <Box
-                            onClick={() => handleOpenImageUpload(doctor)}
-                            sx={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: '50%',
-                              overflow: 'hidden',
-                              cursor: 'pointer',
-                              position: 'relative',
-                              border: '2px solid',
-                              borderColor: doctor.profileImage ? '#4CAF50' : '#e0e0e0',
-                              transition: 'all 0.2s',
-                              '&:hover': { borderColor: '#1A73E8', boxShadow: '0 0 0 3px rgba(26,115,232,0.2)' },
-                            }}
-                          >
+                          <Box onClick={() => handleOpenImageUpload(doctor)} sx={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', position: 'relative', border: '2px solid', borderColor: doctor.profileImage ? '#4CAF50' : '#e0e0e0', transition: 'all 0.2s', '&:hover': { borderColor: '#1A73E8', boxShadow: '0 0 0 3px rgba(26,115,232,0.2)' } }}>
                             {doctor.profileImage ? (
                               <img src={doctor.profileImage} alt={getDoctorName(doctor)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
@@ -273,16 +278,10 @@ const DoctorsManagementPage = () => {
                         </TableCell>
                         <TableCell sx={{ py: 1.25 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Avatar sx={{ width: 36, height: 36, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', fontSize: 13, fontWeight: 600 }}>
-                              {getInitials(doctor)}
-                            </Avatar>
+                            <Avatar sx={{ width: 36, height: 36, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', fontSize: 13, fontWeight: 600 }}>{getInitials(doctor)}</Avatar>
                             <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.85rem' }}>
-                                {getDoctorName(doctor)}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: '#7B809A' }}>
-                                {doctor.email || 'N/A'}
-                              </Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.85rem' }}>{getDoctorName(doctor)}</Typography>
+                              <Typography variant="caption" sx={{ color: '#7B809A' }}>{doctor.email || 'N/A'}</Typography>
                             </Box>
                           </Box>
                         </TableCell>
@@ -291,16 +290,12 @@ const DoctorsManagementPage = () => {
                         </TableCell>
                         <TableCell sx={{ color: '#7B809A', fontSize: '0.85rem', py: 1.25 }}>{doctor.qualification || 'N/A'}</TableCell>
                         <TableCell sx={{ color: '#7B809A', fontSize: '0.85rem', py: 1.25 }}>{doctor.experience ? `${doctor.experience} yrs` : 'N/A'}</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#4CAF50', fontSize: '0.85rem', py: 1.25 }}>
-                          ₦{(doctor.consultationFee || doctor.consultation_fee || 0).toLocaleString()}
-                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#4CAF50', fontSize: '0.85rem', py: 1.25 }}>₦{(doctor.consultationFee || doctor.consultation_fee || 0).toLocaleString()}</TableCell>
                         <TableCell sx={{ py: 1.25 }}>
                           {avgRating > 0 ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <StarIcon sx={{ fontSize: 16, color: '#FFB400' }} />
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.85rem' }}>
-                                {avgRating.toFixed(1)}
-                              </Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.85rem' }}>{avgRating.toFixed(1)}</Typography>
                               <Typography variant="caption" sx={{ color: '#7B809A' }}>({ratingCount})</Typography>
                             </Box>
                           ) : (
@@ -308,26 +303,13 @@ const DoctorsManagementPage = () => {
                           )}
                         </TableCell>
                         <TableCell sx={{ py: 1.25 }}>
-                          <Chip label={doctor.isAvailable !== false ? 'Active' : 'Inactive'} size="small"
-                            color={doctor.isAvailable !== false ? 'success' : 'default'} sx={{ fontWeight: 700, fontSize: '0.75rem' }} />
+                          <Chip label={doctor.isAvailable !== false ? 'Active' : 'Inactive'} size="small" color={doctor.isAvailable !== false ? 'success' : 'default'} sx={{ fontWeight: 700, fontSize: '0.75rem' }} />
                         </TableCell>
                         <TableCell sx={{ py: 1.25 }}>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <Tooltip title="Change Photo">
-                              <IconButton size="small" sx={{ color: '#9C27B0' }} onClick={() => handleOpenImageUpload(doctor)}>
-                                <PhotoCameraIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Edit">
-                              <IconButton size="small" sx={{ color: '#1A73E8' }} onClick={() => handleOpenEdit(doctor)}>
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete">
-                              <IconButton size="small" sx={{ color: '#F44336' }} onClick={() => handleDelete(doctor)} disabled={actionLoading}>
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                            <Tooltip title="Change Photo"><IconButton size="small" sx={{ color: '#9C27B0' }} onClick={() => handleOpenImageUpload(doctor)}><PhotoCameraIcon fontSize="small" /></IconButton></Tooltip>
+                            <Tooltip title="Edit"><IconButton size="small" sx={{ color: '#1A73E8' }} onClick={() => handleOpenEdit(doctor)}><EditIcon fontSize="small" /></IconButton></Tooltip>
+                            <Tooltip title="Delete"><IconButton size="small" sx={{ color: '#F44336' }} onClick={() => handleDelete(doctor)} disabled={actionLoading}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -345,6 +327,7 @@ const DoctorsManagementPage = () => {
           </DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              {formError && <Alert severity="error" sx={{ borderRadius: 2 }}>{formError}</Alert>}
               <TextField label="Full Name" fullWidth value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
               <TextField label="Email" type="email" fullWidth value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -361,8 +344,8 @@ const DoctorsManagementPage = () => {
               </FormControl>
               <TextField label="Qualification" fullWidth value={formData.qualification} onChange={(e) => setFormData({ ...formData, qualification: e.target.value })} />
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField label="Experience (years)" type="number" fullWidth value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: e.target.value })} />
-                <TextField label="Consultation Fee (₦)" type="number" fullWidth value={formData.consultationFee} onChange={(e) => setFormData({ ...formData, consultationFee: e.target.value })} />
+                <TextField label="Experience (years)" type="number" fullWidth value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: e.target.value })} inputProps={{ min: 0 }} />
+                <TextField label="Consultation Fee (₦)" type="number" fullWidth value={formData.consultationFee} onChange={(e) => setFormData({ ...formData, consultationFee: e.target.value })} inputProps={{ min: 0 }} />
               </Box>
               <TextField label="Bio" fullWidth multiline rows={3} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} />
             </Box>

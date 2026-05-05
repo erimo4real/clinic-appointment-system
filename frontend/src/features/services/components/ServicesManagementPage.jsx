@@ -6,7 +6,7 @@ import {
   Card, CardContent, Typography, Box, Chip, Button, Avatar,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton,
-  CircularProgress, Alert, Tooltip, InputAdornment
+  CircularProgress, Tooltip, InputAdornment
 } from '@mui/material';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import EditIcon from '@mui/icons-material/Edit';
@@ -16,17 +16,19 @@ import SearchIcon from '@mui/icons-material/Search';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import TimerIcon from '@mui/icons-material/Timer';
 import api from '../../../shared/services/api';
+import { useToast } from '../../../components/ui/Toast';
+
+const sanitize = (str) => typeof str === 'string' ? str.trim().replace(/[<>]/g, '') : str;
 
 const ServicesManagementPage = () => {
   const dispatch = useDispatch();
   const { services, loading } = useSelector((state) => state.doctors);
   const { user } = useSelector((state) => state.auth);
+  const toast = useToast();
   const [openDialog, setOpenDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
   const [formData, setFormData] = useState({ name: '', description: '', duration: 30, price: '', isActive: true });
 
@@ -45,8 +47,6 @@ const ServicesManagementPage = () => {
     setEditMode(false);
     setSelectedService(null);
     setFormData({ name: '', description: '', duration: 30, price: '', isActive: true });
-    setError('');
-    setSuccess('');
     setOpenDialog(true);
   };
 
@@ -60,34 +60,34 @@ const ServicesManagementPage = () => {
       price: service.price || '',
       isActive: service.isActive !== false,
     });
-    setError('');
-    setSuccess('');
     setOpenDialog(true);
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.price) { setError('Name and Price are required'); return; }
+    if (!formData.name.trim()) { toast.error('Service name is required'); return; }
+    if (!formData.price || parseFloat(formData.price) < 0) { toast.error('Valid price is required'); return; }
+    if (formData.duration && parseInt(formData.duration) < 1) { toast.error('Duration must be at least 1 minute'); return; }
     setActionLoading(true);
-    setError('');
     try {
       const payload = {
-        ...formData,
+        name: sanitize(formData.name),
+        description: sanitize(formData.description),
         price: parseFloat(formData.price),
         duration: parseInt(formData.duration) || 30,
       };
       if (editMode) {
         payload.is_active = formData.isActive;
         await api.put(`/admin/services/${selectedService._id || selectedService.id}`, payload);
-        setSuccess('Service updated successfully');
+        toast.success('Service updated successfully');
       } else {
         payload.is_active = true;
         await api.post('/admin/services', payload);
-        setSuccess('Service created successfully');
+        toast.success('Service created successfully');
       }
       dispatch(fetchServices());
-      setTimeout(() => setOpenDialog(false), 800);
+      setOpenDialog(false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Operation failed');
+      toast.error(err.response?.data?.message || 'Operation failed');
     }
     setActionLoading(false);
   };
@@ -98,10 +98,9 @@ const ServicesManagementPage = () => {
     try {
       await api.delete(`/admin/services/${service._id || service.id}`);
       dispatch(fetchServices());
-      setSuccess('Service deleted successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      toast.success('Service deleted successfully');
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      toast.error(err.response?.data?.message || 'Delete failed');
     }
     setActionLoading(false);
   };
@@ -111,8 +110,9 @@ const ServicesManagementPage = () => {
     try {
       await api.put(`/admin/services/${service._id || service.id}`, { is_active: !service.isActive });
       dispatch(fetchServices());
+      toast.success(`Service ${service.isActive ? 'deactivated' : 'activated'}`);
     } catch (err) {
-      setError('Failed to update status');
+      toast.error('Failed to update status');
     }
     setActionLoading(false);
   };
@@ -132,9 +132,6 @@ const ServicesManagementPage = () => {
             </Button>
           )}
         </Box>
-
-        {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{success}</Alert>}
 
         <Box sx={{ mb: 2 }}>
           <TextField

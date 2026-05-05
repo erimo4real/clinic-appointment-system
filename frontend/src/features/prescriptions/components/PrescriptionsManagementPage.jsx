@@ -4,7 +4,7 @@ import {
   Card, CardContent, Typography, Box, Avatar, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, InputAdornment, IconButton, Button, Dialog, DialogTitle,
-  DialogContent, DialogActions, CircularProgress, Tooltip, Alert,
+  DialogContent, DialogActions, CircularProgress, Tooltip,
   Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -14,6 +14,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import api from '../../../shared/services/api';
 import { useSelector } from 'react-redux';
+import { useToast } from '../../../components/ui/Toast';
+
+const sanitize = (str) => typeof str === 'string' ? str.trim().replace(/[<>]/g, '') : str;
 
 const statusColors = {
   active: { bg: '#e8f5e9', text: '#1b5e20', label: 'Active' },
@@ -23,6 +26,7 @@ const statusColors = {
 
 const PrescriptionsManagementPage = () => {
   const { user } = useSelector((state) => state.auth);
+  const toast = useToast();
   const [prescriptions, setPrescriptions] = useState([]);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -34,8 +38,6 @@ const PrescriptionsManagementPage = () => {
   const [selectedRx, setSelectedRx] = useState(null);
   const [viewMode, setViewMode] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
     patient: '', doctor: '', notes: '', status: 'active',
     medicines: [{ name: '', dosage: '', frequency: '', duration: '', instructions: '' }]
@@ -97,8 +99,6 @@ const PrescriptionsManagementPage = () => {
       patient: '', doctor: '', notes: '', status: 'active',
       medicines: [{ name: '', dosage: '', frequency: '', duration: '', instructions: '' }]
     });
-    setError('');
-    setSuccess('');
     setOpenDialog(true);
   };
 
@@ -113,8 +113,6 @@ const PrescriptionsManagementPage = () => {
       status: rx.status || 'active',
       medicines: rx.medicines && rx.medicines.length > 0 ? [...rx.medicines] : [{ name: '', dosage: '', frequency: '', duration: '', instructions: '' }]
     });
-    setError('');
-    setSuccess('');
     setOpenDialog(true);
   };
 
@@ -142,30 +140,46 @@ const PrescriptionsManagementPage = () => {
 
   const handleSubmit = async () => {
     setActionLoading(true);
-    setError('');
-    setSuccess('');
     try {
       if (editMode && selectedRx) {
-        const payload = { notes: formData.notes, status: formData.status, medicines: formData.medicines };
+        const payload = {
+          notes: sanitize(formData.notes),
+          status: formData.status,
+          medicines: formData.medicines.map(m => ({
+            name: sanitize(m.name),
+            dosage: sanitize(m.dosage),
+            frequency: sanitize(m.frequency),
+            duration: sanitize(m.duration),
+            instructions: sanitize(m.instructions),
+          })),
+        };
         await api.put(`/prescriptions/${selectedRx._id || selectedRx.id}`, payload);
-        setSuccess('Prescription updated successfully');
+        toast.success('Prescription updated successfully');
       } else {
+        const validMeds = formData.medicines.filter(m => m.name.trim());
+        if (!formData.patient) { toast.error('Patient is required'); setActionLoading(false); return; }
+        if (!formData.doctor) { toast.error('Doctor is required'); setActionLoading(false); return; }
+        if (validMeds.length === 0) { toast.error('Add at least one medicine'); setActionLoading(false); return; }
         const payload = {
           patient: formData.patient,
           doctor: formData.doctor,
-          notes: formData.notes,
+          notes: sanitize(formData.notes),
           status: formData.status,
-          medicines: formData.medicines.filter(m => m.name.trim()),
+          medicines: validMeds.map(m => ({
+            name: sanitize(m.name),
+            dosage: sanitize(m.dosage),
+            frequency: sanitize(m.frequency),
+            duration: sanitize(m.duration),
+            instructions: sanitize(m.instructions),
+          })),
         };
-        if (!payload.patient || !payload.doctor) { setError('Patient and Doctor are required'); setActionLoading(false); return; }
-        if (payload.medicines.length === 0) { setError('Add at least one medicine'); setActionLoading(false); return; }
         await api.post('/prescriptions', payload);
-        setSuccess('Prescription created successfully');
+        toast.success('Prescription created successfully');
       }
       await loadData();
-      setTimeout(() => setOpenDialog(false), 800);
+      setOpenDialog(false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Operation failed');
+      toast.error(err.response?.data?.message || 'Operation failed');
     }
     setActionLoading(false);
   };
@@ -176,10 +190,9 @@ const PrescriptionsManagementPage = () => {
     try {
       await api.delete(`/prescriptions/${rx._id || rx.id}`);
       await loadData();
-      setSuccess('Prescription deleted successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      toast.success('Prescription deleted successfully');
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      toast.error(err.response?.data?.message || 'Delete failed');
     }
     setActionLoading(false);
   };
@@ -207,9 +220,6 @@ const PrescriptionsManagementPage = () => {
             </Button>
           )}
         </Box>
-
-        {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{success}</Alert>}
 
         <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
           <TextField

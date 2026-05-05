@@ -16,6 +16,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import DoneIcon from '@mui/icons-material/Done';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../../layout/MaterialDashboard/DashboardLayout';
 import ReportsLineChart from '../../../components/Dashboard/ReportsLineChart';
 import ReportsBarChart from '../../../components/Dashboard/ReportsBarChart';
@@ -99,6 +100,7 @@ const MetricCardSkeleton = () => (
 );
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { appointments, stats, loadingAppointments, loadingStats } = useSelector((state) => state.appointments);
@@ -265,6 +267,7 @@ const DashboardPage = () => {
                     variant="contained"
                     size="small"
                     endIcon={<ArrowUpwardIcon sx={{ fontSize: 16 }} />}
+                    onClick={() => navigate('/dashboard/appointments')}
                     sx={{
                       borderRadius: 2,
                       textTransform: 'uppercase',
@@ -275,6 +278,7 @@ const DashboardPage = () => {
                       boxShadow: '0 2px 12px 0 rgba(0,0,0,0.14)',
                       px: 3,
                       py: 0.75,
+                      cursor: 'pointer',
                       '&:hover': {
                         background: 'linear-gradient(195deg, #1A73E8 0%, #49A3B8 100%)',
                         boxShadow: '0 4px 20px 0 rgba(0,0,0,0.2)',
@@ -361,13 +365,17 @@ const DashboardPage = () => {
                 <Divider sx={{ mb: 1 }} />
                 <List disablePadding dense sx={{ flex: 1 }}>
                   {[
-                    { icon: <PeopleIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #49A3B8 0%, #1A73E8 100%)', label: 'Total Doctors', value: totalDoctors },
-                    { icon: <PersonIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #66BB6A 0%, #43A047 100%)', label: 'Total Patients', value: totalPatients },
-                    { icon: <LocalHospitalIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #FFB74D 0%, #FB8C00 100%)', label: 'Medical Services', value: totalServices },
-                    { icon: <ScheduleIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #EC407A 0%, #D81B60 100%)', label: 'Pending', value: pendingAppointments },
-                    { icon: <CheckCircleIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #EF5350 0%, #E53935 100%)', label: 'Completed', value: completedAppointments },
+                    { icon: <PeopleIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #49A3B8 0%, #1A73E8 100%)', label: 'Total Doctors', value: totalDoctors, path: '/dashboard/doctors' },
+                    { icon: <PersonIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #66BB6A 0%, #43A047 100%)', label: 'Total Patients', value: totalPatients, path: '/dashboard/patients' },
+                    { icon: <LocalHospitalIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #FFB74D 0%, #FB8C00 100%)', label: 'Medical Services', value: totalServices, path: '/dashboard/services' },
+                    { icon: <ScheduleIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #EC407A 0%, #D81B60 100%)', label: 'Pending', value: pendingAppointments, path: '/dashboard/appointments' },
+                    { icon: <CheckCircleIcon sx={{ fontSize: 18, color: '#fff' }} />, bg: 'linear-gradient(195deg, #EF5350 0%, #E53935 100%)', label: 'Completed', value: completedAppointments, path: '/dashboard/appointments' },
                   ].map((item) => (
-                    <ListItem key={item.label} sx={{ px: 0, py: 1 }}>
+                    <ListItem
+                      key={item.label}
+                      sx={{ px: 0, py: 1, cursor: 'pointer', borderRadius: 1, '&:hover': { bgcolor: '#f5f5f5' } }}
+                      onClick={() => navigate(item.path)}
+                    >
                       <ListItemIcon sx={{ minWidth: 40 }}>
                         <Avatar sx={{ width: 32, height: 32, background: item.bg, borderRadius: 1.5, boxShadow: '0 4px 20px 0 rgba(0,0,0,0.14)' }}>
                           {item.icon}

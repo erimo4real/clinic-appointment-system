@@ -15,6 +15,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import api from '../../../shared/services/api';
+import { useToast } from '../../../components/ui/Toast';
 
 const statusColors = {
   pending: { bg: '#fff3e0', text: '#e65100', label: 'Pending' },
@@ -29,6 +30,7 @@ const AppointmentsManagementPage = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { appointments, loadingAppointments } = useSelector((state) => state.appointments);
+  const toast = useToast();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [allAppointments, setAllAppointments] = useState([]);
@@ -89,7 +91,7 @@ const AppointmentsManagementPage = () => {
   };
 
   const handleStatusUpdate = async () => {
-    if (!selectedAppt || !newStatus) return;
+    if (!selectedAppt || !newStatus) { toast.error('Please select a status'); return; }
     setActionLoading(true);
     try {
       if (user?.role === 'admin' || user?.role === 'receptionist') {
@@ -97,6 +99,7 @@ const AppointmentsManagementPage = () => {
       } else {
         await dispatch(updateAppointmentStatus({ id: selectedAppt._id || selectedAppt.id, status: newStatus }));
       }
+      toast.success('Appointment status updated');
       setOpenStatusDialog(false);
       if (user?.role === 'admin' || user?.role === 'receptionist') {
         const res = await api.get('/admin/appointments');
@@ -105,7 +108,7 @@ const AppointmentsManagementPage = () => {
         dispatch(fetchAppointments());
       }
     } catch (err) {
-      console.error('Failed to update status:', err);
+      toast.error(err.response?.data?.message || 'Failed to update status');
     }
     setActionLoading(false);
   };
@@ -119,6 +122,7 @@ const AppointmentsManagementPage = () => {
       } else {
         await api.delete(`/appointments/${apt._id || apt.id}`);
       }
+      toast.success('Appointment deleted successfully');
       if (user?.role === 'admin' || user?.role === 'receptionist') {
         const res = await api.get('/admin/appointments');
         setAllAppointments(Array.isArray(res.data) ? res.data : []);
@@ -126,7 +130,7 @@ const AppointmentsManagementPage = () => {
         dispatch(fetchAppointments());
       }
     } catch (err) {
-      console.error('Failed to delete:', err);
+      toast.error(err.response?.data?.message || 'Delete failed');
     }
     setActionLoading(false);
   };
