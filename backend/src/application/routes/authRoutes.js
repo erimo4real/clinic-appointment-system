@@ -70,11 +70,13 @@ router.post('/register', validateRegister, async (req, res) => {
       username, email, password, firstName, lastName, role 
     });
     
+    const isProd = process.env.NODE_ENV === 'production';
+    
     // Set httpOnly cookie for auth (server-side validation)
     res.cookie('auth_token', result.token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/'
     });
@@ -82,8 +84,8 @@ router.post('/register', validateRegister, async (req, res) => {
     // Set readable cookie for frontend API calls
     res.cookie('token', result.token, {
       httpOnly: false,
-      secure: true,
-      sameSite: 'none',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/'
     });
@@ -128,11 +130,13 @@ router.post('/login', validateLogin, async (req, res) => {
     // Authenticate user via AuthService
     const result = await AuthService.login(email, password);
     
+    const isProd = process.env.NODE_ENV === 'production';
+    
     // Set httpOnly cookie for auth (server-side validation)
     res.cookie('auth_token', result.token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/'
     });
@@ -140,8 +144,8 @@ router.post('/login', validateLogin, async (req, res) => {
     // Set readable cookie for frontend API calls
     res.cookie('token', result.token, {
       httpOnly: false,
-      secure: true,
-      sameSite: 'none',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/'
     });
@@ -353,10 +357,11 @@ router.post('/refresh-token', async (req, res) => {
     
     // Set new access token in httpOnly cookie
     res.cookie('accessToken', result.token, { 
-      ...cookieOptions, 
-      maxAge: 60 * 60 * 1000,
+      httpOnly: true,
       secure: true,
-      sameSite: 'none'
+      sameSite: 'none',
+      maxAge: 60 * 60 * 1000,
+      path: '/'
     });
     
     // Return new token for API interceptors
@@ -376,11 +381,13 @@ router.post('/refresh-token', async (req, res) => {
  */
 router.post('/logout', async (req, res) => {
   try {
+    const isProd = process.env.NODE_ENV === 'production';
+    
     // Clear authentication cookie (match the original cookie settings)
     res.clearCookie('auth_token', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       path: '/'
     });
     res.clearCookie('accessToken', { path: '/' });

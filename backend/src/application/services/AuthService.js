@@ -158,7 +158,7 @@ class AuthService {
       passwordResetExpires: Date.now() + 3600000
     });
 
-    return { message: 'Reset link sent', debugToken: resetToken };
+    return { message: 'Reset link sent' };
   }
 
   /**
@@ -177,9 +177,13 @@ class AuthService {
       throw new Error('Invalid or expired token');
     }
 
-    // Update password and clear reset token fields
+    // Hash password using User model's pre-save hook by updating via findById
+    const User = require('../../domain/entities/User');
+    const userToUpdate = await User.findById(user._id);
+    userToUpdate.password = newPassword;
+    await userToUpdate.save();
+
     await UserRepository.update(user._id, {
-      password: newPassword,
       passwordResetToken: null,
       passwordResetExpires: null
     });

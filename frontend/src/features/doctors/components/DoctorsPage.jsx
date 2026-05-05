@@ -1,61 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import OptimizedImage from '../../../components/ui/OptimizedImage';
-
-const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
-
-const NavIcon = ({ name, className }) => {
-  const icons = {
-    arrowRight: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />,
-    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
-    heart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />,
-    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
-  };
-  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
-};
-
-const Header = () => (
-  <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center h-16">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-          <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
-        </Link>
-        <div className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-gray-600 hover:text-teal-600 transition-colors">Home</Link>
-          <Link to="/services" className="text-gray-600 hover:text-teal-600 transition-colors">Services</Link>
-          <Link to="/doctors" className="text-teal-600 font-medium">Doctors</Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link to="/login" className="text-gray-600 hover:text-teal-600 transition-colors font-medium">Sign In</Link>
-          <Link to="/booking" className="px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-medium rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">Book Appointment</Link>
-        </div>
-      </div>
-    </div>
-  </header>
-);
-
-const Footer = () => (
-  <footer className="bg-gray-900 text-gray-400 py-12">
-    <div className="max-w-7xl mx-auto px-4">
-      <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-        <p>© {new Date().getFullYear()} MedBook Pro. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
-);
+import {
+  Box, Container, Typography, Grid, Card, CardContent, Button,
+  Avatar, AppBar, Toolbar, Chip, Paper, Skeleton, IconButton,
+  useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import WorkIcon from '@mui/icons-material/Work';
+import api from '../../../shared/services/api';
 
 const DoctorsPage = () => {
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [specialties, setSpecialties] = useState([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [favorites, setFavorites] = useState(() => {
     try {
       const saved = localStorage.getItem('favoriteDoctors');
@@ -69,8 +40,8 @@ const DoctorsPage = () => {
   useEffect(() => {
     const fetchRatings = async () => {
       try {
-        const response = await fetch(API_URL + '/api/feedback');
-        const data = await response.json();
+        const response = await api.get('/feedback');
+        const data = response.data;
         const ratings = {};
         if (Array.isArray(data)) {
           data.forEach(fb => {
@@ -111,11 +82,11 @@ const DoctorsPage = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await fetch(API_URL + '/api/doctors');
-        const doctorsData = await response.json();
+        const response = await api.get('/doctors');
+        const doctorsData = response.data;
         const data = Array.isArray(doctorsData) ? doctorsData : [];
         setDoctors(data);
-        
+
         const uniqueSpecialties = [...new Set(data.map(d => d.specialty).filter(Boolean))];
         setSpecialties(uniqueSpecialties);
       } catch (err) {
@@ -124,28 +95,25 @@ const DoctorsPage = () => {
         setLoading(false);
       }
     };
-
     fetchDoctors();
   }, []);
 
   const getDoctorName = (doctor) => {
-    // Handle various API response structures
     const firstName = doctor?.user?.firstName || doctor?.firstName || doctor?.first_name || '';
     const lastName = doctor?.user?.lastName || doctor?.lastName || doctor?.last_name || '';
     const name = `${firstName} ${lastName}`.trim();
     return name ? `Dr. ${name}` : doctor?.fullName || doctor?.name || 'Doctor';
   };
-  
+
   const getDoctorImage = (doctor) => {
-    // Check multiple possible locations for profile image
-    const img = doctor?.profileImage 
-      || doctor?.user?.profileImage 
+    const img = doctor?.profileImage
+      || doctor?.user?.profileImage
       || doctor?.profile_image
       || doctor?.user?.profile_image
       || null;
     return img;
   };
-  
+
   const getDoctorInitials = (doctor) => {
     const first = doctor?.user?.firstName || doctor?.firstName || doctor?.first_name || '';
     const last = doctor?.user?.lastName || doctor?.lastName || doctor?.last_name || '';
@@ -156,150 +124,272 @@ const DoctorsPage = () => {
     ? doctors.filter(d => d.specialty === selectedSpecialty)
     : doctors;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading doctors...</p>
-        </div>
-      </div>
-    );
-  }
+  const navLinks = [
+    { label: 'Home', to: '/' },
+    { label: 'Services', to: '/services' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="bg-gradient-to-r from-teal-600 to-teal-700 py-16 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 text-center text-white">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-4">Our Expert Doctors</h1>
-          <p className="text-lg lg:text-xl text-white/80">Meet our team of experienced medical professionals</p>
-        </div>
-      </div>
-      
-      <div className="max-w-7xl mx-auto px-4 py-12 lg:py-16">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-8">
-            Unable to load doctors. Please try again later.
-          </div>
-        )}
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+      {/* Navigation */}
+      <AppBar position="fixed" elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #f0f2f5' }}>
+        <Container maxWidth="xl">
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between', minHeight: 64 }}>
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+              <Avatar sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', borderRadius: 2 }}>
+                <MedicalServicesIcon sx={{ fontSize: 22, color: '#fff' }} />
+              </Avatar>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767' }}>MedBook Pro</Typography>
+            </Link>
 
-        {specialties.length > 1 && (
-          <div className="mb-8 flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedSpecialty('')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedSpecialty === ''
-                  ? 'bg-teal-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              All Specialties
-            </button>
-            {specialties.map((specialty) => (
-              <button
-                key={specialty}
-                onClick={() => setSelectedSpecialty(specialty)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedSpecialty === specialty
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {specialty}
-              </button>
+            {!isMobile && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                {navLinks.map(link => (
+                  <Link key={link.to} to={link.to} style={{ color: '#7B809A', textDecoration: 'none', fontWeight: 500, fontSize: '0.875rem' }}
+                    onMouseEnter={(e) => (e.target.style.color = '#1A73E8')}
+                    onMouseLeave={(e) => (e.target.style.color = '#7B809A')}>
+                    {link.label}
+                  </Link>
+                ))}
+                <Typography sx={{ color: '#1A73E8', fontWeight: 600, fontSize: '0.875rem' }}>Doctors</Typography>
+                <Link to="/booking" style={{ textDecoration: 'none' }}>
+                  <Button variant="contained" size="small" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                    Book Appointment
+                  </Button>
+                </Link>
+              </Box>
+            )}
+
+            {isMobile && (
+              <IconButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
+              </IconButton>
+            )}
+          </Toolbar>
+        </Container>
+
+        {isMobile && mobileMenuOpen && (
+          <Box sx={{ bgcolor: '#fff', borderTop: '1px solid #f0f2f5', px: 3, py: 2 }}>
+            {navLinks.map(link => (
+              <Link key={link.to} to={link.to} onClick={() => setMobileMenuOpen(false)}
+                style={{ display: 'block', py: 1.5, color: '#7B809A', textDecoration: 'none', fontWeight: 500 }}>
+                {link.label}
+              </Link>
             ))}
-          </div>
+            <Link to="/booking" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', display: 'block', mt: 1 }}>
+              <Button fullWidth variant="contained" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                Book Appointment
+              </Button>
+            </Link>
+          </Box>
         )}
+      </AppBar>
 
-        {filteredDoctors.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No doctors available at the moment.</p>
-            <p className="text-gray-400 text-sm mt-2">Please check back later.</p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {filteredDoctors.map((doctor) => {
-              const doctorId = doctor._id || doctor.id;
-              const rating = doctorRatings[doctorId];
-              const avgRating = rating?.avg || 0;
-              const ratingCount = rating?.count || 0;
-              
-              return (
-                <div key={doctorId} className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg hover:border-teal-100 transition-all relative">
-                  <button
-                    onClick={() => toggleFavorite(doctorId)}
-                    className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 ${
-                      isFavorite(doctorId) 
-                        ? 'bg-red-500 text-white' 
-                        : 'bg-white/80 text-gray-400 hover:text-red-500'
-                    }`}
-                  >
-                    <NavIcon name="heart" className="w-5 h-5" />
-                  </button>
-                  <div className="bg-gradient-to-br from-teal-100 to-blue-100 p-8 flex items-center justify-center">
-                    {getDoctorImage(doctor) ? (
-                      <img 
-                        src={getDoctorImage(doctor)}
-                        alt={getDoctorName(doctor)}
-                        className="w-32 h-32 border-4 border-white shadow-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-32 h-32 border-4 border-white shadow-lg rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-2xl font-bold">
-                        {getDoctorInitials(doctor)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{getDoctorName(doctor)}</h3>
-                    <p className="text-teal-600 font-medium mb-1">{doctor.specialty || 'General'}</p>
-                    <p className="text-gray-500 text-sm mb-3">{doctor.qualification || ''}</p>
-                    
-                    {avgRating > 0 && (
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <NavIcon 
-                              key={star} 
-                              name="star" 
-                              className={`w-4 h-4 ${star <= Math.round(avgRating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} 
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm text-gray-500">({ratingCount} reviews)</span>
-                      </div>
-                    )}
-                    
-                    {doctor.bio && (
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">{doctor.bio}</p>
-                    )}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <span className="text-sm text-gray-500">
-                        {doctor.experience ? `${doctor.experience} years experience` : 'Experience varies'}
-                      </span>
-                      <Link 
-                        to="/booking" 
-                        state={{ doctorId }}
-                        className="flex items-center gap-1 text-teal-600 font-medium hover:text-teal-700"
+      {/* Hero Section */}
+      <Box sx={{ pt: { xs: 10, md: 14 }, pb: { xs: 8, md: 12 }, background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 50%, #7B1FA2 100%)' }}>
+        <Container maxWidth="xl" sx={{ textAlign: 'center' }}>
+          <Typography variant="h2" sx={{ fontWeight: 800, color: '#fff', mb: 2 }}>Our Expert Doctors</Typography>
+          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 400, maxWidth: 600, mx: 'auto' }}>
+            Meet our team of experienced medical professionals
+          </Typography>
+        </Container>
+      </Box>
+
+      {/* Doctors Grid */}
+      <Box sx={{ py: { xs: 8, md: 12 } }}>
+        <Container maxWidth="xl">
+          {error && (
+            <Paper sx={{ borderRadius: 2, p: 3, mb: 4, bgcolor: '#ffebee', border: '1px solid #ffcdd2' }}>
+              <Typography variant="body1" sx={{ color: '#c62828' }}>Unable to load doctors. Please try again later.</Typography>
+            </Paper>
+          )}
+
+          {/* Specialty Filter */}
+          {specialties.length > 1 && (
+            <Box sx={{ mb: 4, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              <Chip
+                label="All Specialties"
+                onClick={() => setSelectedSpecialty('')}
+                sx={{
+                  borderRadius: 4, fontWeight: 500, cursor: 'pointer',
+                  bgcolor: selectedSpecialty === '' ? '#1A73E8' : '#e0e0e0',
+                  color: selectedSpecialty === '' ? '#fff' : '#757575',
+                  '&:hover': { bgcolor: selectedSpecialty === '' ? '#1557B0' : '#bdbdbd' }
+                }}
+              />
+              {specialties.map((specialty) => (
+                <Chip
+                  key={specialty}
+                  label={specialty}
+                  onClick={() => setSelectedSpecialty(specialty)}
+                  sx={{
+                    borderRadius: 4, fontWeight: 500, cursor: 'pointer',
+                    bgcolor: selectedSpecialty === specialty ? '#1A73E8' : '#e0e0e0',
+                    color: selectedSpecialty === specialty ? '#fff' : '#757575',
+                    '&:hover': { bgcolor: selectedSpecialty === specialty ? '#1557B0' : '#bdbdbd' }
+                  }}
+                />
+              ))}
+            </Box>
+          )}
+
+          {loading ? (
+            <Grid container spacing={3}>
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <Grid item xs={12} sm={6} md={4} key={i}>
+                  <Card sx={{ borderRadius: 3 }}>
+                    <Skeleton variant="rectangular" height={200} />
+                    <CardContent>
+                      <Skeleton variant="circular" width={64} height={64} sx={{ mb: 2 }} />
+                      <Skeleton variant="text" width="60%" height={28} />
+                      <Skeleton variant="text" width="40%" />
+                      <Skeleton variant="text" width="80%" />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : filteredDoctors.length === 0 ? (
+            <Paper sx={{ borderRadius: 3, p: 6, textAlign: 'center' }}>
+              <MedicalServicesIcon sx={{ fontSize: 64, color: '#e0e0e0', mb: 2 }} />
+              <Typography variant="h6" sx={{ color: '#7B809A' }}>No doctors available at the moment.</Typography>
+              <Typography variant="body2" sx={{ color: '#aaa', mt: 1 }}>Please check back later.</Typography>
+            </Paper>
+          ) : (
+            <Grid container spacing={3}>
+              {filteredDoctors.map((doctor) => {
+                const doctorId = doctor._id || doctor.id;
+                const rating = doctorRatings[doctorId];
+                const avgRating = rating?.avg || 0;
+                const ratingCount = rating?.count || 0;
+
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={doctorId}>
+                    <Card sx={{
+                      borderRadius: 3, overflow: 'hidden', position: 'relative', height: '100%',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      '&:hover': { transform: 'translateY(-4px)', boxShadow: 8 }
+                    }}>
+                      {/* Favorite Button */}
+                      <IconButton
+                        onClick={() => toggleFavorite(doctorId)}
+                        sx={{
+                          position: 'absolute', top: 12, right: 12, zIndex: 10,
+                          bgcolor: isFavorite(doctorId) ? '#ef5350' : 'rgba(255,255,255,0.8)',
+                          color: isFavorite(doctorId) ? '#fff' : '#757575',
+                          '&:hover': { bgcolor: isFavorite(doctorId) ? '#e53935' : 'rgba(255,255,255,1)' }
+                        }}
                       >
-                        Book <NavIcon name="arrowRight" className="w-4 h-4" />
-                      </Link>
-                    </div>
-                    {doctor.consultationFee && (
-                      <div className="mt-3 text-teal-600 font-semibold">
-                        Consultation: ₦{doctor.consultationFee?.toLocaleString()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-      
-      <Footer />
-    </div>
+                        {isFavorite(doctorId) ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                      </IconButton>
+
+                      {/* Doctor Image */}
+                      <Box sx={{
+                        background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)',
+                        p: 5, display: 'flex', justifyContent: 'center'
+                      }}>
+                        {getDoctorImage(doctor) ? (
+                          <Box
+                            component="img"
+                            src={getDoctorImage(doctor)}
+                            alt={getDoctorName(doctor)}
+                            sx={{
+                              width: 128, height: 128, borderRadius: '50%',
+                              border: '4px solid #fff', boxShadow: 2, objectFit: 'cover'
+                            }}
+                          />
+                        ) : (
+                          <Avatar sx={{
+                            width: 128, height: 128,
+                            background: 'linear-gradient(135deg, #1A73E8, #4285F4)',
+                            fontSize: 36, fontWeight: 600, border: '4px solid #fff', boxShadow: 2
+                          }}>
+                            {getDoctorInitials(doctor)}
+                          </Avatar>
+                        )}
+                      </Box>
+
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767', mb: 0.5 }}>
+                          {getDoctorName(doctor)}
+                        </Typography>
+                        <Chip label={doctor.specialty || 'General'} size="small" sx={{ mb: 1, bgcolor: '#e3f2fd', color: '#1A73E8', fontWeight: 600 }} />
+                        {doctor.qualification && (
+                          <Typography variant="body2" sx={{ color: '#7B809A', mb: 1 }}>{doctor.qualification}</Typography>
+                        )}
+
+                        {/* Ratings */}
+                        {avgRating > 0 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1.5 }}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Box key={star} sx={{ display: 'flex', alignItems: 'center' }}>
+                                {star <= Math.round(avgRating) ? (
+                                  <StarIcon sx={{ fontSize: 18, color: '#FFB400' }} />
+                                ) : (
+                                  <StarBorderIcon sx={{ fontSize: 18, color: '#e0e0e0' }} />
+                                )}
+                              </Box>
+                            ))}
+                            <Typography variant="body2" sx={{ color: '#7B809A', ml: 0.5 }}>({ratingCount} reviews)</Typography>
+                          </Box>
+                        )}
+
+                        {doctor.bio && (
+                          <Typography variant="body2" sx={{ color: '#7B809A', mb: 2, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {doctor.bio}
+                          </Typography>
+                        )}
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 2, borderTop: '1px solid #f0f0f0', mt: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <WorkIcon sx={{ fontSize: 16, color: '#7B809A' }} />
+                            <Typography variant="body2" sx={{ color: '#7B809A' }}>
+                              {doctor.experience ? `${doctor.experience} years` : 'Experience varies'}
+                            </Typography>
+                          </Box>
+                          <Link to={`/booking?doctorId=${doctorId}`} style={{ textDecoration: 'none' }}>
+                            <Button
+                              size="small"
+                              endIcon={<ArrowForwardIcon />}
+                              sx={{ color: '#1A73E8', fontWeight: 700, textTransform: 'none' }}
+                            >
+                              Book
+                            </Button>
+                          </Link>
+                        </Box>
+
+                        {doctor.consultationFee && (
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#4CAF50', mt: 1.5 }}>
+                            ₦{doctor.consultationFee.toLocaleString()}
+                          </Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
+        </Container>
+      </Box>
+
+      {/* Footer */}
+      <Box sx={{ bgcolor: '#1a1a2e', py: 4 }}>
+        <Container maxWidth="xl">
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', borderRadius: 2 }}>
+                <MedicalServicesIcon sx={{ fontSize: 22, color: '#fff' }} />
+              </Avatar>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>MedBook Pro</Typography>
+            </Box>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+              © {new Date().getFullYear()} MedBook Pro. Clinic Appointment Management System
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+    </Box>
   );
 };
 

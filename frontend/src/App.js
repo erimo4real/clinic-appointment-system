@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import dashboardTheme from './theme/dashboardTheme';
 import { fetchCurrentUser } from './features/auth/store/authSlice';
 
 import { ToastProvider } from './components/ui/Toast';
-import { ThemeProvider } from './components/ui/Theme';
 
 import LandingPage from './shared/pages/LandingPage';
 import LoginPage from './features/auth/components/LoginPage';
@@ -13,12 +14,26 @@ import ServicesPage from './features/services/components/ServicesPage';
 import DoctorsPage from './features/doctors/components/DoctorsPage';
 import BookingPage from './features/appointments/components/BookingPage';
 import AdminDashboard from './features/admin/components/AdminDashboard';
+import DoctorsManagementPage from './features/doctors/components/DoctorsManagementPage';
+import ServicesManagementPage from './features/services/components/ServicesManagementPage';
+import AppointmentsManagementPage from './features/appointments/components/AppointmentsManagementPage';
+import PatientsManagementPage from './features/patients/components/PatientsManagementPage';
+import PrescriptionsManagementPage from './features/prescriptions/components/PrescriptionsManagementPage';
+import SettingsPage from './features/settings/components/SettingsPage';
+import ProfilePage from './features/settings/components/ProfilePage';
 
 const LoadingScreen = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent"></div>
+  <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f2f5' }}>
+    <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid #e0e0e0', borderTopColor: '#1A73E8', animation: 'spin 1s linear infinite' }}></div>
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
   </div>
 );
+
+const RequireAuth = ({ children }) => {
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
+  return children;
+};
 
 const App = () => {
   const dispatch = useDispatch();
@@ -34,10 +49,10 @@ const App = () => {
   if (initialLoad) return <LoadingScreen />;
 
   return (
-    <ThemeProvider>
+    <ThemeProvider theme={dashboardTheme}>
+      <CssBaseline />
       <ToastProvider>
         <Routes>
-          {/* Public Routes - no auth check needed */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/doctors" element={<DoctorsPage />} />
@@ -45,10 +60,21 @@ const App = () => {
           <Route path="/register" element={isAuthenticated && user ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
           <Route path="/booking" element={<BookingPage />} />
 
-          {/* All Logged-in Users - Same Dashboard */}
-          <Route path="/dashboard" element={!isAuthenticated || !user ? <Navigate to="/login" replace /> : <AdminDashboard />} />
+          <Route path="/dashboard/*" element={
+            <RequireAuth>
+              <Routes>
+                <Route path="" element={<AdminDashboard />} />
+                <Route path="appointments" element={<AppointmentsManagementPage />} />
+                <Route path="doctors" element={<DoctorsManagementPage />} />
+                <Route path="patients" element={<PatientsManagementPage />} />
+                <Route path="services" element={<ServicesManagementPage />} />
+                <Route path="prescriptions" element={<PrescriptionsManagementPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+              </Routes>
+            </RequireAuth>
+          } />
 
-          {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ToastProvider>

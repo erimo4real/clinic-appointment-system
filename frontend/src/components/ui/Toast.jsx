@@ -1,8 +1,14 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { Alert, Snackbar, Box, IconButton, Collapse } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import WarningIcon from '@mui/icons-material/Warning';
+import InfoIcon from '@mui/icons-material/Info';
 
 const ToastContext = createContext(null);
 
-export const ToastProvider = ({ children }) => {
+const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = useCallback((message, type = 'info', duration = 20000) => {
@@ -35,94 +41,77 @@ export const ToastProvider = ({ children }) => {
 const ToastContainer = ({ toasts, onRemove }) => {
   if (toasts.length === 0) return null;
 
-  const icons = {
-    success: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
-    error: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    warning: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
-    ),
-    info: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
+  const severityMap = {
+    success: 'success',
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
   };
 
-  const colors = {
-    success: 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200',
-    error: 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200',
-    warning: 'bg-gradient-to-r from-amber-50 to-yellow-50 border-yellow-200',
-    info: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200',
-  };
-
-  const iconColors = {
-    success: 'text-emerald-500',
-    error: 'text-red-500',
-    warning: 'text-amber-500',
-    info: 'text-blue-500',
+  const iconMap = {
+    success: <CheckCircleIcon fontSize="small" />,
+    error: <ErrorIcon fontSize="small" />,
+    warning: <WarningIcon fontSize="small" />,
+    info: <InfoIcon fontSize="small" />,
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-3 w-full max-w-md">
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 16,
+        right: 16,
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        width: '100%',
+        maxWidth: 448,
+      }}
+    >
       {toasts.map((t, index) => (
-        <div
+        <Collapse
           key={t.id}
-          className={`flex items-start gap-3 px-4 py-4 rounded-2xl border shadow-xl animate-slideIn ${colors[t.type]}`}
-          style={{ animationDelay: `${index * 50}ms` }}
+          in={true}
+          timeout={{ appear: 300, enter: 300, exit: 200 }}
+          sx={{ animation: `slideIn 0.3s ease-out ${index * 50}ms both` }}
         >
-          <div className={`flex-shrink-0 mt-0.5 ${iconColors[t.type]}`}>
-            {icons[t.type]}
-          </div>
-          <div className="flex-1 min-w-0">
-            {React.isValidElement(t.message) ? (
-              t.message
-            ) : (
-              <p className="text-sm font-semibold text-gray-900">{t.message}</p>
-            )}
-          </div>
-          <button
-            onClick={() => onRemove(t.id)}
-            className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1"
+          <Alert
+            severity={severityMap[t.type]}
+            icon={iconMap[t.type]}
+            variant="filled"
+            sx={{
+              borderRadius: 2,
+              boxShadow: 6,
+              '& .MuiAlert-message': {
+                fontSize: '0.875rem',
+                fontWeight: 600,
+              },
+            }}
+            action={
+              <IconButton
+                size="small"
+                aria-label="close"
+                color="inherit"
+                onClick={() => onRemove(t.id)}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            }
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+            {t.message}
+          </Alert>
+        </Collapse>
       ))}
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        .animate-slideIn {
-          animation: slideIn 0.3s ease-out forwards;
-        }
-      `}</style>
-    </div>
+    </Box>
   );
 };
 
-export const useToast = () => {
+const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) throw new Error('useToast must be used within ToastProvider');
   return context;
 };
 
+export { ToastProvider, useToast };
 export default ToastContext;

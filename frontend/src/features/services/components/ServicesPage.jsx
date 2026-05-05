@@ -1,194 +1,275 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const API_URL = process.env.REACT_APP_API_URL || 'https://clinic-appointment-system-88np.onrender.com';
-
-const NavIcon = ({ name, className }) => {
-  const icons = {
-    calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
-    arrowRight: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />,
-    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
-    heart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />,
-    medical: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />,
-    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
-  };
-  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
-};
+import {
+  Box, Container, Typography, Grid, Card, CardContent, Button,
+  Avatar, AppBar, Toolbar, Chip, Paper, Skeleton, IconButton,
+  useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import api from '../../../shared/services/api';
 
 const getServiceIcon = (serviceName) => {
   const name = (serviceName || '').toLowerCase();
-  if (name.includes('cardiac') || name.includes('heart')) return 'heart';
-  if (name.includes('pediatric') || name.includes('child')) return 'user';
-  if (name.includes('general') || name.includes('consultation')) return 'medical';
-  return 'medical';
+  if (name.includes('cardiac') || name.includes('heart')) return <FavoriteIcon />;
+  if (name.includes('pediatric') || name.includes('child')) return <MedicalServicesIcon />;
+  return <MedicalServicesIcon />;
 };
 
-const Header = () => (
-  <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center h-16">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-          <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
-        </Link>
-        <div className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-gray-600 hover:text-teal-600 transition-colors">Home</Link>
-          <Link to="/services" className="text-teal-600 font-medium">Services</Link>
-          <Link to="/doctors" className="text-gray-600 hover:text-teal-600 transition-colors">Doctors</Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link to="/login" className="text-gray-600 hover:text-teal-600 transition-colors font-medium">Sign In</Link>
-          <Link to="/booking" className="px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-medium rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">Book Appointment</Link>
-        </div>
-      </div>
-    </div>
-  </header>
-);
-
-const Footer = ({ services = [] }) => (
-  <footer className="bg-gray-900 text-gray-400 py-12">
-    <div className="max-w-7xl mx-auto px-4">
-      <div className="grid md:grid-cols-4 gap-8">
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-              </svg>
-            </div>
-            <span className="text-lg font-bold text-white">MedBook Pro</span>
-          </div>
-          <p className="text-sm">Your trusted partner in modern healthcare management.</p>
-        </div>
-        <div>
-          <h4 className="text-white font-semibold mb-4">Quick Links</h4>
-          <ul className="space-y-2">
-            <li><Link to="/" className="hover:text-white transition-colors">Home</Link></li>
-            <li><Link to="/services" className="hover:text-white transition-colors">Services</Link></li>
-            <li><Link to="/doctors" className="hover:text-white transition-colors">Doctors</Link></li>
-            <li><Link to="/booking" className="hover:text-white transition-colors">Book Now</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="text-white font-semibold mb-4">Our Services</h4>
-          <ul className="space-y-2">
-            {services.slice(0, 4).map((service, index) => (
-              <li key={index}><Link to="/services" className="hover:text-white transition-colors">{service.name || 'Service'}</Link></li>
-            ))}
-            {services.length === 0 && (
-              <>
-                <li><span className="hover:text-white">General Medicine</span></li>
-                <li><span className="hover:text-white">Cardiology</span></li>
-                <li><span className="hover:text-white">Pediatrics</span></li>
-                <li><span className="hover:text-white">Orthopedics</span></li>
-              </>
-            )}
-          </ul>
-        </div>
-        <div>
-          <h4 className="text-white font-semibold mb-4">Contact</h4>
-          <ul className="space-y-2 text-sm">
-            <li>123 Medical Center Dr</li>
-            <li>+234 801 234 5678</li>
-            <li>contact@medbookpro.com</li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-        <p>© {new Date().getFullYear()} MedBook Pro. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
-);
-
 const ServicesPage = () => {
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch(API_URL + '/api/services');
-        const data = await response.json();
-        setServices(Array.isArray(data) ? data : []);
+        const response = await api.get('/services');
+        setServices(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-
     fetchServices();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading services...</p>
-        </div>
-      </div>
-    );
-  }
+  const navLinks = [
+    { label: 'Home', to: '/' },
+    { label: 'Doctors', to: '/doctors' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="bg-gradient-to-r from-teal-600 to-teal-700 py-16 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 text-center text-white">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-4">Our Medical Services</h1>
-          <p className="text-lg lg:text-xl text-white/80">Comprehensive healthcare solutions for you and your family</p>
-        </div>
-      </div>
-      
-      <div className="max-w-7xl mx-auto px-4 py-12 lg:py-16">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-8">
-            Unable to load services. Please try again later.
-          </div>
-        )}
-        
-        {services.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No services available at the moment.</p>
-            <p className="text-gray-400 text-sm mt-2">Please check back later.</p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {services.map((service) => (
-              <div key={service._id || service.id} className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 hover:shadow-lg hover:border-teal-100 transition-all">
-                <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-4">
-                  <NavIcon name={getServiceIcon(service.name)} className="w-7 h-7 text-teal-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{service.name}</h3>
-                <p className="text-gray-600 mb-4">{service.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-teal-600 font-semibold">
-                    ₦{(service.price || 0).toLocaleString()}
-                  </span>
-                  <Link to="/booking" className="flex items-center gap-1 text-teal-600 font-medium hover:text-teal-700">
-                    Book <NavIcon name="arrowRight" className="w-4 h-4" />
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+      {/* Navigation */}
+      <AppBar position="fixed" elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #f0f2f5' }}>
+        <Container maxWidth="xl">
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between', minHeight: 64 }}>
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+              <Avatar sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', borderRadius: 2 }}>
+                <MedicalServicesIcon sx={{ fontSize: 22, color: '#fff' }} />
+              </Avatar>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767' }}>MedBook Pro</Typography>
+            </Link>
+
+            {!isMobile && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                {navLinks.map(link => (
+                  <Link key={link.to} to={link.to} style={{ color: '#7B809A', textDecoration: 'none', fontWeight: 500, fontSize: '0.875rem' }}
+                    onMouseEnter={(e) => (e.target.style.color = '#1A73E8')}
+                    onMouseLeave={(e) => (e.target.style.color = '#7B809A')}>
+                    {link.label}
                   </Link>
-                </div>
-                {service.duration && (
-                  <p className="text-gray-400 text-sm mt-2">
-                    Duration: {service.duration} minutes
-                  </p>
-                )}
-              </div>
+                ))}
+                <Typography sx={{ color: '#1A73E8', fontWeight: 600, fontSize: '0.875rem' }}>Services</Typography>
+                <Link to="/booking" style={{ textDecoration: 'none' }}>
+                  <Button variant="contained" size="small" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                    Book Appointment
+                  </Button>
+                </Link>
+              </Box>
+            )}
+
+            {isMobile && (
+              <IconButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
+              </IconButton>
+            )}
+          </Toolbar>
+        </Container>
+
+        {isMobile && mobileMenuOpen && (
+          <Box sx={{ bgcolor: '#fff', borderTop: '1px solid #f0f2f5', px: 3, py: 2 }}>
+            {navLinks.map(link => (
+              <Link key={link.to} to={link.to} onClick={() => setMobileMenuOpen(false)}
+                style={{ display: 'block', py: 1.5, color: '#7B809A', textDecoration: 'none', fontWeight: 500 }}>
+                {link.label}
+              </Link>
             ))}
-          </div>
+            <Link to="/booking" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', display: 'block', mt: 1 }}>
+              <Button fullWidth variant="contained" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                Book Appointment
+              </Button>
+            </Link>
+          </Box>
         )}
-      </div>
-      
-      <Footer services={services} />
-    </div>
+      </AppBar>
+
+      {/* Hero Section */}
+      <Box sx={{ pt: { xs: 10, md: 14 }, pb: { xs: 8, md: 12 }, background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 50%, #7B1FA2 100%)' }}>
+        <Container maxWidth="xl" sx={{ textAlign: 'center' }}>
+          <Typography variant="h2" sx={{ fontWeight: 800, color: '#fff', mb: 2 }}>Our Medical Services</Typography>
+          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 400, maxWidth: 600, mx: 'auto' }}>
+            Comprehensive healthcare solutions for you and your family
+          </Typography>
+        </Container>
+      </Box>
+
+      {/* Services Grid */}
+      <Box sx={{ py: { xs: 8, md: 12 } }}>
+        <Container maxWidth="xl">
+          {error && (
+            <Paper sx={{ borderRadius: 2, p: 3, mb: 4, bgcolor: '#ffebee', border: '1px solid #ffcdd2' }}>
+              <Typography variant="body1" sx={{ color: '#c62828' }}>Unable to load services. Please try again later.</Typography>
+            </Paper>
+          )}
+
+          {loading ? (
+            <Grid container spacing={3}>
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <Grid item xs={12} sm={6} md={4} key={i}>
+                  <Card sx={{ borderRadius: 3 }}>
+                    <CardContent sx={{ p: 4 }}>
+                      <Skeleton variant="circular" width={56} height={56} sx={{ mb: 2 }} />
+                      <Skeleton variant="text" width="70%" height={32} sx={{ mb: 1 }} />
+                      <Skeleton variant="text" width="100%" sx={{ mb: 1 }} />
+                      <Skeleton variant="text" width="60%" sx={{ mb: 2 }} />
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Skeleton variant="text" width={80} />
+                        <Skeleton variant="text" width={60} />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : services.length === 0 ? (
+            <Paper sx={{ borderRadius: 3, p: 6, textAlign: 'center' }}>
+              <MedicalServicesIcon sx={{ fontSize: 64, color: '#e0e0e0', mb: 2 }} />
+              <Typography variant="h6" sx={{ color: '#7B809A' }}>No services available at the moment.</Typography>
+              <Typography variant="body2" sx={{ color: '#aaa', mt: 1 }}>Please check back later.</Typography>
+            </Paper>
+          ) : (
+            <Grid container spacing={3}>
+              {services.map((service) => (
+                <Grid item xs={12} sm={6} md={4} key={service._id || service.id}>
+                  <Card sx={{
+                    borderRadius: 3, height: '100%',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': { transform: 'translateY(-4px)', boxShadow: 8 }
+                  }}>
+                    <CardContent sx={{ p: 4 }}>
+                      <Avatar sx={{ width: 56, height: 56, mb: 2, background: '#e3f2fd' }}>
+                        {getServiceIcon(service.name)}
+                      </Avatar>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767', mb: 1 }}>{service.name}</Typography>
+                      <Typography variant="body2" sx={{ color: '#7B809A', mb: 2, minHeight: 40 }}>
+                        {service.description || 'Professional healthcare service'}
+                      </Typography>
+                      {service.duration && (
+                        <Chip
+                          icon={<AccessTimeIcon sx={{ fontSize: 16 }} />}
+                          label={`${service.duration} minutes`}
+                          size="small"
+                          sx={{ mb: 2, bgcolor: '#f5f5f5', color: '#7B809A' }}
+                        />
+                      )}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#4CAF50' }}>
+                          ₦{(service.price || 0).toLocaleString()}
+                        </Typography>
+                        <Link to={`/booking?serviceId=${service._id || service.id}`} style={{ textDecoration: 'none' }}>
+                          <Button
+                            size="small"
+                            endIcon={<ArrowForwardIcon />}
+                            sx={{ color: '#1A73E8', fontWeight: 700, textTransform: 'none' }}
+                          >
+                            Book
+                          </Button>
+                        </Link>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Container>
+      </Box>
+
+      {/* Footer */}
+      <Box sx={{ bgcolor: '#1a1a2e', py: 6 }}>
+        <Container maxWidth="xl">
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={3}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                <Avatar sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', borderRadius: 2 }}>
+                  <MedicalServicesIcon sx={{ fontSize: 22, color: '#fff' }} />
+                </Avatar>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>MedBook Pro</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                Your trusted partner in modern healthcare management.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 600, mb: 2 }}>Quick Links</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {navLinks.map(link => (
+                  <Link key={link.to} to={link.to} style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '0.875rem' }}
+                    onMouseEnter={(e) => (e.target.style.color = '#fff')}
+                    onMouseLeave={(e) => (e.target.style.color = 'rgba(255,255,255,0.5)')}>
+                    {link.label}
+                  </Link>
+                ))}
+                <Link to="/booking" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: '0.875rem' }}
+                  onMouseEnter={(e) => (e.target.style.color = '#fff')}
+                  onMouseLeave={(e) => (e.target.style.color = 'rgba(255,255,255,0.5)')}>
+                  Book Now
+                </Link>
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 600, mb: 2 }}>Our Services</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {(services.length > 0 ? services.slice(0, 4) : [
+                  { name: 'General Medicine' }, { name: 'Cardiology' },
+                  { name: 'Pediatrics' }, { name: 'Orthopedics' }
+                ]).map((service, i) => (
+                  <Typography key={i} variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>
+                    {service.name}
+                  </Typography>
+                ))}
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 600, mb: 2 }}>Contact</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LocationOnIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.5)' }} />
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>123 Medical Center Dr</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PhoneIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.5)' }} />
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>+234 801 234 5678</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <EmailIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.5)' }} />
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>contact@medbookpro.com</Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+          <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.1)', mt: 4, pt: 4, textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
+              © {new Date().getFullYear()} MedBook Pro. All rights reserved.
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+    </Box>
   );
 };
 

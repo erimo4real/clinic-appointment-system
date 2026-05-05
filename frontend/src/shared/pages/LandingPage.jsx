@@ -2,81 +2,39 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors } from '../../features/doctors/store/doctorSlice';
-
-const API_URL = process.env.REACT_APP_API_URL 
-  ? process.env.REACT_APP_API_URL.replace(/\/$/, '') + '/api'
-  : 'https://clinic-appointment-system-88np.onrender.com/api';
-
-const LoadingScreen = () => {
-  const [dots, setDots] = useState('');
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDots(d => d.length < 3 ? d + '.' : '');
-    }, 400);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="fixed inset-0 bg-gradient-to-br from-teal-50 via-white to-blue-50 flex items-center justify-center z-50">
-      <div className="text-center">
-        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse">
-          <svg className="w-12 h-12 lg:w-14 lg:h-14 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">MedBook Pro</h2>
-        <p className="text-gray-500">Loading{dots}</p>
-      </div>
-    </div>
-  );
-};
-
-const NavIcon = ({ name, className }) => {
-  const icons = {
-    menu: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />,
-    calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
-    users: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
-    shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
-    clock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
-    location: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />,
-    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
-    check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />,
-    arrow: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />,
-    arrowLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />,
-    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
-  };
-  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
-};
-
-const EmptyState = ({ icon, title, message }) => (
-  <div className="bg-gray-50 rounded-xl p-8 text-center">
-    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-      <NavIcon name={icon} className="w-8 h-8 text-gray-400" />
-    </div>
-    <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-    <p className="text-gray-500 text-sm">{message}</p>
-  </div>
-);
+import {
+  Box, Typography, Button, Container, Grid, Card, CardContent,
+  Avatar, AppBar, Toolbar, IconButton, Chip, Paper, useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import PeopleIcon from '@mui/icons-material/People';
+import SecurityIcon from '@mui/icons-material/Security';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import StarIcon from '@mui/icons-material/Star';
+import api from '../services/api';
 
 const LandingPage = () => {
   const dispatch = useDispatch();
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [services, setServices] = useState([]);
-  const { doctors, loading: doctorsLoading } = useSelector((state) => state.doctors);
+  const { doctors } = useSelector((state) => state.doctors);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         await dispatch(fetchDoctors());
-        
-        const servicesRes = await fetch(`${API_URL}/services`);
-        if (servicesRes.ok) {
-          const servicesData = await servicesRes.json();
-          setServices(Array.isArray(servicesData) ? servicesData : []);
-        }
+        const servicesRes = await api.get('/services');
+        setServices(Array.isArray(servicesRes.data) ? servicesRes.data : []);
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -86,287 +44,308 @@ const LandingPage = () => {
     fetchData();
   }, [dispatch]);
 
-  if (loading) return <LoadingScreen />;
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #f0f2f5 0%, #e8f4fd 100%)' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 3, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', animation: 'pulse 2s infinite' }}>
+            <MedicalServicesIcon sx={{ fontSize: 40, color: '#fff' }} />
+          </Avatar>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#344767', mb: 1 }}>MedBook Pro</Typography>
+          <Typography variant="body1" sx={{ color: '#7B809A' }}>Loading...</Typography>
+          <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }`}</style>
+        </Box>
+      </Box>
+    );
+  }
 
   const doctorCount = doctors.length;
-  const specialtyCount = [...new Set(doctors.map(d => d.specialty))].length;
+  const specialtyCount = [...new Set(doctors.map(d => d.specialty).filter(Boolean))].length;
+
+  const navLinks = [
+    { label: 'Services', to: '/services' },
+    { label: 'Doctors', to: '/doctors' },
+  ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-              </div>
-              <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
-            </div>
-            
-            {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-6">
-              <Link to="/services" className="text-gray-600 hover:text-teal-600 transition-colors">Services</Link>
-              <Link to="/doctors" className="text-gray-600 hover:text-teal-600 transition-colors">Doctors</Link>
-              <Link to="/login" className="px-4 py-2 text-teal-600 font-medium hover:text-teal-700">Sign In</Link>
-              <Link to="/register" className="px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-medium rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">Get Started</Link>
-            </div>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
+        {/* Navigation */}
+        <AppBar position="fixed" elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #f0f2f5' }}>
+          <Container maxWidth="xl">
+            <Toolbar disableGutters sx={{ justifyContent: 'space-between', minHeight: 64 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Avatar sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', borderRadius: 2 }}>
+                  <MedicalServicesIcon sx={{ fontSize: 22, color: '#fff' }} />
+                </Avatar>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767' }}>MedBook Pro</Typography>
+              </Box>
 
-            {/* Mobile Menu Button */}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 hover:bg-gray-100 rounded-lg">
-              <NavIcon name={mobileMenuOpen ? 'arrowLeft' : 'menu'} className="w-6 h-6 text-gray-600" />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
-            <Link to="/services" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-600">Services</Link>
-            <Link to="/doctors" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-600">Doctors</Link>
-            <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-teal-600 font-medium">Sign In</Link>
-            <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="block py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-center font-medium rounded-xl">Get Started</Link>
-          </div>
-        )}
-      </nav>
-
-      {/* Hero Section */}
-      <section className="pt-24 lg:pt-32 pb-16 lg:pb-24 bg-gradient-to-br from-teal-50 via-white to-blue-50">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="inline-flex items-center px-4 py-2 bg-teal-100 text-teal-700 rounded-full text-sm font-medium mb-6">
-                <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
-                Trusted Healthcare Platform
-              </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Your Health, <br />
-                <span className="text-teal-600">Our Priority</span>
-              </h1>
-              <p className="text-lg lg:text-xl text-gray-600 mb-8 max-w-lg">
-                Book appointments with top-rated doctors in minutes. Experience modern healthcare that's convenient, reliable, and always available.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/booking" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">
-                  <NavIcon name="calendar" className="w-5 h-5" />
-                  Book Appointment
-                </Link>
-                <Link to="/doctors" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">
-                  View Doctors
-                  <NavIcon name="arrow" className="w-5 h-5" />
-                </Link>
-              </div>
-              <div className="flex items-center gap-6 lg:gap-8 mt-10">
-                <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{doctorCount}</div>
-                  <div className="text-sm text-gray-500">Expert Doctors</div>
-                </div>
-                <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{doctorCount * 50}+</div>
-                  <div className="text-sm text-gray-500">Happy Patients</div>
-                </div>
-                <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{specialtyCount}</div>
-                  <div className="text-sm text-gray-500">Specialties</div>
-                </div>
-              </div>
-            </div>
-            <div className="relative hidden lg:block">
-              <div className="absolute -top-8 -left-8 w-72 h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
-              <div className="absolute -bottom-8 -right-8 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
-              <div className="relative bg-white rounded-3xl shadow-2xl p-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-teal-100 to-teal-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <NavIcon name="user" className="w-10 h-10 text-teal-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 text-center mb-2">Book an Appointment</h3>
-                <p className="text-gray-500 text-center mb-6">Schedule a visit with our specialists</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <NavIcon name="star" className="w-5 h-5 text-amber-500" />
-                    <span className="text-gray-700">Top-rated doctors</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <NavIcon name="check" className="w-5 h-5 text-teal-500" />
-                    <span className="text-gray-700">Easy online booking</span>
-                  </div>
-                  <Link to="/booking" className="block w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-center font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all">
-                    Book Now
+              {!isMobile && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                  {navLinks.map(link => (
+                    <Link key={link.to} to={link.to} style={{ color: '#7B809A', textDecoration: 'none', fontWeight: 500, fontSize: '0.875rem' }}
+                      onMouseEnter={(e) => (e.target.style.color = '#1A73E8')}
+                      onMouseLeave={(e) => (e.target.style.color = '#7B809A')}>
+                      {link.label}
+                    </Link>
+                  ))}
+                  <Link to="/login" style={{ color: '#1A73E8', textDecoration: 'none', fontWeight: 600, fontSize: '0.875rem' }}>Sign In</Link>
+                  <Link to="/register" style={{ textDecoration: 'none' }}>
+                    <Button variant="contained" size="small" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                      Get Started
+                    </Button>
                   </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+                </Box>
+              )}
 
-      {/* Services Section */}
-      <section className="py-16 lg:py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Our Services</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">Comprehensive healthcare services for you and your family</p>
-          </div>
-          
-          {services.length === 0 ? (
-            <EmptyState 
-              icon="calendar" 
-              title="No Services Available at the Moment" 
-              message="Please check back later." 
-            />
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-              {services.slice(0, 6).map((service, i) => (
-                <div key={service.id || service._id || i} className="bg-white rounded-2xl p-6 lg:p-8 hover:shadow-lg transition-shadow">
-                  <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-4">
-                    <NavIcon name="calendar" className="w-7 h-7 text-teal-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name}</h3>
-                  <p className="text-gray-600 mb-4">{service.description || 'Professional healthcare service'}</p>
-                  <p className="text-teal-600 font-semibold">₦{(service.price || 0).toLocaleString()}</p>
-                </div>
+              {isMobile && (
+                <IconButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                  {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
+                </IconButton>
+              )}
+            </Toolbar>
+          </Container>
+
+          {isMobile && mobileMenuOpen && (
+            <Box sx={{ bgcolor: '#fff', borderTop: '1px solid #f0f2f5', px: 3, py: 2 }}>
+              {navLinks.map(link => (
+                <Link key={link.to} to={link.to} onClick={() => setMobileMenuOpen(false)}
+                  style={{ display: 'block', py: 1.5, color: '#7B809A', textDecoration: 'none', fontWeight: 500 }}>
+                  {link.label}
+                </Link>
               ))}
-            </div>
-          )}
-          
-          {services.length > 0 && (
-            <div className="text-center mt-8">
-              <Link to="/services" className="inline-flex items-center gap-2 px-6 py-3 text-teal-600 font-semibold hover:text-teal-700 transition-colors">
-                View All Services
-                <NavIcon name="arrow" className="w-5 h-5" />
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)} style={{ display: 'block', py: 1.5, color: '#1A73E8', textDecoration: 'none', fontWeight: 600 }}>Sign In</Link>
+              <Link to="/register" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', display: 'block', mt: 1 }}>
+                <Button fullWidth variant="contained" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                  Get Started
+                </Button>
               </Link>
-            </div>
+            </Box>
           )}
-        </div>
-      </section>
+        </AppBar>
 
-      {/* Doctors Section */}
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Our Expert Doctors</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">Meet our team of experienced medical professionals</p>
-          </div>
-          
-          {doctors.length === 0 ? (
-            <EmptyState 
-              icon="users" 
-              title="No Doctors Available at the Moment" 
-              message="Please check back later." 
-            />
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {doctors.slice(0, 4).map((doctor, i) => (
-                <div key={doctor.id || doctor._id || i} className="bg-white rounded-2xl p-6 text-center border border-gray-100 hover:shadow-lg hover:border-teal-100 transition-all">
-                  <div className="w-24 h-24 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden">
-                    {doctor.profileImage || doctor.user?.profileImage ? (
-                      <img src={doctor.profileImage || doctor.user?.profileImage} alt={`Dr. ${doctor.user?.firstName || doctor.firstName}`} className="w-full h-full object-cover" />
-                    ) : (
-                      <NavIcon name="user" className="w-12 h-12 text-teal-600" />
-                    )}
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    Dr. {doctor.user?.firstName || doctor.firstName || ''} {doctor.user?.lastName || doctor.lastName || ''}
-                  </h3>
-                  <p className="text-teal-600 font-medium">{doctor.specialty}</p>
-                  {doctor.experience && (
-                    <p className="text-gray-400 text-sm mt-1">{doctor.experience} years experience</p>
-                  )}
-                  <Link to="/booking" className="mt-4 inline-flex items-center gap-1 text-teal-600 font-medium hover:text-teal-700">
-                    Book <NavIcon name="arrow" className="w-4 h-4" />
+        {/* Hero Section */}
+        <Box sx={{ pt: { xs: 10, md: 14 }, pb: { xs: 8, md: 12 }, background: 'linear-gradient(135deg, #f0f2f5 0%, #e8f4fd 50%, #f3e5f5 100%)' }}>
+          <Container maxWidth="xl">
+            <Grid container spacing={6} alignItems="center">
+              <Grid item xs={12} md={6}>
+                <Chip label="Trusted Healthcare Platform" size="small" sx={{ mb: 2, bgcolor: '#e3f2fd', color: '#1A73E8', fontWeight: 600 }} />
+                <Typography variant="h2" sx={{ fontWeight: 800, color: '#344767', lineHeight: 1.2, mb: 3 }}>
+                  Your Health, <Box component="span" sx={{ color: '#1A73E8' }}>Our Priority</Box>
+                </Typography>
+                <Typography variant="h6" sx={{ color: '#7B809A', fontWeight: 400, mb: 4, maxWidth: 500 }}>
+                  Book appointments with top-rated doctors in minutes. Experience modern healthcare that's convenient, reliable, and always available.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Link to="/booking" style={{ textDecoration: 'none' }}>
+                    <Button variant="contained" size="large" startIcon={<EventNoteIcon />}
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', boxShadow: '0 4px 7px -1px rgba(26,115,232,0.3)' }}>
+                      Book Appointment
+                    </Button>
                   </Link>
-                </div>
-              ))}
-            </div>
-          )}
+                  <Link to="/doctors" style={{ textDecoration: 'none' }}>
+                    <Button variant="outlined" size="large" endIcon={<ArrowForwardIcon />}
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, color: '#344767', borderColor: '#e0e0e0' }}>
+                      View Doctors
+                    </Button>
+                  </Link>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 6, mt: 6 }}>
+                  <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#344767' }}>{doctorCount}</Typography>
+                    <Typography variant="body2" sx={{ color: '#7B809A' }}>Expert Doctors</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#344767' }}>{doctorCount * 50}+</Typography>
+                    <Typography variant="body2" sx={{ color: '#7B809A' }}>Happy Patients</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#344767' }}>{specialtyCount}</Typography>
+                    <Typography variant="body2" sx={{ color: '#7B809A' }}>Specialties</Typography>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={6} sx={{ display: { xs: 'none', md: 'block' } }}>
+                <Paper elevation={6} sx={{ borderRadius: 4, p: 5, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                  <Box sx={{ position: 'absolute', top: -40, left: -40, width: 200, height: 200, borderRadius: '50%', bgcolor: '#e3f2fd', opacity: 0.6 }} />
+                  <Box sx={{ position: 'absolute', bottom: -40, right: -40, width: 200, height: 200, borderRadius: '50%', bgcolor: '#f3e5f5', opacity: 0.6 }} />
+                  <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 3, background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)' }}>
+                    <PeopleIcon sx={{ fontSize: 40, color: '#1A73E8' }} />
+                  </Avatar>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#344767', mb: 1 }}>Book an Appointment</Typography>
+                  <Typography variant="body2" sx={{ color: '#7B809A', mb: 3 }}>Schedule a visit with our specialists</Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+                      <StarIcon sx={{ color: '#FFB400', fontSize: 20 }} />
+                      <Typography variant="body2" sx={{ color: '#344767' }}>Top-rated doctors</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+                      <EventNoteIcon sx={{ color: '#4CAF50', fontSize: 20 }} />
+                      <Typography variant="body2" sx={{ color: '#344767' }}>Easy online booking</Typography>
+                    </Box>
+                    <Link to="/booking" style={{ textDecoration: 'none' }}>
+                      <Button fullWidth variant="contained" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                        Book Now
+                      </Button>
+                    </Link>
+                  </Box>
+                </Paper>
+              </Grid>
+            </Grid>
+          </Container>
+        </Box>
 
-          {doctors.length > 0 && (
-            <div className="text-center mt-8">
-              <Link to="/doctors" className="inline-flex items-center gap-2 px-6 py-3 text-teal-600 font-semibold hover:text-teal-700 transition-colors">
-                View All Doctors
-                <NavIcon name="arrow" className="w-5 h-5" />
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
+        {/* Services Section */}
+        <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#f5f5f5' }}>
+          <Container maxWidth="xl">
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Typography variant="h3" sx={{ fontWeight: 700, color: '#344767', mb: 1 }}>Our Services</Typography>
+              <Typography variant="body1" sx={{ color: '#7B809A', maxWidth: 500, mx: 'auto' }}>Comprehensive healthcare services for you and your family</Typography>
+            </Box>
+            {services.length === 0 ? (
+              <Paper sx={{ borderRadius: 3, p: 6, textAlign: 'center' }}>
+                <MedicalServicesIcon sx={{ fontSize: 64, color: '#e0e0e0', mb: 2 }} />
+                <Typography variant="h6" sx={{ color: '#7B809A' }}>No services available</Typography>
+              </Paper>
+            ) : (
+              <Grid container spacing={3}>
+                {services.slice(0, 6).map((service, i) => (
+                  <Grid item xs={12} sm={6} md={4} key={service._id || service.id || i}>
+                    <Card sx={{ borderRadius: 3, height: '100%', transition: 'transform 0.2s, box-shadow 0.2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 8 } }}>
+                      <CardContent sx={{ p: 3 }}>
+                        <Avatar sx={{ width: 56, height: 56, mb: 2, background: '#e3f2fd' }}>
+                          <MedicalServicesIcon sx={{ color: '#1A73E8', fontSize: 28 }} />
+                        </Avatar>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767', mb: 1 }}>{service.name}</Typography>
+                        <Typography variant="body2" sx={{ color: '#7B809A', mb: 2 }}>{service.description || 'Professional healthcare service'}</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#4CAF50' }}>${service.price || 0}</Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+            {services.length > 6 && (
+              <Box sx={{ textAlign: 'center', mt: 4 }}>
+                <Link to="/services" style={{ textDecoration: 'none' }}>
+                  <Button variant="outlined" endIcon={<ArrowForwardIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, color: '#1A73E8', borderColor: '#1A73E8' }}>
+                    View All Services
+                  </Button>
+                </Link>
+              </Box>
+            )}
+          </Container>
+        </Box>
 
-      {/* Why Choose Us */}
-      <section className="py-16 lg:py-24 bg-gradient-to-r from-teal-600 to-teal-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold mb-6">Why Choose MedBook Pro?</h2>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <NavIcon name="shield" className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-1">Secure & Private</h3>
-                    <p className="text-white/80">Your medical information is protected with enterprise-grade security</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <NavIcon name="clock" className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-1">24/7 Availability</h3>
-                    <p className="text-white/80">Book appointments anytime, anywhere</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <NavIcon name="location" className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-1">Multiple Locations</h3>
-                    <p className="text-white/80">Visit any of our conveniently located clinics</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">98%</div>
-                <div className="text-white/80">Patient Satisfaction</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{specialtyCount}+</div>
-                <div className="text-white/80">Specialties</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{doctorCount}</div>
-                <div className="text-white/80">Medical Experts</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">24/7</div>
-                <div className="text-white/80">Support</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Doctors Section */}
+        <Box sx={{ py: { xs: 8, md: 12 } }}>
+          <Container maxWidth="xl">
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Typography variant="h3" sx={{ fontWeight: 700, color: '#344767', mb: 1 }}>Our Expert Doctors</Typography>
+              <Typography variant="body1" sx={{ color: '#7B809A', maxWidth: 500, mx: 'auto' }}>Meet our team of experienced medical professionals</Typography>
+            </Box>
+            {doctors.length === 0 ? (
+              <Paper sx={{ borderRadius: 3, p: 6, textAlign: 'center' }}>
+                <PeopleIcon sx={{ fontSize: 64, color: '#e0e0e0', mb: 2 }} />
+                <Typography variant="h6" sx={{ color: '#7B809A' }}>No doctors available</Typography>
+              </Paper>
+            ) : (
+              <Grid container spacing={3}>
+                {doctors.slice(0, 4).map((doctor, i) => {
+                  const firstName = doctor.user?.firstName || doctor.firstName || '';
+                  const lastName = doctor.user?.lastName || doctor.lastName || '';
+                  return (
+                    <Grid item xs={12} sm={6} md={3} key={doctor._id || doctor.id || i}>
+                      <Card sx={{ borderRadius: 3, textAlign: 'center', transition: 'transform 0.2s, box-shadow 0.2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 8 } }}>
+                        <CardContent sx={{ p: 3 }}>
+                          <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 2, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', fontSize: 28, fontWeight: 600 }}>
+                            {(firstName[0] || lastName[0] || 'D').toUpperCase()}
+                          </Avatar>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767', mb: 0.5 }}>Dr. {firstName} {lastName}</Typography>
+                          <Chip label={doctor.specialty || 'General'} size="small" sx={{ mb: 1, bgcolor: '#e3f2fd', color: '#1A73E8', fontWeight: 600 }} />
+                          {doctor.experience && <Typography variant="body2" sx={{ color: '#7B809A' }}>{doctor.experience} years experience</Typography>}
+                          <Link to="/booking" style={{ textDecoration: 'none', display: 'inline-flex', marginTop: 12 }}>
+                            <Button size="small" endIcon={<ArrowForwardIcon />} sx={{ color: '#1A73E8', fontWeight: 700, textTransform: 'none' }}>Book</Button>
+                          </Link>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            )}
+            {doctors.length > 4 && (
+              <Box sx={{ textAlign: 'center', mt: 4 }}>
+                <Link to="/doctors" style={{ textDecoration: 'none' }}>
+                  <Button variant="outlined" endIcon={<ArrowForwardIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, color: '#1A73E8', borderColor: '#1A73E8' }}>
+                    View All Doctors
+                  </Button>
+                </Link>
+              </Box>
+            )}
+          </Container>
+        </Box>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-              </div>
-              <span className="text-xl font-bold">MedBook Pro</span>
-            </div>
-            <p className="text-gray-400 text-sm">© 2024 MedBook Pro. Clinic Appointment Management System</p>
-          </div>
-        </div>
-      </footer>
-    </div>
+        {/* Why Choose Us */}
+        <Box sx={{ py: { xs: 8, md: 12 }, background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 50%, #7B1FA2 100%)', color: '#fff' }}>
+          <Container maxWidth="xl">
+            <Grid container spacing={6} alignItems="center">
+              <Grid item xs={12} md={6}>
+                <Typography variant="h3" sx={{ fontWeight: 700, mb: 4 }}>Why Choose MedBook Pro?</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {[
+                    { icon: <SecurityIcon />, title: 'Secure & Private', desc: 'Your medical information is protected with enterprise-grade security' },
+                    { icon: <AccessTimeIcon />, title: '24/7 Availability', desc: 'Book appointments anytime, anywhere' },
+                    { icon: <LocationOnIcon />, title: 'Multiple Locations', desc: 'Visit any of our conveniently located clinics' },
+                  ].map((item, i) => (
+                    <Box key={i} sx={{ display: 'flex', gap: 2 }}>
+                      <Avatar sx={{ width: 48, height: 48, bgcolor: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>{item.icon}</Avatar>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>{item.title}</Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>{item.desc}</Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Grid container spacing={2}>
+                  {[
+                    { value: '98%', label: 'Patient Satisfaction' },
+                    { value: `${specialtyCount}+`, label: 'Specialties' },
+                    { value: `${doctorCount}`, label: 'Medical Experts' },
+                    { value: '24/7', label: 'Support' },
+                  ].map((stat, i) => (
+                    <Grid item xs={6} key={i}>
+                      <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: 3 }}>
+                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5 }}>{stat.value}</Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>{stat.label}</Typography>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Grid>
+            </Grid>
+          </Container>
+        </Box>
+
+        {/* Footer */}
+        <Box sx={{ bgcolor: '#1a1a2e', py: 4 }}>
+          <Container maxWidth="xl">
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Avatar sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', borderRadius: 2 }}>
+                  <MedicalServicesIcon sx={{ fontSize: 22, color: '#fff' }} />
+                </Avatar>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>MedBook Pro</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                © {new Date().getFullYear()} MedBook Pro. Clinic Appointment Management System
+              </Typography>
+            </Box>
+          </Container>
+        </Box>
+      </Box>
   );
 };
 

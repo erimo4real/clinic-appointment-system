@@ -156,6 +156,15 @@ export const cancelAppointment = createAsyncThunk('appointments/cancel', async (
   }
 });
 
+export const updateAppointmentStatus = createAsyncThunk('appointments/updateStatus', async ({ id, status }, { rejectWithValue }) => {
+  try {
+    const response = await api.put(`/appointments/${id}`, { status });
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data || { error: 'Failed to update status' });
+  }
+});
+
 export const fetchDoctorAppointments = createAsyncThunk('appointments/fetchDoctor', async (doctorId, { rejectWithValue }) => {
   try {
     const response = await api.get(`/appointments/doctor/${doctorId}`);
@@ -188,7 +197,11 @@ const appointmentSlice = createSlice({
     todayAppointments: [], // Today's appointments
     stats: null,         // Dashboard statistics
     loading: false,      // Loading state
+    loadingAppointments: false,  // Per-thunk loading states
+    loadingStats: false,
+    loadingToday: false,
     error: null,         // Error message
+    hasPendingBooking: false, // Track if user has a pending booking before login
   },
   
   reducers: {
@@ -206,56 +219,100 @@ const appointmentSlice = createSlice({
       // FETCH APPOINTMENTS
       // ==================
       .addCase(fetchAppointments.pending, (state) => {
-        state.loading = true;
+        state.loadingAppointments = true;
         state.error = null;
       })
       .addCase(fetchAppointments.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingAppointments = false;
         state.appointments = action.payload;
       })
       .addCase(fetchAppointments.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingAppointments = false;
         state.error = action.payload?.error || action.payload?.message;
       })
       
       // ==================
       // FETCH TODAY
       // ==================
+      .addCase(fetchTodayAppointments.pending, (state) => {
+        state.loadingToday = true;
+        state.error = null;
+      })
       .addCase(fetchTodayAppointments.fulfilled, (state, action) => {
+        state.loadingToday = false;
         state.todayAppointments = action.payload;
+      })
+      .addCase(fetchTodayAppointments.rejected, (state, action) => {
+        state.loadingToday = false;
+        state.error = action.payload?.error || action.payload?.message;
       })
       
       // ==================
       // FETCH STATS
       // ==================
+      .addCase(fetchDashboardStats.pending, (state) => {
+        state.loadingStats = true;
+        state.error = null;
+      })
       .addCase(fetchDashboardStats.fulfilled, (state, action) => {
+        state.loadingStats = false;
         state.stats = action.payload;
+      })
+      .addCase(fetchDashboardStats.rejected, (state, action) => {
+        state.loadingStats = false;
+        state.error = action.payload?.error || action.payload?.message;
       })
       
       // ==================
       // CREATE
       // ==================
+      .addCase(createAppointment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(createAppointment.fulfilled, (state, action) => {
-        // Add new appointment to the beginning of the array
+        state.loading = false;
         state.appointments.unshift(action.payload);
+      })
+      .addCase(createAppointment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || action.payload?.message;
       })
       
       // ==================
       // UPDATE
       // ==================
+      .addCase(updateAppointment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateAppointment.fulfilled, (state, action) => {
+        state.loading = false;
         const index = state.appointments.findIndex(a => a._id === action.payload._id);
         if (index !== -1) {
           state.appointments[index] = action.payload;
         }
       })
+      .addCase(updateAppointment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || action.payload?.message;
+      })
       
       // ==================
       // CANCEL
       // ==================
+      .addCase(cancelAppointment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(cancelAppointment.fulfilled, (state, action) => {
+        state.loading = false;
         const cancelledId = action.payload?._id || action.payload?.id;
         state.appointments = state.appointments.filter(a => a._id !== cancelledId);
+      })
+      .addCase(cancelAppointment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || action.payload?.message;
       })
       
       // ==================
@@ -270,6 +327,25 @@ const appointmentSlice = createSlice({
         state.appointments = action.payload;
       })
       .addCase(fetchDoctorAppointments.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || action.payload?.message;
+      })
+
+      // ==================
+      // UPDATE STATUS
+      // ==================
+      .addCase(updateAppointmentStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateAppointmentStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.appointments.findIndex(a => a._id === action.payload._id);
+        if (index !== -1) {
+          state.appointments[index] = action.payload;
+        }
+      })
+      .addCase(updateAppointmentStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.error || action.payload?.message;
       })

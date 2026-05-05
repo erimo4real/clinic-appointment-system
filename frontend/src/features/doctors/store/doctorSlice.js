@@ -190,29 +190,65 @@ const doctorSlice = createSlice({
       // ==================
       // FETCH DOCTOR BY ID
       // ==================
+      .addCase(fetchDoctorById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchDoctorById.fulfilled, (state, action) => {
+        state.loading = false;
         state.currentDoctor = action.payload;
+      })
+      .addCase(fetchDoctorById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || 'Failed to fetch doctor';
       })
       
       // ==================
       // FETCH SCHEDULE
       // ==================
+      .addCase(fetchDoctorSchedule.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchDoctorSchedule.fulfilled, (state, action) => {
+        state.loading = false;
         state.schedule = action.payload;
+      })
+      .addCase(fetchDoctorSchedule.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || 'Failed to fetch schedule';
       })
       
       // ==================
       // FETCH AVAILABLE SLOTS
       // ==================
+      .addCase(fetchAvailableSlots.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchAvailableSlots.fulfilled, (state, action) => {
+        state.loading = false;
         state.availableSlots = action.payload;
+      })
+      .addCase(fetchAvailableSlots.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || 'Failed to fetch slots';
       })
       
       // ==================
       // FETCH SERVICES
       // ==================
+      .addCase(fetchServices.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchServices.fulfilled, (state, action) => {
+        state.loading = false;
         state.services = action.payload;
+      })
+      .addCase(fetchServices.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || 'Failed to fetch services';
       });
   },
 });

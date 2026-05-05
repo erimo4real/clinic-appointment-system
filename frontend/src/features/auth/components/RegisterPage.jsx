@@ -2,29 +2,50 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { register, clearError } from '../store/authSlice';
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Avatar,
+  InputAdornment,
+  IconButton,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import PersonIcon from '@mui/icons-material/Person';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    password_confirm: '',
-    first_name: '',
-    last_name: '',
-    phone: '',
-    role: 'patient',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.password_confirm) {
-      alert('Passwords do not match');
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordError('Passwords do not match');
       return;
     }
-    const result = await dispatch(register(formData));
+    setPasswordError('');
+    const { confirmPassword, ...registerData } = formData;
+    const result = await dispatch(register(registerData));
     if (register.fulfilled.match(result)) {
       navigate('/dashboard');
     }
@@ -33,186 +54,220 @@ const RegisterPage = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (error) dispatch(clearError());
+    if (passwordError) setPasswordError('');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Left side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8 lg:hidden">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl shadow-lg mb-3">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">MedBook Pro</h1>
-          </div>
-          
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">Create Account</h2>
-            <p className="text-gray-500 mb-6 text-sm">Book your first appointment today</p>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
+    <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 50%, #7B1FA2 100%)',
+          p: 3,
+        }}
+      >
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Avatar
+            sx={{
+              width: 64,
+              height: 64,
+              mx: 'auto',
+              mb: 2,
+              background: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <MedicalServicesIcon sx={{ fontSize: 32, color: '#fff' }} />
+          </Avatar>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#fff', mb: 0.5 }}>
+            MedBook Pro
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+            Create your account
+          </Typography>
+        </Box>
+
+        <Card
+          sx={{
+            maxWidth: 480,
+            width: '100%',
+            borderRadius: 3,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          }}
+        >
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: '#344767', mb: 0.5 }}>
+              Get Started
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#7B809A', mb: 3 }}>
+              Fill in your details to create an account
+            </Typography>
+
+            {(error || passwordError) && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                {error || passwordError}
+              </Alert>
             )}
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  name="firstName"
+                  value={formData.firstName}
                   onChange={handleChange}
-                  placeholder="John"
-                  required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-base"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon sx={{ color: '#7B809A', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  name="lastName"
+                  value={formData.lastName}
                   onChange={handleChange}
-                  placeholder="Doe"
-                  required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-base"
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-              <input
-                type="text"
+              </Box>
+
+              <TextField
+                fullWidth
+                label="Username"
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="johndoe"
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-base"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon sx={{ color: '#7B809A', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
+
+              <TextField
+                fullWidth
+                label="Email"
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="john@example.com"
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-base"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={{ color: '#7B809A', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone (Optional)</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="+234 801 234 5678"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-base"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
+
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Create a password"
                 required
-                minLength={6}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-base"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon sx={{ color: '#7B809A', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-              <input
+
+              <TextField
+                fullWidth
+                label="Confirm Password"
                 type="password"
-                name="password_confirm"
-                value={formData.password_confirm}
+                name="confirmPassword"
+                value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="Confirm your password"
                 required
-                minLength={6}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-base"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon sx={{ color: '#7B809A', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
-            </div>
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Creating account...
-                </>
-              ) : 'Create Account'}
-            </button>
-          </form>
-          
-          <div className="mt-5 lg:mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Already have an account?{' '}
-              <Link to="/login" className="text-teal-600 font-semibold hover:text-teal-700">
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </div>
-        
-        <Link to="/" className="block text-center mt-6 text-gray-500 hover:text-teal-600 text-sm">
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{
+                  borderRadius: 2,
+                  py: 1.5,
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 100%)',
+                  boxShadow: '0 4px 7px -1px rgba(26,115,232,0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #1557B0 0%, #1A73E8 100%)',
+                  },
+                }}
+              >
+                {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Sign Up'}
+              </Button>
+            </Box>
+
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
+              <Typography variant="body2" sx={{ color: '#7B809A' }}>
+                Already have an account?{' '}
+                <Link
+                  to="/login"
+                  style={{ color: '#1A73E8', fontWeight: 700, textDecoration: 'none' }}
+                >
+                  Sign In
+                </Link>
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Link
+          to="/"
+          style={{
+            color: 'rgba(255,255,255,0.8)',
+            marginTop: 24,
+            textDecoration: 'none',
+            fontSize: '0.875rem',
+          }}
+          onMouseEnter={(e) => (e.target.style.color = '#fff')}
+          onMouseLeave={(e) => (e.target.style.color = 'rgba(255,255,255,0.8)')}
+        >
           Back to Home
         </Link>
-      </div>
-      </div>
-      
-      {/* Right side - Image/Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-500 via-teal-600 to-blue-700 items-center justify-center p-12">
-        <div className="text-center text-white">
-          <div className="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <svg className="w-14 h-14 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-          <h2 className="text-4xl font-bold mb-4">MedBook Pro</h2>
-          <p className="text-xl text-white/80 mb-8">Your Trusted Clinic Appointment System</p>
-          <div className="text-left text-white/70 space-y-4 max-w-md mx-auto">
-            <div className="flex items-center gap-3">
-              <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-              <span>Easy online appointment booking</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-              <span>Manage your health records</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-              <span>Connect with certified doctors</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </Box>
   );
 };
 

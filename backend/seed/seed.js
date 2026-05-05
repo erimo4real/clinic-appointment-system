@@ -19,6 +19,7 @@ const User = require('../src/domain/entities/User');
 const Doctor = require('../src/domain/entities/Doctor');
 const Service = require('../src/domain/entities/Service');
 const Appointment = require('../src/domain/entities/Appointment');
+const Feedback = require('../src/domain/entities/Feedback');
 
 // Use the same MONGODB_URI as the server
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -646,12 +647,12 @@ const seedData = {
     {
       patientIndex: 8,
       doctorIndex: 6,
-      serviceIndex: 17,
+      serviceIndex: 10,
       daysFromNow: 8,
       startTime: '13:00',
-      endTime: '13:45',
+      endTime: '13:30',
       status: 'confirmed',
-      notes: 'Food allergy testing'
+      notes: 'Digestive health checkup'
     },
     {
       patientIndex: 9,
@@ -676,12 +677,12 @@ const seedData = {
     {
       patientIndex: 11,
       doctorIndex: 9,
-      serviceIndex: 18,
+      serviceIndex: 9,
       daysFromNow: 11,
       startTime: '11:00',
-      endTime: '11:40',
+      endTime: '11:15',
       status: 'pending',
-      notes: 'Sleep disorder consultation'
+      notes: 'Respiratory blood work'
     },
     {
       patientIndex: 12,
@@ -706,12 +707,12 @@ const seedData = {
     {
       patientIndex: 14,
       doctorIndex: 14,
-      serviceIndex: 18,
+      serviceIndex: 9,
       daysFromNow: 14,
       startTime: '13:30',
-      endTime: '14:10',
+      endTime: '13:45',
       status: 'confirmed',
-      notes: 'Joint pain evaluation'
+      notes: 'Rheumatology blood work'
     }
   ]
 };
@@ -864,14 +865,13 @@ async function seedAppointments(doctors, services, patients) {
   for (const aptData of seedData.appointments) {
     const appointmentDate = new Date();
     appointmentDate.setDate(appointmentDate.getDate() + aptData.daysFromNow);
-    appointmentDate.setHours(9, 0, 0, 0);
 
     const [startHour, startMin] = aptData.startTime.split(':').map(Number);
-    appointmentDate.setHours(startHour, startMin);
+    appointmentDate.setHours(startHour, startMin, 0, 0);
 
     const [endHour, endMin] = aptData.endTime.split(':').map(Number);
     const endDate = new Date(appointmentDate);
-    endDate.setHours(endHour, endMin);
+    endDate.setHours(endHour, endMin, 0, 0);
 
     await Appointment.create({
       patient: patients[aptData.patientIndex]._id,

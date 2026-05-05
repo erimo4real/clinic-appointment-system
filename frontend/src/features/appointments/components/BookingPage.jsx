@@ -1,391 +1,357 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors, fetchAvailableSlots, fetchServices } from '../../doctors/store/doctorSlice';
 import { register } from '../../auth/store/authSlice';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
-import { Textarea } from '../../../components/ui/Textarea';
-import { Card, CardContent } from '../../../components/ui/Card';
+import {
+  Box, Container, Typography, Grid, Card, CardContent, Button,
+  TextField, Avatar, AppBar, Toolbar, IconButton, Chip, Paper,
+  Stepper, Step, StepLabel, StepConnector, stepConnectorClasses,
+  CircularProgress, Alert, InputAdornment, useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import PersonIcon from '@mui/icons-material/Person';
+import SearchIcon from '@mui/icons-material/Search';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ShieldIcon from '@mui/icons-material/Shield';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import api from '../../../shared/services/api';
+
+// ─────────────────────────────────────────────
+// Shared utility: Get doctor name (single source of truth)
+// ─────────────────────────────────────────────
+const getDoctorName = (doctor) => {
+  if (!doctor) return 'Doctor';
+  if (doctor.user) {
+    return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim() || 'Doctor';
+  }
+  return doctor.name || doctor.fullName || 'Doctor';
+};
+
+// ─────────────────────────────────────────────
+// Shared utility: Extract ID from object (handles id and _id)
+// ─────────────────────────────────────────────
+const getId = (obj) => obj?.id || obj?._id;
 
 const BOOKING_STORAGE_KEY = 'pending_booking_data';
 
-const NavIcon = ({ name, className }) => {
-  const icons = {
-    check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />,
-    arrowLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />,
-    calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
-    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
-    search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
-    clock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
-    medical: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />,
-    shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
-    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
-  };
-  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name]}</svg>;
+// ─────────────────────────────────────────────
+// Styled connector for stepper
+// ─────────────────────────────────────────────
+const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
+  [`&.${stepConnectorClasses.alternativeLabel}`]: { top: 22 },
+  [`&.${stepConnectorClasses.active}`]: { [`& .${stepConnectorClasses.line}`]: { backgroundImage: 'linear-gradient(95deg, #1A73E8 0%, #4285F4 100%)' } },
+  [`&.${stepConnectorClasses.completed}`]: { [`& .${stepConnectorClasses.line}`]: { backgroundImage: 'linear-gradient(95deg, #1A73E8 0%, #4285F4 100%)' } },
+  [`& .${stepConnectorClasses.line}`]: {
+    height: 3, border: 0, borderRadius: 1,
+    backgroundColor: '#e0e0e0',
+  },
+}));
+
+const ColorlibStepIconRoot = styled('div')(({ theme, ownerState }) => ({
+  zIndex: 1, color: '#fff', width: 44, height: 44,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  borderRadius: '50%',
+  ...(ownerState.active && {
+    backgroundImage: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 100%)',
+    boxShadow: '0 4px 7px -1px rgba(26,115,232,0.3)',
+  }),
+  ...(ownerState.completed && {
+    backgroundImage: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 100%)',
+  }),
+  ...(!ownerState.active && !ownerState.completed && {
+    backgroundColor: '#e0e0e0', color: '#757575',
+  }),
+}));
+
+const ColorlibStepIcon = (props) => {
+  const { active, completed, className } = props;
+  return (
+    <ColorlibStepIconRoot ownerState={{ completed, active }} className={className}>
+      {completed ? <CheckCircleIcon sx={{ fontSize: 22 }} /> : props.icon}
+    </ColorlibStepIconRoot>
+  );
 };
 
+// ─────────────────────────────────────────────
+// Specialty options for filtering
+// ─────────────────────────────────────────────
 const specialties = [
-  'All Specialties',
-  'General Medicine',
-  'Cardiology',
-  'Neurology',
-  'Orthopedics',
-  'Pediatrics',
-  'Dermatology',
-  'Ophthalmology',
-  'ENT',
-  'Gynecology',
-  'Psychiatry',
-  'Oncology',
-  'Gastroenterology',
-  'Pulmonology',
-  'Urology',
-  'Endocrinology',
-  'Rheumatology',
+  'All Specialties', 'General Medicine', 'Cardiology', 'Neurology',
+  'Orthopedics', 'Pediatrics', 'Dermatology', 'Ophthalmology', 'ENT',
+  'Gynecology', 'Psychiatry', 'Oncology', 'Gastroenterology',
+  'Pulmonology', 'Urology', 'Endocrinology', 'Rheumatology',
 ];
 
-const Header = () => (
-  <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-    <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <Link to="/" className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        </div>
-        <span className="text-xl font-bold text-gray-900">MedBook Pro</span>
-      </Link>
-      <div className="flex items-center gap-4">
-        <Link to="/doctors" className="text-gray-600 hover:text-teal-600 font-medium hidden sm:block">View Doctors</Link>
-        <Link to="/login" className="px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors">Sign In</Link>
-      </div>
-    </div>
-  </header>
-);
+// ─────────────────────────────────────────────
+// Header Component
+// ─────────────────────────────────────────────
+const Header = ({ isMobile, mobileMenuOpen, setMobileMenuOpen }) => (
+  <AppBar position="fixed" elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #f0f2f5' }}>
+    <Container maxWidth="xl">
+      <Toolbar disableGutters sx={{ justifyContent: 'space-between', minHeight: 64 }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+          <Avatar sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #1A73E8, #4285F4)', borderRadius: 2 }}>
+            <MedicalServicesIcon sx={{ fontSize: 22, color: '#fff' }} />
+          </Avatar>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767' }}>MedBook Pro</Typography>
+        </Link>
 
-const HeroSection = () => (
-  <div className="bg-gradient-to-br from-teal-600 via-teal-500 to-teal-400 text-white py-12 px-4">
-    <div className="max-w-4xl mx-auto text-center">
-      <h1 className="text-3xl sm:text-4xl font-bold mb-4">Book Your Appointment</h1>
-      <p className="text-teal-50 text-lg mb-8">Quality healthcare made simple and accessible</p>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <NavIcon name="user" className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold mb-1">1. Choose Doctor</h3>
-          <p className="text-sm text-teal-100">Browse our specialists</p>
-        </div>
-        
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <NavIcon name="medical" className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold mb-1">2. Select Service</h3>
-          <p className="text-sm text-teal-100">Pick your treatment</p>
-        </div>
-        
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <NavIcon name="calendar" className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold mb-1">3. Pick Time</h3>
-          <p className="text-sm text-teal-100">Schedule your visit</p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const ProgressSteps = ({ currentStep }) => {
-  const steps = [
-    { num: 1, label: 'Doctor', desc: 'Choose specialist' },
-    { num: 2, label: 'Service', desc: 'Select treatment' },
-    { num: 3, label: 'Schedule', desc: 'Pick date & time' },
-    { num: 4, label: 'Confirm', desc: 'Review & book' },
-  ];
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => (
-          <React.Fragment key={step.num}>
-            <div className="flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
-                currentStep > step.num 
-                  ? 'bg-teal-600 text-white' 
-                  : currentStep === step.num 
-                    ? 'bg-teal-100 text-teal-600 border-2 border-teal-600' 
-                    : 'bg-gray-100 text-gray-400'
-              }`}>
-                {currentStep > step.num ? (
-                  <NavIcon name="check" className="w-5 h-5" />
-                ) : (
-                  step.num
-                )}
-              </div>
-              <span className={`text-xs mt-1 hidden sm:block ${currentStep >= step.num ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
-                {step.label}
-              </span>
-              <span className="text-xs text-gray-400 hidden md:block">{step.desc}</span>
-            </div>
-            {index < 3 && (
-              <div className={`flex-1 h-1 mx-2 rounded ${currentStep > step.num ? 'bg-teal-600' : 'bg-gray-200'}`} />
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const DoctorCard = ({ doctor, isSelected, onSelect }) => {
-  const getDoctorName = (doctor) => {
-    if (doctor.user) {
-      return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
-    }
-    return doctor.name || doctor.fullName || 'Doctor';
-  };
-
-  const serviceNames = doctor.services?.slice(0, 3).map(s => s.name) || [];
-
-  return (
-    <button
-      onClick={() => onSelect(doctor)}
-      className={`w-full p-5 rounded-xl border-2 text-left transition-all duration-200 hover:shadow-lg ${
-        isSelected 
-          ? 'border-teal-600 bg-teal-50 shadow-md' 
-          : 'border-gray-200 bg-white hover:border-teal-400 hover:bg-teal-50/50'
-      }`}
-    >
-      <div className="flex items-start gap-4">
-        <div className="w-20 h-20 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-          {doctor.profileImage ? (
-            <img src={doctor.profileImage} alt={getDoctorName(doctor)} className="w-full h-full object-cover rounded-full" />
-          ) : (
-            <NavIcon name="user" className="w-10 h-10 text-teal-600" />
-          )}
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-900 text-lg">{getDoctorName(doctor)}</h3>
-          <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-700 rounded-full text-xs font-medium mt-1">
-            {doctor.specialty || 'General'}
-          </span>
-          
-          <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-gray-600">
-            <span className="flex items-center gap-1">
-              <NavIcon name="star" className="w-4 h-4 text-amber-400" />
-              {doctor.experience || 0} years exp
-            </span>
-            <span className="text-gray-300">|</span>
-            <span className="font-semibold text-teal-600">
-              ₦{(doctor.consultationFee || doctor.consultation_fee || 0).toLocaleString()}
-            </span>
-          </div>
-
-          {serviceNames.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1">
-              {serviceNames.map((name, i) => (
-                <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
-                  {name}
-                </span>
-              ))}
-              {doctor.services?.length > 3 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">
-                  +{doctor.services.length - 3} more
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        
-        {isSelected && (
-          <div className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <NavIcon name="check" className="w-4 h-4 text-white" />
-          </div>
+        {!isMobile && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Link to="/doctors" style={{ color: '#7B809A', textDecoration: 'none', fontWeight: 500, fontSize: '0.875rem' }}
+              onMouseEnter={(e) => (e.target.style.color = '#1A73E8')}
+              onMouseLeave={(e) => (e.target.style.color = '#7B809A')}>
+              View Doctors
+            </Link>
+            <Link to="/login" style={{ textDecoration: 'none' }}>
+              <Button variant="contained" size="small" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                Sign In
+              </Button>
+            </Link>
+          </Box>
         )}
-      </div>
-    </button>
-  );
-};
 
+        {isMobile && (
+          <IconButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
+          </IconButton>
+        )}
+      </Toolbar>
+    </Container>
+
+    {isMobile && mobileMenuOpen && (
+      <Box sx={{ bgcolor: '#fff', borderTop: '1px solid #f0f2f5', px: 3, py: 2 }}>
+        <Link to="/doctors" onClick={() => setMobileMenuOpen(false)}
+          style={{ display: 'block', py: 1.5, color: '#7B809A', textDecoration: 'none', fontWeight: 500 }}>
+          View Doctors
+        </Link>
+        <Link to="/login" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', display: 'block', mt: 1 }}>
+          <Button fullWidth variant="contained" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+            Sign In
+          </Button>
+        </Link>
+      </Box>
+    )}
+  </AppBar>
+);
+
+// ─────────────────────────────────────────────
+// HeroSection Component
+// ─────────────────────────────────────────────
+const HeroSection = () => (
+  <Box sx={{
+    pt: { xs: 10, md: 14 }, pb: { xs: 6, md: 10 },
+    background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 50%, #7B1FA2 100%)',
+    color: '#fff'
+  }}>
+    <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
+      <Typography variant="h3" sx={{ fontWeight: 800, mb: 2 }}>Book Your Appointment</Typography>
+      <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 400, mb: 6, maxWidth: 500, mx: 'auto' }}>
+        Quality healthcare made simple and accessible
+      </Typography>
+      <Grid container spacing={3} sx={{ maxWidth: 700, mx: 'auto' }}>
+        {[
+          { icon: <PersonIcon sx={{ fontSize: 28 }} />, title: '1. Choose Doctor', desc: 'Browse our specialists' },
+          { icon: <MedicalServicesIcon sx={{ fontSize: 28 }} />, title: '2. Select Service', desc: 'Pick your treatment' },
+          { icon: <CalendarTodayIcon sx={{ fontSize: 28 }} />, title: '3. Pick Time', desc: 'Schedule your visit' },
+        ].map((item, i) => (
+          <Grid item xs={4} key={i}>
+            <Paper sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: 3 }}>
+              <Avatar sx={{ width: 48, height: 48, mx: 'auto', mb: 1.5, bgcolor: 'rgba(255,255,255,0.2)' }}>
+                {item.icon}
+              </Avatar>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>{item.title}</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem' }}>{item.desc}</Typography>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+    </Container>
+  </Box>
+);
+
+// ─────────────────────────────────────────────
+// BookingSuccessPage Component
+// ─────────────────────────────────────────────
 const BookingSuccessPage = ({ bookingData, onCreateAccount, onSignIn, onBackHome, isRegistering, registerForm, setRegisterForm, handleRegister, registerLoading, registerError }) => {
-  const getDoctorName = (doctor) => {
-    if (doctor.user) {
-      return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
-    }
-    return doctor.name || doctor.fullName || 'Doctor';
-  };
-
   return (
-    <div className="max-w-md mx-auto">
-      <Card className="overflow-hidden">
-        <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-6 text-center text-white">
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <NavIcon name="check" className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold">Almost Done!</h2>
-          <p className="text-teal-100 mt-1">Create an account to save your booking</p>
-        </div>
-        
-        <CardContent className="p-6">
-          <div className="bg-gray-50 rounded-xl p-4 mb-6">
-            <h3 className="font-semibold text-gray-900 mb-2">{getDoctorName(bookingData.doctor)}</h3>
-            <p className="text-sm text-gray-600">{bookingData.service?.name}</p>
-            <p className="text-sm text-gray-600">
+    <Box sx={{ maxWidth: 500, mx: 'auto' }}>
+      <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
+        <Box sx={{ background: 'linear-gradient(135deg, #1A73E8, #4285F4)', p: 4, textAlign: 'center', color: '#fff' }}>
+          <Avatar sx={{ width: 64, height: 64, mx: 'auto', mb: 2, bgcolor: 'rgba(255,255,255,0.2)' }}>
+            <CheckCircleIcon sx={{ fontSize: 36 }} />
+          </Avatar>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>Booking Confirmed!</Typography>
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }}>Your appointment has been booked successfully</Typography>
+        </Box>
+
+        <CardContent sx={{ p: 4 }}>
+          <Paper sx={{ p: 3, bgcolor: '#f5f5f5', borderRadius: 2, mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#344767', mb: 0.5 }}>{getDoctorName(bookingData.doctor)}</Typography>
+            <Typography variant="body2" sx={{ color: '#7B809A' }}>{bookingData.service?.name}</Typography>
+            <Typography variant="body2" sx={{ color: '#7B809A' }}>
               {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-            </p>
-            <p className="text-sm text-gray-600">at {typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time}</p>
-          </div>
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#7B809A' }}>
+              at {typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time}
+            </Typography>
+          </Paper>
 
           {isRegistering ? (
-            <div>
-              <h3 className="font-bold text-gray-900 mb-2 text-center">Create Your Account</h3>
-              <p className="text-sm text-gray-500 mb-4 text-center">Your booking will be saved to your account</p>
-              
-              {registerError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600">{registerError}</p>
-                </div>
-              )}
-              
-              <form onSubmit={handleRegister} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="First Name"
-                    value={registerForm.firstName}
-                    onChange={(e) => setRegisterForm({...registerForm, firstName: e.target.value})}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Last Name"
-                    value={registerForm.lastName}
-                    onChange={(e) => setRegisterForm({...registerForm, lastName: e.target.value})}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                  />
-                </div>
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  value={registerForm.email}
-                  onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={registerForm.phone}
-                  onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                />
-                <input
-                  type="password"
-                  placeholder="Password (min 6 characters)"
-                  value={registerForm.password}
-                  onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
-                  required
-                  minLength={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                />
-                <button
-                  type="submit"
-                  disabled={registerLoading}
-                  className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {registerLoading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Creating Account...
-                    </>
-                  ) : (
-                    'Create Account & Save Booking'
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={onBackHome}
-                  className="w-full py-2 text-gray-500 hover:text-gray-700 text-sm"
-                >
-                  Continue as Guest (booking won't be saved)
-                </button>
-              </form>
-            </div>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767', mb: 0.5, textAlign: 'center' }}>Create Your Account</Typography>
+              <Typography variant="body2" sx={{ color: '#7B809A', mb: 3, textAlign: 'center' }}>Save your booking to track appointments</Typography>
+
+              {registerError && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{registerError}</Alert>}
+
+              <Box component="form" onSubmit={handleRegister} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField fullWidth label="First Name" value={registerForm.firstName}
+                      onChange={(e) => setRegisterForm({...registerForm, firstName: e.target.value})} required size="small" />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField fullWidth label="Last Name" value={registerForm.lastName}
+                      onChange={(e) => setRegisterForm({...registerForm, lastName: e.target.value})} required size="small" />
+                  </Grid>
+                </Grid>
+                <TextField fullWidth label="Email Address" type="email" value={registerForm.email}
+                  onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})} required size="small" />
+                <TextField fullWidth label="Phone Number" type="tel" value={registerForm.phone}
+                  onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})} required size="small" />
+                <TextField fullWidth label="Password" type="password" value={registerForm.password}
+                  onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})} required size="small" inputProps={{ minLength: 6 }} />
+                <Button type="submit" fullWidth variant="contained" size="large" disabled={registerLoading}
+                  sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, py: 1.5, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                  {registerLoading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Create Account'}
+                </Button>
+                <Button onClick={onBackHome} sx={{ color: '#7B809A' }}>Skip — Go Home</Button>
+              </Box>
+            </Box>
           ) : (
-            <div className="space-y-3">
-              <button
-                onClick={onCreateAccount}
-                className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all"
-              >
-                Create Account to Save Booking
-              </button>
-              
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or</span>
-                </div>
-              </div>
-              
-              <button
-                onClick={onSignIn}
-                className="w-full py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
-              >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Button onClick={onCreateAccount} fullWidth variant="contained" size="large"
+                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, py: 1.5, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                Create Account (Recommended)
+              </Button>
+              <Box sx={{ position: 'relative', textAlign: 'center' }}>
+                <Box sx={{ position: 'absolute', top: '50%', left: 0, right: 0, borderTop: '1px solid #e0e0e0' }} />
+                <Box sx={{ position: 'relative', display: 'inline-block', px: 2, bgcolor: '#fff' }}>
+                  <Typography variant="body2" sx={{ color: '#7B809A' }}>Or</Typography>
+                </Box>
+              </Box>
+              <Button onClick={onSignIn} fullWidth variant="outlined" size="large"
+                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, py: 1.5 }}>
                 Sign In to Existing Account
-              </button>
-              
-              <button
-                onClick={onBackHome}
-                className="w-full py-2 text-gray-500 hover:text-gray-600 text-sm"
-              >
-                Continue as Guest
-              </button>
-            </div>
+              </Button>
+              <Button onClick={onBackHome} sx={{ color: '#7B809A' }}>Go Home</Button>
+            </Box>
           )}
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 };
 
+// ─────────────────────────────────────────────
+// DoctorCard Component
+// ─────────────────────────────────────────────
+const DoctorCard = ({ doctor, isSelected, onSelect }) => {
+  const serviceNames = doctor.services?.slice(0, 3).map(s => s.name) || [];
+
+  return (
+    <Button
+      onClick={() => onSelect(doctor)}
+      sx={{
+        width: '100%', p: 3, borderRadius: 3, textAlign: 'left',
+        border: '2px solid', textTransform: 'none',
+        borderColor: isSelected ? '#1A73E8' : '#e0e0e0',
+        bgcolor: isSelected ? '#e3f2fd' : '#fff',
+        boxShadow: isSelected ? 3 : 'none',
+        '&:hover': { bgcolor: '#f5f5f5', borderColor: '#90caf9', boxShadow: 4 },
+      }}
+    >
+      <Grid container spacing={2} alignItems="flex-start">
+        <Grid item>
+          <Avatar sx={{
+            width: 80, height: 80, borderRadius: '50%',
+            background: isSelected ? 'linear-gradient(135deg, #1A73E8, #4285F4)' : 'linear-gradient(135deg, #e3f2fd, #bbdefb)',
+            color: '#1A73E8'
+          }}>
+            {doctor.profileImage ? (
+              <Box component="img" src={doctor.profileImage} alt={getDoctorName(doctor)} sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            ) : (
+              <PersonIcon sx={{ fontSize: 40 }} />
+            )}
+          </Avatar>
+        </Grid>
+        <Grid item xs>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767' }}>{getDoctorName(doctor)}</Typography>
+          <Chip label={doctor.specialty || 'General'} size="small" sx={{ mb: 1, mt: 0.5, bgcolor: '#e3f2fd', color: '#1A73E8', fontWeight: 600 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+            <Typography variant="body2" sx={{ color: '#7B809A' }}>{doctor.experience || 0} years exp</Typography>
+            <Typography variant="body2" sx={{ color: '#4CAF50', fontWeight: 600 }}>
+              ₦{(doctor.consultationFee || doctor.consultation_fee || 0).toLocaleString()}
+            </Typography>
+          </Box>
+          {serviceNames.length > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1.5 }}>
+              {serviceNames.map((name, i) => (
+                <Chip key={i} label={name} size="small" sx={{ bgcolor: '#f5f5f5', color: '#757575', height: 22 }} />
+              ))}
+              {doctor.services?.length > 3 && (
+                <Chip label={`+${doctor.services.length - 3} more`} size="small" sx={{ bgcolor: '#f5f5f5', color: '#9e9e9e', height: 22 }} />
+              )}
+            </Box>
+          )}
+        </Grid>
+        {isSelected && (
+          <Grid item>
+            <CheckCircleIcon sx={{ color: '#1A73E8', fontSize: 24 }} />
+          </Grid>
+        )}
+      </Grid>
+    </Button>
+  );
+};
+
+// ─────────────────────────────────────────────
+// BookingPage Component (Main)
+// ─────────────────────────────────────────────
 const BookingPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { doctors, availableSlots, services, loading } = useSelector((state) => state.doctors);
-  
+  const [searchParams] = useSearchParams();
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const { doctors, availableSlots, services, loading, error } = useSelector((state) => state.doctors);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const preDoctorId = searchParams.get('doctorId');
+  const preServiceId = searchParams.get('serviceId');
+
   const [step, setStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [specialtyFilter, setSpecialtyFilter] = useState('All Specialties');
-  const [bookingData, setBookingData] = useState({
-    doctor: null,
-    service: null,
-    date: '',
-    timeSlot: null,
-    notes: '',
-  });
+  const [bookingData, setBookingData] = useState({ doctor: null, service: null, date: '', timeSlot: null, notes: '' });
+  const [guestInfo, setGuestInfo] = useState({ firstName: '', lastName: '', email: '', phone: '' });
   const [success, setSuccess] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [registerForm, setRegisterForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-  });
+  const [registerForm, setRegisterForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '' });
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState('');
+
+  const hasAppliedPreSelection = useRef(false);
 
   useEffect(() => {
     dispatch(fetchDoctors());
@@ -394,27 +360,44 @@ const BookingPage = () => {
 
   useEffect(() => {
     if (bookingData.doctor && bookingData.date) {
-      dispatch(fetchAvailableSlots({ doctorId: getId(bookingData.doctor), date: bookingData.date }));
+      setSlotsLoading(true);
+      dispatch(fetchAvailableSlots({ doctorId: getId(bookingData.doctor), date: bookingData.date }))
+        .finally(() => setSlotsLoading(false));
     }
   }, [dispatch, bookingData.doctor, bookingData.date]);
 
-  const getDoctorName = (doctor) => {
-    if (doctor.user) {
-      return `Dr. ${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
+  useEffect(() => {
+    if (hasAppliedPreSelection.current) return;
+    if (doctors.length === 0 && services.length === 0) return;
+
+    hasAppliedPreSelection.current = true;
+    let startStep = 1;
+    let selectedDoctor = null;
+    let selectedService = null;
+
+    if (preDoctorId) selectedDoctor = doctors.find(d => getId(d) === preDoctorId) || null;
+    if (preServiceId) selectedService = services.find(s => getId(s) === preServiceId) || null;
+
+    if (selectedDoctor && selectedService) {
+      setBookingData({ doctor: selectedDoctor, service: selectedService, date: '', timeSlot: null, notes: '' });
+      startStep = 3;
+    } else if (selectedDoctor) {
+      setBookingData({ doctor: selectedDoctor, service: null, date: '', timeSlot: null, notes: '' });
+      startStep = 2;
+    } else if (selectedService) {
+      setBookingData({ doctor: null, service: selectedService, date: '', timeSlot: null, notes: '' });
+      startStep = 1;
     }
-    return doctor.name || doctor.fullName || 'Doctor';
-  };
+    setStep(startStep);
+  }, [doctors, services, preDoctorId, preServiceId]);
 
   const getDoctorServices = () => {
     if (!bookingData.doctor) return services;
-    const doctorServiceIds = bookingData.doctor.services?.map(s => s.id || s._id) || [];
-    if (doctorServiceIds.length > 0) {
-      return services.filter(s => doctorServiceIds.includes(s.id) || doctorServiceIds.includes(s._id));
-    }
+    const doctorServiceIds = bookingData.doctor.services?.map(s => getId(s)) || [];
+    if (doctorServiceIds.length > 0) return services.filter(s => doctorServiceIds.includes(getId(s)));
     return services;
   };
 
-  const getId = (obj) => obj?.id || obj?._id;
   const doctorServices = getDoctorServices();
 
   const filteredDoctors = doctors.filter(doctor => {
@@ -425,7 +408,10 @@ const BookingPage = () => {
   });
 
   const handleDoctorSelect = (doctor) => {
-    setBookingData({ ...bookingData, doctor, service: null, timeSlot: null });
+    const prevService = bookingData.service;
+    const doctorServiceIds = doctor.services?.map(s => getId(s)) || [];
+    const serviceStillValid = prevService && doctorServiceIds.includes(getId(prevService));
+    setBookingData({ ...bookingData, doctor, service: serviceStillValid ? prevService : null, timeSlot: null, date: '' });
     setStep(2);
   };
 
@@ -439,36 +425,34 @@ const BookingPage = () => {
   };
 
   const handleTimeSelect = (slot) => {
-    setBookingData({ ...bookingData, timeSlot: slot });
+    setBookingData({ ...bookingData, timeSlot: typeof slot === 'string' ? slot : slot.start_time });
   };
 
-  const handleConfirmBooking = () => {
-    setStep(4);
-  };
+  const handleNextToInfo = () => setStep(4);
+  const handleNextToConfirm = () => setStep(5);
 
   const handleBookAndSave = async () => {
     setBooking(true);
-    
     try {
       const timeSlot = typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time;
       const [hours, minutes] = timeSlot.split(':');
       const endHour = parseInt(hours) + 1;
       const endTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
-      
-      const appointmentData = {
+
+      await api.post('/appointments', {
         doctor: getId(bookingData.doctor),
         service: getId(bookingData.service),
         date: bookingData.date,
         startTime: timeSlot,
-        endTime: endTime,
+        endTime,
         notes: bookingData.notes,
-      };
-      
-      await api.post('/appointments', appointmentData);
+        guestName: `${guestInfo.firstName} ${guestInfo.lastName}`,
+        guestEmail: guestInfo.email,
+        guestPhone: guestInfo.phone,
+      });
       setSuccess(true);
-    } catch (error) {
-      console.error('Booking error:', error);
-      alert('Failed to book appointment. Please try again.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to book appointment. Please try again.');
     } finally {
       setBooking(false);
     }
@@ -478,35 +462,12 @@ const BookingPage = () => {
     e.preventDefault();
     setRegisterError('');
     setRegisterLoading(true);
-
     try {
-      const result = await dispatch(register({
-        firstName: registerForm.firstName,
-        lastName: registerForm.lastName,
-        email: registerForm.email,
-        phone: registerForm.phone,
-        password: registerForm.password,
-        role: 'patient',
-      }));
-
-      if (register.fulfilled.match(result)) {
-        const pendingBooking = JSON.parse(localStorage.getItem(BOOKING_STORAGE_KEY) || 'null');
-        
-        if (pendingBooking) {
-          try {
-            await api.post('/appointments', pendingBooking);
-            localStorage.removeItem(BOOKING_STORAGE_KEY);
-          } catch (bookingError) {
-            console.error('Failed to create booking:', bookingError);
-          }
-        }
-        
-        navigate('/dashboard');
-      } else {
-        setRegisterError(result.payload || 'Registration failed. Please try again.');
-      }
-    } catch (error) {
-      setRegisterError(error.message || 'Registration failed. Please try again.');
+      const result = await dispatch(register(registerForm));
+      if (register.fulfilled.match(result)) navigate('/dashboard');
+      else setRegisterError(result.payload || 'Registration failed. Please try again.');
+    } catch (err) {
+      setRegisterError(err.message || 'Registration failed. Please try again.');
     } finally {
       setRegisterLoading(false);
     }
@@ -514,53 +475,26 @@ const BookingPage = () => {
 
   const getMinDate = () => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
+  const stepLabels = ['Doctor', 'Service', 'Schedule', 'Your Info', 'Confirm'];
+  const stepIcons = [1, 2, 3, 4, 5];
+
+  // ── Render: Success screen ──
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-4xl mx-auto py-12 px-4">
+      <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+        <Header isMobile={isMobile} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+        <Container maxWidth="lg" sx={{ py: 8, mt: 4 }}>
           <BookingSuccessPage
             bookingData={bookingData}
-            onCreateAccount={() => {
-              const timeSlot = typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time;
-              const [hours, minutes] = timeSlot.split(':');
-              const endHour = parseInt(hours) + 1;
-              const endTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
-              
-              const pendingBooking = {
-                doctor: getId(bookingData.doctor),
-                service: getId(bookingData.service),
-                date: bookingData.date,
-                startTime: timeSlot,
-                endTime: endTime,
-                notes: bookingData.notes,
-              };
-              localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(pendingBooking));
-              setIsRegistering(true);
-            }}
-            onSignIn={() => {
-              const timeSlot = typeof bookingData.timeSlot === 'string' ? bookingData.timeSlot : bookingData.timeSlot?.start_time;
-              const [hours, minutes] = timeSlot.split(':');
-              const endHour = parseInt(hours) + 1;
-              const endTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
-              
-              localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify({
-                doctor: getId(bookingData.doctor),
-                service: getId(bookingData.service),
-                date: bookingData.date,
-                startTime: timeSlot,
-                endTime: endTime,
-                notes: bookingData.notes,
-              }));
-              navigate('/login');
-            }}
-            onBackHome={() => {
-              localStorage.removeItem(BOOKING_STORAGE_KEY);
-              navigate('/');
-            }}
+            onCreateAccount={() => setIsRegistering(true)}
+            onSignIn={() => navigate('/login')}
+            onBackHome={() => navigate('/')}
             isRegistering={isRegistering}
             registerForm={registerForm}
             setRegisterForm={setRegisterForm}
@@ -568,295 +502,406 @@ const BookingPage = () => {
             registerLoading={registerLoading}
             registerError={registerError}
           />
-        </div>
-      </div>
+        </Container>
+      </Box>
     );
   }
 
+  // ── Render: Main booking wizard ──
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+      <Header isMobile={isMobile} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <HeroSection />
-      
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <ProgressSteps currentStep={step} />
 
-        <Card>
-          <CardContent className="p-6">
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        {/* Stepper */}
+        <Paper sx={{ borderRadius: 3, p: { xs: 2, sm: 3 }, mb: 4, bgcolor: '#fff' }}>
+          <Stepper activeStep={step - 1} alternativeLabel connector={<ColorlibConnector />}>
+            {stepLabels.map((label, i) => (
+              <Step key={label}>
+                <StepLabel StepIconComponent={ColorlibStepIcon} icon={stepIcons[i]}>
+                  <Typography variant="body2" sx={{ fontWeight: step >= i + 1 ? 600 : 400, color: step >= i + 1 ? '#344767' : '#7B809A', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>
+                    {label}
+                  </Typography>
+                </StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Paper>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>
+            {error}. Please refresh the page.
+          </Alert>
+        )}
+
+        <Card sx={{ borderRadius: 3 }}>
+          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+            {/* ── Step 1: Doctor Selection ── */}
             {step === 1 && (
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Choose Your Doctor</h2>
-                
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <div className="flex-1 relative">
-                    <NavIcon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: '#344767', mb: 3 }}>Choose Your Doctor</Typography>
+
+                {bookingData.service && (
+                  <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}
+                    action={
+                      <Button size="small" onClick={() => setBookingData({ ...bookingData, service: null })} sx={{ color: '#1A73E8' }}>Clear</Button>
+                    }>
+                    Pre-selected service: <strong>{bookingData.service.name}</strong> — ₦{(bookingData.service.price || 0).toLocaleString()}
+                  </Alert>
+                )}
+
+                <Grid container spacing={2} sx={{ mb: 4 }}>
+                  <Grid item xs={12} sm={8}>
+                    <TextField
+                      fullWidth
                       placeholder="Search doctors by name..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon sx={{ color: '#7B809A' }} />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
-                  </div>
-                  <select
-                    value={specialtyFilter}
-                    onChange={(e) => setSpecialtyFilter(e.target.value)}
-                    className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white"
-                  >
-                    {specialties.map((spec) => (
-                      <option key={spec} value={spec}>{spec}</option>
-                    ))}
-                  </select>
-                </div>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      select
+                      fullWidth
+                      value={specialtyFilter}
+                      onChange={(e) => setSpecialtyFilter(e.target.value)}
+                      SelectProps={{ native: true }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    >
+                      {specialties.map((spec) => (
+                        <option key={spec} value={spec}>{spec}</option>
+                      ))}
+                    </TextField>
+                  </Grid>
+                </Grid>
 
                 {loading ? (
-                  <div className="text-center py-12">
-                    <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-gray-500">Loading doctors...</p>
-                  </div>
+                  <Box sx={{ textAlign: 'center', py: 8 }}>
+                    <CircularProgress sx={{ color: '#1A73E8', mb: 2 }} />
+                    <Typography variant="body1" sx={{ color: '#7B809A' }}>Loading doctors...</Typography>
+                  </Box>
                 ) : filteredDoctors.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <NavIcon name="user" className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 mb-2">No doctors found</p>
-                    <p className="text-sm text-gray-400">Try adjusting your search or filters</p>
-                  </div>
+                  <Box sx={{ textAlign: 'center', py: 8 }}>
+                    <PersonIcon sx={{ fontSize: 64, color: '#e0e0e0', mb: 2 }} />
+                    <Typography variant="body1" sx={{ color: '#7B809A' }}>No doctors found</Typography>
+                    <Typography variant="body2" sx={{ color: '#aaa' }}>Try adjusting your search or filters</Typography>
+                  </Box>
                 ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-500 mb-4">{filteredDoctors.length} doctor{filteredDoctors.length !== 1 ? 's' : ''} available</p>
-                    {filteredDoctors.map((doctor) => (
-                      <DoctorCard
-                        key={doctor.id}
-                        doctor={doctor}
-                        isSelected={bookingData.doctor?.id === doctor.id}
-                        onSelect={handleDoctorSelect}
-                      />
-                    ))}
-                  </div>
+                  <Box>
+                    <Typography variant="body2" sx={{ color: '#7B809A', mb: 2 }}>{filteredDoctors.length} doctor{filteredDoctors.length !== 1 ? 's' : ''} available</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {filteredDoctors.map((doctor) => (
+                        <DoctorCard
+                          key={getId(doctor)}
+                          doctor={doctor}
+                          isSelected={getId(bookingData.doctor) === getId(doctor)}
+                          onSelect={handleDoctorSelect}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
                 )}
-              </div>
+              </Box>
             )}
 
+            {/* ── Step 2: Service Selection ── */}
             {step === 2 && (
-              <div>
-                <button 
-                  onClick={() => setStep(1)} 
-                  className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
-                >
-                  <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Doctors
-                </button>
-                
-                <div className="bg-teal-50 rounded-xl p-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center">
-                      <NavIcon name="user" className="w-6 h-6 text-teal-600" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">{getDoctorName(bookingData.doctor)}</p>
-                      <p className="text-sm text-teal-600">{bookingData.doctor.specialty}</p>
-                    </div>
-                  </div>
-                </div>
+              <Box>
+                <Button startIcon={<ArrowBackIcon />} onClick={() => setStep(1)} sx={{ mb: 3, color: '#7B809A', textTransform: 'none' }}>
+                  Back to Doctors
+                </Button>
 
-                <h2 className="text-xl font-bold text-gray-900 mb-2"> Select a Service</h2>
-                <p className="text-gray-500 text-sm mb-6">Choose from {doctorServices.length} available service{doctorServices.length !== 1 ? 's' : ''}</p>
-                
-                <div className="space-y-3">
+                <Paper sx={{ p: 3, bgcolor: '#e3f2fd', borderRadius: 2, mb: 4 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar sx={{ width: 48, height: 48, background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)', color: '#1A73E8' }}>
+                        <PersonIcon />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#344767' }}>{getDoctorName(bookingData.doctor)}</Typography>
+                        <Typography variant="body2" sx={{ color: '#1A73E8' }}>{bookingData.doctor.specialty}</Typography>
+                      </Box>
+                    </Box>
+                    <Button size="small" onClick={() => { setBookingData({ ...bookingData, doctor: null, service: null, timeSlot: null, date: '' }); setStep(1); }}
+                      sx={{ color: '#1A73E8', fontWeight: 600 }}>
+                      Change Doctor
+                    </Button>
+                  </Box>
+                </Paper>
+
+                <Typography variant="h5" sx={{ fontWeight: 700, color: '#344767', mb: 0.5 }}>Select a Service</Typography>
+                <Typography variant="body2" sx={{ color: '#7B809A', mb: 3 }}>Choose from {doctorServices.length} available service{doctorServices.length !== 1 ? 's' : ''}</Typography>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {doctorServices.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-gray-500">No services available for this doctor.</p>
-                    </div>
+                    <Box sx={{ textAlign: 'center', py: 8 }}>
+                      <Typography variant="body1" sx={{ color: '#7B809A' }}>No services available for this doctor.</Typography>
+                    </Box>
                   ) : (
                     doctorServices.map((service) => (
-                      <button
-                        key={service.id || service._id}
+                      <Button
+                        key={getId(service)}
                         onClick={() => handleServiceSelect(service)}
-                        className={`w-full p-4 rounded-xl border-2 text-left transition-all hover:shadow-md ${
-                          bookingData.service?.id === service.id || bookingData.service?._id === service._id 
-                            ? 'border-teal-600 bg-teal-50' 
-                            : 'border-gray-200 bg-white hover:border-teal-400'
-                        }`}
+                        sx={{
+                          width: '100%', p: 3, borderRadius: 2, textAlign: 'left', textTransform: 'none',
+                          border: '2px solid',
+                          borderColor: getId(bookingData.service) === getId(service) ? '#1A73E8' : '#e0e0e0',
+                          bgcolor: getId(bookingData.service) === getId(service) ? '#e3f2fd' : '#fff',
+                          '&:hover': { bgcolor: '#f5f5f5', borderColor: '#90caf9', boxShadow: 3 },
+                        }}
                       >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{service.name}</h3>
-                            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                              <NavIcon name="clock" className="w-4 h-4" />
-                              {service.duration} minutes
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <span className="block text-teal-600 font-bold text-lg">₦{service.price?.toLocaleString()}</span>
-                            {bookingData.service?.id === service.id || bookingData.service?._id === service._id ? (
-                              <span className="text-xs text-teal-600 font-medium">Selected</span>
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#344767' }}>{service.name}</Typography>
+                            <Typography variant="body2" sx={{ color: '#7B809A', display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                              <AccessTimeIcon sx={{ fontSize: 16 }} /> {service.duration} minutes
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#4CAF50' }}>₦{service.price?.toLocaleString()}</Typography>
+                            {getId(bookingData.service) === getId(service) ? (
+                              <Typography variant="caption" sx={{ color: '#1A73E8', fontWeight: 600 }}>Selected</Typography>
                             ) : (
-                              <span className="text-xs text-gray-400">Click to select</span>
+                              <Typography variant="caption" sx={{ color: '#aaa' }}>Click to select</Typography>
                             )}
-                          </div>
-                        </div>
-                      </button>
+                          </Box>
+                        </Box>
+                      </Button>
                     ))
                   )}
-                </div>
-              </div>
+                </Box>
+              </Box>
             )}
 
+            {/* ── Step 3: Date & Time Selection ── */}
             {step === 3 && (
-              <div>
-                <button 
-                  onClick={() => setStep(2)} 
-                  className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
-                >
-                  <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Services
-                </button>
-                
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Select Date & Time</h2>
-                
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Choose a Date</label>
-                  <Input
+              <Box>
+                <Button startIcon={<ArrowBackIcon />} onClick={() => setStep(2)} sx={{ mb: 3, color: '#7B809A', textTransform: 'none' }}>
+                  Back to Services
+                </Button>
+
+                <Paper sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, mb: 4 }}>
+                  <Grid container spacing={1}>
+                    <Grid item xs={8}>
+                      <Typography variant="body2" sx={{ color: '#7B809A' }}>Doctor: <strong sx={{ color: '#344767' }}>{getDoctorName(bookingData.doctor)}</strong></Typography>
+                      <Typography variant="body2" sx={{ color: '#7B809A' }}>Service: <strong sx={{ color: '#344767' }}>{bookingData.service?.name}</strong></Typography>
+                    </Grid>
+                    <Grid item xs={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                      <Button size="small" onClick={() => { setBookingData({ ...bookingData, doctor: null, service: null, timeSlot: null, date: '' }); setStep(1); }} sx={{ color: '#1A73E8', fontWeight: 600 }}>Change</Button>
+                    </Grid>
+                  </Grid>
+                </Paper>
+
+                <Typography variant="h5" sx={{ fontWeight: 700, color: '#344767', mb: 3 }}>Select Date & Time</Typography>
+
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#7B809A', mb: 1 }}>Choose a Date</Typography>
+                  <TextField
                     type="date"
                     value={bookingData.date}
                     onChange={handleDateChange}
-                    min={getMinDate()}
-                    className="max-w-xs"
+                    inputProps={{ min: getMinDate() }}
+                    sx={{ maxWidth: 280, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                   />
-                </div>
-                
+                </Box>
+
                 {bookingData.date && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Available Time Slots for {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                    </label>
-                    {Array.isArray(availableSlots) && availableSlots.length === 0 ? (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-700">
-                        <p className="flex items-center gap-2">
-                          <NavIcon name="clock" className="w-5 h-5" />
-                          No available slots for this date. Please try another date.
-                        </p>
-                      </div>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 500, color: '#7B809A', mb: 2 }}>
+                      Available Time Slots for {new Date(bookingData.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                    </Typography>
+
+                    {slotsLoading ? (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <CircularProgress size={32} sx={{ color: '#1A73E8', mb: 1 }} />
+                        <Typography variant="body2" sx={{ color: '#7B809A' }}>Loading available slots...</Typography>
+                      </Box>
+                    ) : Array.isArray(availableSlots) && availableSlots.length === 0 ? (
+                      <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                        No available slots for this date. Please try another date.
+                      </Alert>
                     ) : (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                      <Grid container spacing={1}>
                         {(Array.isArray(availableSlots) ? availableSlots : []).map((slot, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleTimeSelect(typeof slot === 'string' ? slot : slot.start_time)}
-                            className={`p-3 rounded-lg text-sm font-medium transition-all ${
-                              bookingData.timeSlot === slot || bookingData.timeSlot === slot.start_time
-                                ? 'bg-teal-600 text-white shadow-md'
-                                : 'bg-gray-100 text-gray-700 hover:bg-teal-100 hover:text-teal-700'
-                            }`}
-                          >
-                            {typeof slot === 'string' ? slot : slot.start_time}
-                          </button>
+                          <Grid item xs={4} sm={3} md={2} key={index}>
+                            <Button
+                              fullWidth
+                              onClick={() => handleTimeSelect(slot)}
+                              sx={{
+                                p: 1.5, borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.875rem',
+                                bgcolor: bookingData.timeSlot === (typeof slot === 'string' ? slot : slot.start_time) ? '#1A73E8' : '#f5f5f5',
+                                color: bookingData.timeSlot === (typeof slot === 'string' ? slot : slot.start_time) ? '#fff' : '#757575',
+                                '&:hover': { bgcolor: bookingData.timeSlot === (typeof slot === 'string' ? slot : slot.start_time) ? '#1557B0' : '#e3f2fd' },
+                              }}
+                            >
+                              {typeof slot === 'string' ? slot : slot.start_time}
+                            </Button>
+                          </Grid>
                         ))}
-                      </div>
+                      </Grid>
                     )}
-                  </div>
+                  </Box>
                 )}
-                
+
                 {bookingData.timeSlot && (
-                  <div className="mt-6 p-4 bg-teal-50 rounded-lg">
-                    <p className="text-sm text-teal-700">
-                      <span className="font-semibold">Selected:</span> {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {bookingData.timeSlot}
-                    </p>
-                    <Button onClick={handleConfirmBooking} className="mt-4 w-full">
-                      Continue to Confirm
+                  <Paper sx={{ p: 3, bgcolor: '#e3f2fd', borderRadius: 2, mt: 4 }}>
+                    <Typography variant="body2" sx={{ color: '#1A73E8', mb: 2 }}>
+                      <strong>Selected:</strong> {new Date(bookingData.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {bookingData.timeSlot}
+                    </Typography>
+                    <Button fullWidth variant="contained" size="large" onClick={handleNextToInfo}
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                      Continue to Your Info
                     </Button>
-                  </div>
+                  </Paper>
                 )}
-              </div>
+              </Box>
             )}
 
+            {/* ── Step 4: Guest/Patient Information ── */}
             {step === 4 && (
-              <div>
-                <button 
-                  onClick={() => setStep(3)} 
-                  className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
-                >
-                  <NavIcon name="arrowLeft" className="w-5 h-5" /> Back to Schedule
-                </button>
-                
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Confirm Your Appointment</h2>
-                
-                <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl p-6 mb-6">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <NavIcon name="user" className="w-8 h-8 text-teal-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900">{getDoctorName(bookingData.doctor)}</h3>
-                      <p className="text-sm text-teal-600">{bookingData.doctor.specialty}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="border-t border-teal-200 pt-4 space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 flex items-center gap-2">
-                        <NavIcon name="medical" className="w-4 h-4" />
-                        Service
-                      </span>
-                      <span className="font-medium text-gray-900">{bookingData.service?.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 flex items-center gap-2">
-                        <NavIcon name="calendar" className="w-4 h-4" />
-                        Date
-                      </span>
-                      <span className="font-medium text-gray-900">
-                        {new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 flex items-center gap-2">
-                        <NavIcon name="clock" className="w-4 h-4" />
-                        Time
-                      </span>
-                      <span className="font-medium text-gray-900">{bookingData.timeSlot}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-teal-200 pt-3">
-                      <span className="text-gray-600 font-medium">Total</span>
-                      <span className="font-bold text-teal-600 text-xl">₦{bookingData.service?.price?.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
-                  <Textarea
+              <Box>
+                <Button startIcon={<ArrowBackIcon />} onClick={() => setStep(3)} sx={{ mb: 3, color: '#7B809A', textTransform: 'none' }}>
+                  Back to Schedule
+                </Button>
+
+                <Typography variant="h5" sx={{ fontWeight: 700, color: '#344767', mb: 0.5 }}>Your Information</Typography>
+                <Typography variant="body2" sx={{ color: '#7B809A', mb: 3 }}>Please provide your details for the appointment</Typography>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="First Name" value={guestInfo.firstName}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, firstName: e.target.value })} placeholder="First name"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Last Name" value={guestInfo.lastName}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, lastName: e.target.value })} placeholder="Last name"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Email Address" type="email" value={guestInfo.email}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, email: e.target.value })} placeholder="your@email.com"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Phone Number" type="tel" value={guestInfo.phone}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, phone: e.target.value })} placeholder="08012345678"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                </Grid>
+
+                {guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.phone && (
+                  <Paper sx={{ p: 3, bgcolor: '#e3f2fd', borderRadius: 2, mt: 4 }}>
+                    <Typography variant="body2" sx={{ color: '#1A73E8', mb: 2 }}>
+                      <strong>Name:</strong> {guestInfo.firstName} {guestInfo.lastName}<br />
+                      <strong>Email:</strong> {guestInfo.email}<br />
+                      <strong>Phone:</strong> {guestInfo.phone}
+                    </Typography>
+                    <Button fullWidth variant="contained" size="large" onClick={handleNextToConfirm}
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A73E8, #4285F4)' }}>
+                      Continue to Confirm
+                    </Button>
+                  </Paper>
+                )}
+              </Box>
+            )}
+
+            {/* ── Step 5: Confirmation & Booking Submit ── */}
+            {step === 5 && (
+              <Box>
+                <Button startIcon={<ArrowBackIcon />} onClick={() => setStep(4)} sx={{ mb: 3, color: '#7B809A', textTransform: 'none' }}>
+                  Back to Your Info
+                </Button>
+
+                <Typography variant="h5" sx={{ fontWeight: 700, color: '#344767', mb: 4 }}>Confirm Your Appointment</Typography>
+
+                <Paper sx={{ p: 4, background: 'linear-gradient(135deg, #e3f2fd, #f5f5f5)', borderRadius: 3, mb: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 3 }}>
+                    <Avatar sx={{ width: 64, height: 64, background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)', color: '#1A73E8', flexShrink: 0 }}>
+                      <PersonIcon sx={{ fontSize: 32 }} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#344767' }}>{getDoctorName(bookingData.doctor)}</Typography>
+                      <Typography variant="body2" sx={{ color: '#1A73E8' }}>{bookingData.doctor.specialty}</Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ borderTop: '1px solid #bbdefb', pt: 3 }}>
+                    {[
+                      { icon: <MedicalServicesIcon sx={{ fontSize: 18 }} />, label: 'Service', value: bookingData.service?.name },
+                      { icon: <CalendarTodayIcon sx={{ fontSize: 18 }} />, label: 'Date', value: new Date(bookingData.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) },
+                      { icon: <AccessTimeIcon sx={{ fontSize: 18 }} />, label: 'Time', value: bookingData.timeSlot },
+                      { icon: <PersonIcon sx={{ fontSize: 18 }} />, label: 'Patient', value: `${guestInfo.firstName} ${guestInfo.lastName}` },
+                    ].map((item, i) => (
+                      <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', py: 1.5, alignItems: 'center' }}>
+                        <Typography variant="body2" sx={{ color: '#7B809A', display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {item.icon} {item.label}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: '#344767' }}>{item.value}</Typography>
+                      </Box>
+                    ))}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 2, borderTop: '1px solid #bbdefb', mt: 1 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#344767' }}>Total</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#4CAF50' }}>₦{bookingData.service?.price?.toLocaleString()}</Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#7B809A', mb: 1 }}>Additional Notes (Optional)</Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
                     value={bookingData.notes}
                     onChange={(e) => setBookingData({ ...bookingData, notes: e.target.value })}
-                    className="h-24"
                     placeholder="Any symptoms, concerns, or special requests..."
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                   />
-                </div>
-                
-                <Button 
-                  onClick={handleBookAndSave} 
-                  className="w-full py-4 text-lg" 
+                </Box>
+
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  onClick={handleBookAndSave}
                   disabled={booking}
+                  sx={{
+                    borderRadius: 2, textTransform: 'none', fontWeight: 700, py: 1.5, fontSize: '1rem',
+                    background: 'linear-gradient(135deg, #1A73E8, #4285F4)',
+                    boxShadow: '0 4px 7px -1px rgba(26,115,232,0.3)',
+                    '&:hover': { background: 'linear-gradient(135deg, #1557B0, #1A73E8)' },
+                  }}
                 >
                   {booking ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CircularProgress size={20} sx={{ color: '#fff' }} />
                       Booking...
-                    </span>
+                    </Box>
                   ) : (
                     'Confirm Booking'
                   )}
                 </Button>
-                
-                <p className="text-xs text-gray-400 text-center mt-4 flex items-center justify-center gap-1">
-                  <NavIcon name="shield" className="w-4 h-4" />
-                  Your information is secure and encrypted
-                </p>
-              </div>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mt: 2 }}>
+                  <ShieldIcon sx={{ fontSize: 16, color: '#aaa' }} />
+                  <Typography variant="caption" sx={{ color: '#aaa' }}>Your information is secure and encrypted</Typography>
+                </Box>
+              </Box>
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Container>
+    </Box>
   );
 };
 

@@ -175,6 +175,7 @@ router.get('/users', requireAdmin, async (req, res) => {
       phone: u.phone,
       role: u.role,
       is_active: u.isActive !== false,
+      profileImage: u.profileImage,
       createdAt: u.createdAt,
     }));
     
@@ -250,7 +251,7 @@ router.post('/users', requireAdmin, async (req, res) => {
  */
 router.put('/users/:id', requireAdmin, async (req, res) => {
   try {
-    const { username, email, first_name, last_name, phone, role, is_active } = req.body;
+    const { username, email, first_name, last_name, phone, role, is_active, profileImage } = req.body;
     
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -264,6 +265,7 @@ router.put('/users/:id', requireAdmin, async (req, res) => {
     if (phone) user.phone = phone;
     if (role) user.role = role;
     if (is_active !== undefined) user.isActive = is_active;
+    if (profileImage !== undefined) user.profileImage = profileImage;
 
     await user.save();
     res.json({ message: 'User updated successfully' });
@@ -468,20 +470,23 @@ router.post('/doctors', requireAdminOrReceptionist, async (req, res) => {
  */
 router.put('/doctors/:id', requireAdminOrReceptionist, async (req, res) => {
   try {
-    const { name, specialty, qualification, experience, consultation_fee, bio, is_available, services, schedule } = req.body;
+    const { name, specialty, qualification, experience, consultation_fee, bio, is_available, services, schedule, profileImage, email, phone } = req.body;
     
     const doctor = await Doctor.findById(req.params.id).populate('user');
     if (!doctor) {
       return res.status(404).json({ message: 'Doctor not found' });
     }
 
-    // Update user name if provided
+    // Update user fields if provided
     if (name && doctor.user) {
       const nameParts = name.split(' ');
       doctor.user.firstName = nameParts[0];
       doctor.user.lastName = nameParts.slice(1).join(' ') || '';
-      await doctor.user.save();
     }
+    if (email && doctor.user) doctor.user.email = email;
+    if (phone && doctor.user) doctor.user.phone = phone;
+    if (profileImage && doctor.user) doctor.user.profileImage = profileImage;
+    if (doctor.user) await doctor.user.save();
 
     if (specialty) doctor.specialty = specialty;
     if (qualification) doctor.qualification = qualification;
