@@ -8,7 +8,6 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import SettingsIcon from '@mui/icons-material/Settings';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useDispatch, useSelector } from 'react-redux';
@@ -23,8 +22,6 @@ const menuItems = [
   { text: 'Patients', icon: <PeopleIcon />, path: '/dashboard/patients', roles: ['admin', 'doctor', 'receptionist'] },
   { text: 'Services', icon: <MedicalServicesIcon />, path: '/dashboard/services', roles: ['admin', 'receptionist'] },
   { text: 'Prescriptions', icon: <LocalHospitalIcon />, path: '/dashboard/prescriptions', roles: ['admin', 'doctor'] },
-  { text: 'Profile', icon: <AccountCircleIcon />, path: '/dashboard/profile', roles: ['admin', 'doctor', 'patient', 'receptionist'] },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/dashboard/settings', roles: ['admin', 'doctor', 'patient', 'receptionist'] },
 ];
 
 const Sidenav = ({ open, setOpen }) => {
@@ -79,47 +76,46 @@ const Sidenav = ({ open, setOpen }) => {
         )}
       </Box>
       <Divider />
-      <Box sx={{ px: 2, py: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: '#f0f2f5' }}>
-          {user?.profileImage ? (
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                overflow: 'hidden',
-                flexShrink: 0,
-                border: '2px solid',
-                borderColor: '#1A73E8',
-              }}
-            >
-              <img
-                src={user.profileImage}
-                alt="User"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            </Box>
-          ) : (
-            <Avatar
-              sx={{
-                width: 36,
-                height: 36,
-                background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 100%)',
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              {getInitials()}
-            </Avatar>
-          )}
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'User'}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#7B809A', textTransform: 'capitalize', fontSize: '0.7rem' }}>
-              {user?.role || 'patient'}
-            </Typography>
+      <Box sx={{ px: 2, py: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.2 }}>
+        {user?.profileImage ? (
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '2px solid',
+              borderColor: '#1A73E8',
+              boxShadow: '0 2px 8px rgba(26,115,232,0.2)',
+            }}
+          >
+            <img
+              src={user.profileImage}
+              alt="User"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
           </Box>
+        ) : (
+          <Avatar
+            sx={{
+              width: 56,
+              height: 56,
+              background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 100%)',
+              fontSize: 20,
+              fontWeight: 700,
+              boxShadow: '0 2px 8px rgba(26,115,232,0.2)',
+            }}
+          >
+            {getInitials()}
+          </Avatar>
+        )}
+        <Box sx={{ textAlign: 'center', minWidth: 0 }}>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#344767', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'User'}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#7B809A', textTransform: 'capitalize', fontSize: '0.7rem', fontWeight: 500 }}>
+            {user?.role || 'patient'}
+          </Typography>
         </Box>
       </Box>
       <Divider />
