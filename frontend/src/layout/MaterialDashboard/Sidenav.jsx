@@ -81,17 +81,37 @@ const Sidenav = ({ open, setOpen }) => {
       <Divider />
       <Box sx={{ px: 2, py: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: '#f0f2f5' }}>
-          <Avatar
-            sx={{
-              width: 36,
-              height: 36,
-              background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 100%)',
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
-            {getInitials()}
-          </Avatar>
+          {user?.profileImage ? (
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                flexShrink: 0,
+                border: '2px solid',
+                borderColor: '#1A73E8',
+              }}
+            >
+              <img
+                src={user.profileImage}
+                alt="User"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </Box>
+          ) : (
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                background: 'linear-gradient(135deg, #1A73E8 0%, #4285F4 100%)',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              {getInitials()}
+            </Avatar>
+          )}
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: '#344767', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'User'}
