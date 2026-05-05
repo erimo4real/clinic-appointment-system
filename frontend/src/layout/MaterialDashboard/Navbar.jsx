@@ -10,6 +10,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import SettingsIcon from '@mui/icons-material/Settings';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../../features/auth/store/authSlice';
 import { useNavigate } from 'react-router-dom';

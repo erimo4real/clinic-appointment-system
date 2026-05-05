@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Card, CardContent, Box } from '@mui/material';
+import { Card, CardContent, Box, Typography, Divider } from '@mui/material';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -11,27 +11,33 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-const ReportsBarChart = ({ data = {} }) => {
+const ReportsBarChart = ({ data = {}, title, description, color = 'info' }) => {
   const labels = data.labels || ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   const values = data.values || [4500, 5200, 4800, 6100, 5500, 3200, 2800];
+
+  const colorMap = {
+    primary: '#1A73E8',
+    secondary: '#7B809A',
+    success: '#4CAF50',
+    info: '#1A73E8',
+    warning: '#FF9800',
+    error: '#F44336',
+    dark: '#344767',
+  };
+  const barColor = colorMap[color] || colorMap.info;
 
   const chartData = useMemo(() => ({
     labels,
     datasets: [{
-      label: 'Appointments',
+      label: title || 'Appointments',
       data: values,
-      backgroundColor: values.map((_, i) => {
-        const colors = [
-          '#1A73E8', '#4285F4', '#1A73E8', '#4285F4', '#1A73E8', '#4285F4', '#1A73E8'
-        ];
-        return colors[i % colors.length];
-      }),
+      backgroundColor: barColor,
       borderRadius: 4,
       borderSkipped: false,
       barPercentage: 0.55,
       categoryPercentage: 0.7,
     }],
-  }), [labels, values]);
+  }), [labels, values, barColor, title]);
 
   const options = useMemo(() => ({
     responsive: true,
@@ -64,12 +70,28 @@ const ReportsBarChart = ({ data = {} }) => {
         border: { display: false },
       },
     },
-  }), []);
+  }), [barColor]);
 
   return (
-    <Card sx={{ borderRadius: 1, height: '100%', boxShadow: '0 2px 12px 0 rgba(0,0,0,0.06)' }}>
-      <CardContent sx={{ p: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ flexGrow: 1, px: 2, py: 2 }}>
+    <Card sx={{ borderRadius: 1, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.06)' }}>
+      <CardContent sx={{ p: '1rem 1rem 0' }}>
+        <Typography variant="caption" sx={{ color: '#7B809A', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+          {title || 'Appointments'}
+        </Typography>
+        {description && (
+          <Typography variant="body2" sx={{ color: '#344767', fontWeight: 600, fontSize: '0.875rem', mt: 0.5 }}>
+            {description}
+          </Typography>
+        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+          <Typography variant="caption" sx={{ color: '#7B809A', fontSize: '0.75rem' }}>
+            as of {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          </Typography>
+        </Box>
+      </CardContent>
+      <Divider sx={{ mx: 2 }} />
+      <CardContent sx={{ p: 0, pb: '0.5rem !important' }}>
+        <Box sx={{ px: 1.5, py: 1.5, height: 250 }}>
           <Bar data={chartData} options={options} />
         </Box>
       </CardContent>
