@@ -19,6 +19,9 @@ import ServicesManagementPage from './features/services/components/ServicesManag
 import AppointmentsManagementPage from './features/appointments/components/AppointmentsManagementPage';
 import PatientsManagementPage from './features/patients/components/PatientsManagementPage';
 import PrescriptionsManagementPage from './features/prescriptions/components/PrescriptionsManagementPage';
+import FeedbackManagementPage from './features/feedback/components/FeedbackManagementPage';
+import MedicalRecordsManagementPage from './features/medicalrecords/components/MedicalRecordsManagementPage';
+import WaitlistManagementPage from './features/waitlist/components/WaitlistManagementPage';
 import SettingsPage from './features/settings/components/SettingsPage';
 import ProfilePage from './features/settings/components/ProfilePage';
 
@@ -69,6 +72,9 @@ const App = () => {
                 <Route path="patients" element={<PatientsManagementPage />} />
                 <Route path="services" element={<ServicesManagementPage />} />
                 <Route path="prescriptions" element={<PrescriptionsManagementPage />} />
+                <Route path="feedback" element={<FeedbackManagementPage />} />
+                <Route path="medical-records" element={<MedicalRecordsManagementPage />} />
+                <Route path="waitlist" element={<WaitlistManagementPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
               </Routes>

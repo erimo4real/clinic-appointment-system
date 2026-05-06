@@ -7,6 +7,9 @@ import PeopleIcon from '@mui/icons-material/People';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import FolderSharedIcon from '@mui/icons-material/FolderShared';
+import QueueIcon from '@mui/icons-material/Queue';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -22,6 +25,9 @@ const menuItems = [
   { text: 'Patients', icon: <PeopleIcon />, path: '/dashboard/patients', roles: ['admin', 'doctor', 'receptionist'] },
   { text: 'Services', icon: <MedicalServicesIcon />, path: '/dashboard/services', roles: ['admin', 'receptionist'] },
   { text: 'Prescriptions', icon: <LocalHospitalIcon />, path: '/dashboard/prescriptions', roles: ['admin', 'doctor'] },
+  { text: 'Medical Records', icon: <FolderSharedIcon />, path: '/dashboard/medical-records', roles: ['admin', 'doctor'] },
+  { text: 'Waitlist', icon: <QueueIcon />, path: '/dashboard/waitlist', roles: ['admin', 'receptionist'] },
+  { text: 'Feedback', icon: <RateReviewIcon />, path: '/dashboard/feedback', roles: ['admin'] },
 ];
 
 const Sidenav = ({ open, setOpen }) => {

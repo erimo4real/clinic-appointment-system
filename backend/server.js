@@ -37,6 +37,7 @@ const medicalRecordRoutes = require('./src/application/routes/medicalRecordRoute
 const prescriptionRoutes = require('./src/application/routes/prescriptionRoutes');
 const searchRoutes = require('./src/application/routes/searchRoutes');
 const notificationRoutes = require('./src/application/routes/notificationRoutes');
+const waitlistRoutes = require('./src/application/routes/waitlistRoutes');
 
 const app = express();
 
@@ -107,6 +108,7 @@ app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/waitlist', waitlistRoutes);
 
 // Health check (single definition)
 app.get('/api/health', (req, res) => {
